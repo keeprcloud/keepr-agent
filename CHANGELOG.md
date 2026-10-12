@@ -3,6 +3,12 @@
 Each release lists the two versions it carries: the skill's (which is also the
 plugin's) and the server's.
 
+## 2.13.0 — 2026-10-11
+
+Skill 2.13.0, keepr-mcp 0.15.0.
+
+- Your assistant now draws and explains the widths of a form. When it proposes a layout for a card's form, each field shows what it sets, such as phone (span 6) or dob (span 4, new row), instead of an unreadable object, and a form that changes only a width shows the difference under now and becomes. The assistant's tool and the skill both say what a field's span and its new row mean, and leave the limits to keepr: keepr checks each width against what the field holds and, when it refuses one, names the range, so the assistant proposes again with that. No new tools or inputs.
+
 ## 2.12.0 — 2026-10-09
 
 Skill 2.12.0, keepr-mcp 0.14.0.

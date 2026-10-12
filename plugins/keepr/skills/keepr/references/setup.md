@@ -127,10 +127,32 @@ what you arrange. Zero rows is a tile of identity and date alone.
 "title" }, { "system": "updatedAt" }, … ] }`. System columns: `title`,
 `primaryDate`, `updatedAt`, `createdAt`, `sourceCreatedAt`, `tags`, `owner`.
 
-**Form** — the item form's order and groups: `{ "groups": [ { "id": "g1",
-"title": "Basics", "elements": ["title", "status"] }, { "id": "g2", "title":
-"Dates", "elements": ["due"], "collapsed": true } ] }`. Order and grouping only:
-a form never hides an element (a required one hidden is a record nobody can
+**Form** — the item form's order, groups and field widths. A group's `elements`
+holds **entries**: an element's name, or `{ "element": name, "span": …,
+"newRow": true }` once the person says how wide a field is or where a row
+starts:
+
+```json example
+{ "groups": [ { "id": "g1", "title": "Basics",
+                "elements": [ "title", { "element": "status", "span": 4 },
+                              { "element": "owner", "span": 4, "newRow": true } ] },
+              { "id": "g2", "title": "Dates", "elements": ["due"], "collapsed": true } ] }
+```
+
+`span` is how many of the form's columns the field takes, or `"auto"`; a bare
+name is `auto` with no new row, which is also what every layout saved before
+widths existed means. `newRow: true` starts the field on a fresh row. Write an
+entry as an object only for a field the person asked to size or to start a row:
+the rest stay bare names, so each keeps the width its own kind of data suits.
+Do not work out a width from what you know of the data. How wide a field may be
+depends on what it holds, and keepr decides: its preview refuses a width the
+field cannot take, naming the field and the range, and the next proposal uses
+that range. keepr also keeps an entry in one spelling, so a field sent with
+`"span": "auto"` may come back as the bare name; it is the same thing. The
+preview draws each field with what it sets, `phone (span 6)` or `dob (span 4,
+new row)`, and a form that changes only a width shows it under "now:" and
+"becomes:". Read those lines to the person; do not describe widths from memory.
+A form never hides an element (a required one hidden is a record nobody can
 save).
 
 **Page** — paper: a record per sheet (a face sheet, a label) or the records a

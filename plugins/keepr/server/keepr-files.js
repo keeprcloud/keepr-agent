@@ -1248,7 +1248,7 @@ async function within(promise, ms) {
 
 // dist/src/contract.snapshot.json
 var contract_snapshot_default = {
-  version: "e34b7c13c2cc",
+  version: "79f1131383e0",
   title: "keepr write contract",
   summary: "What keepr accepts from a machine client: the element types, the batch envelope, and every error code a row can come back with. Generated from the running server, so it describes THIS deployment.",
   loop: [
@@ -1953,6 +1953,10 @@ var contract_snapshot_default = {
       {
         code: "duplicate_value",
         means: 'another item of the card already holds this value of a unique element (text and email compared ignoring case); itemId and title name it when you can read it \u2014 use mode "upsert" keyed on the element to re-run an import'
+      },
+      {
+        code: "element_read_only",
+        means: 'reason "grant": the element is shown to the caller but only some people may change it (an element rule of the collection) \u2014 the row changes it, so nothing is written for the row. Leave it out, or send the stored value unchanged (on a new record, its default); an element HIDDEN from the caller is never named this way: it answers unknown_element, as a name the card does not have'
       },
       {
         code: "externalId_required",
@@ -2749,7 +2753,7 @@ This is a bug in keepr-mcp, not something the user did.`)) : guard(def, ctx, arg
 
 // dist/src/server.js
 var SERVER_NAME = "keepr";
-var SERVER_VERSION = "0.14.0";
+var SERVER_VERSION = "0.15.0";
 var WEBSITE_URL = "https://keepr.cloud";
 var KQL_REFERENCE_URL = `${WEBSITE_URL}/docs/guides/finding-and-lists/kql-reference`;
 function brandIcons(publicUrl = process.env.KEEPR_PUBLIC_URL || "https://api.keepr.cloud") {
