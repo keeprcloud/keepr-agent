@@ -3,6 +3,12 @@
 Each release lists the two versions it carries: the skill's (which is also the
 plugin's) and the server's.
 
+## 2.15.0 — 2026-10-13
+
+Skill 2.15.0, keepr-mcp 0.17.0.
+
+- Your assistant can fill in repeating groups. When a card has one, such as the ingredients of a recipe, the assistant reads an item's entries in order and writes the whole list back: an entry it keeps holds on to its id, a new one gets an id from keepr, and one it leaves out is removed. keepr_schema shows what each column takes, and keepr checks every entry the way it checks an item, naming the entry and the column when it refuses one. Re-running the same import changes nothing. No new tools or inputs.
+
 ## 2.14.0 — 2026-10-12
 
 Skill 2.14.0, keepr-mcp 0.16.0.

@@ -1248,7 +1248,7 @@ async function within(promise, ms) {
 
 // dist/src/contract.snapshot.json
 var contract_snapshot_default = {
-  version: "84c70b3f0977",
+  version: "cac3388564a9",
   title: "keepr write contract",
   summary: "What keepr accepts from a machine client: the element types, the batch envelope, and every error code a row can come back with. Generated from the running server, so it describes THIS deployment.",
   loop: [
@@ -1679,6 +1679,7 @@ var contract_snapshot_default = {
     maxIngestBytes: "5 MB per ingest call",
     activeApiKeysPerUser: 25,
     deletesPerKeyPerDay: 500,
+    relatedListsPerCard: 20,
     repeatingGroup: {
       defaultMaxEntries: 100,
       maxEntriesCeiling: 500,
@@ -1803,8 +1804,8 @@ var contract_snapshot_default = {
     },
     {
       name: "repeating-group",
-      send: `nothing yet: a repeating group's entries cannot be written in this version \u2014 leave it out, or send "" or null`,
-      note: "a group is ONE element holding an ordered list of entries, each with the group's own columns (the collection schema gives columns \u2014 each an element with its own id, type and options \u2014 minEntries, maxEntries and sections); any other value is repeating_group_not_settable, and a filter cannot read a group yet (unsupported_operator)"
+      send: `the WHOLE list of entries, in order: [{ "elements": { "<column>": <the column's value> } }, \u2026] \u2014 an entry read with its "id" and sent back with it keeps that id, and its columns you leave out keep their values; an entry without an "id" is added (keepr issues its id \u2014 never invent one); an entry you leave out is removed; [] or "" removes every entry. A group with section headings also takes { "section": "<title>" }`,
+      note: 'each column takes what an element of its type takes (the collection schema gives columns, minEntries, maxEntries and sections); every refusal names the entry (position, from 1, and entryId) and the column. Read an item first and send its list back changed: re-sending a list unchanged changes nothing, and an entry without an id that matches a stored one exactly is that entry (a re-run of an import keeps every id). A file column, a {"$ref"} in a lookup column, and a filter on a group are not in this version (column_type_not_allowed, invalid_lookup, unsupported_operator)'
     }
   ],
   emptyValue: 'null or "" means empty. Omitting the key means empty too, except on a CREATE, where an element the row omits starts at its default (defaultValue, defaultToToday or defaultToNow in the schema; a default that no longer fits the element is left out and the element starts empty). On upsert, an omitted key KEEPS its stored value while "" overwrites it; a default never applies to an update.',
@@ -1863,6 +1864,10 @@ var contract_snapshot_default = {
         means: "not local@domain.tld, or over 254 characters"
       },
       {
+        code: "invalid_entry",
+        means: `an entry of a repeating group is not one: not an object, a key an entry does not take (an entry is { "id"?, "elements": { \u2026 } } or { "id"?, "section": "<title>" } \u2014 a column's value goes under "elements"), its id twice in the list, a section heading on a group without them or with columns beside it, or an entry made a heading (or a heading an entry); position and entryId name it`
+      },
+      {
         code: "invalid_location",
         means: "neither an address nor a coordinate pair, or the half the element's accept setting forbids"
       },
@@ -1892,7 +1897,7 @@ var contract_snapshot_default = {
       },
       {
         code: "repeating_group_not_settable",
-        means: 'a value for a repeating group: its entries cannot be written in this version \u2014 leave it out, or send "" or null (an empty list reads as no entries)'
+        means: 'a value for a repeating group on a path that does not write entries (a rule, multi add, quick add, a public form) \u2014 leave it out, or send "" or null; items, bulk and ingest write entries'
       },
       {
         code: "required",
@@ -1903,12 +1908,20 @@ var contract_snapshot_default = {
         means: "the element is numbered by the server (options.sequence); its value cannot be written \u2014 refused in strict mode, dropped otherwise"
       },
       {
+        code: "too_few_entries",
+        means: "a repeating group holds fewer entries than its minEntries (min and count carry both; section headings do not count)"
+      },
+      {
         code: "too_long",
         means: "longer than the element allows (limit carries it): the element's own maxLength, else 255 characters for a short text, 20,000 long (50,000 extended), 100,000 rich (250,000 extended), 2,048 for a url"
       },
       {
         code: "too_many_dates",
         means: "more than 1,000 distinct entries in a date or date-time list (limit carries it); a longer list stored before the cap, re-sent unchanged, still saves"
+      },
+      {
+        code: "too_many_entries",
+        means: "a repeating group's list is longer than its maxEntries (max and count carry both; section headings count)"
       },
       {
         code: "too_many_files",
@@ -1921,6 +1934,10 @@ var contract_snapshot_default = {
       {
         code: "unknown_element",
         means: "no element of that name on the card (strict mode only; non-strict drops the key)"
+      },
+      {
+        code: "unknown_entry",
+        means: `an entry's "id" is not one this item's group holds \u2014 keepr issues entry ids: leave "id" out to add a new entry, or read the item for the ids it holds`
       },
       {
         code: "user_not_found",
@@ -2767,7 +2784,7 @@ This is a bug in keepr-mcp, not something the user did.`)) : guard(def, ctx, arg
 
 // dist/src/server.js
 var SERVER_NAME = "keepr";
-var SERVER_VERSION = "0.16.0";
+var SERVER_VERSION = "0.17.0";
 var WEBSITE_URL = "https://keepr.cloud";
 var KQL_REFERENCE_URL = `${WEBSITE_URL}/docs/guides/finding-and-lists/kql-reference`;
 function brandIcons(publicUrl = process.env.KEEPR_PUBLIC_URL || "https://api.keepr.cloud") {
