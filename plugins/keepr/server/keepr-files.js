@@ -1248,7 +1248,7 @@ async function within(promise, ms) {
 
 // dist/src/contract.snapshot.json
 var contract_snapshot_default = {
-  version: "79f1131383e0",
+  version: "84c70b3f0977",
   title: "keepr write contract",
   summary: "What keepr accepts from a machine client: the element types, the batch envelope, and every error code a row can come back with. Generated from the running server, so it describes THIS deployment.",
   loop: [
@@ -1678,7 +1678,12 @@ var contract_snapshot_default = {
     maxRowsPerCall: 200,
     maxIngestBytes: "5 MB per ingest call",
     activeApiKeysPerUser: 25,
-    deletesPerKeyPerDay: 500
+    deletesPerKeyPerDay: 500,
+    repeatingGroup: {
+      defaultMaxEntries: 100,
+      maxEntriesCeiling: 500,
+      maxColumns: 200
+    }
   },
   elementTypes: [
     {
@@ -1795,6 +1800,11 @@ var contract_snapshot_default = {
       name: "confirmations",
       send: 'nothing: how many people said "me too" \u2014 a person confirms or takes it back with POST or DELETE /api/items/{id}/confirmations/{element} (endpoints itemConfirm, itemUnconfirm), once each',
       note: "stored as a whole number, absent until the first confirmation and read as 0 when absent (filters, sorting, charts); a row may re-send the stored count unchanged and nothing else (confirmations_not_settable); who confirmed is never in an item \u2014 only a collection's managers can list them (itemConfirmers)"
+    },
+    {
+      name: "repeating-group",
+      send: `nothing yet: a repeating group's entries cannot be written in this version \u2014 leave it out, or send "" or null`,
+      note: "a group is ONE element holding an ordered list of entries, each with the group's own columns (the collection schema gives columns \u2014 each an element with its own id, type and options \u2014 minEntries, maxEntries and sections); any other value is repeating_group_not_settable, and a filter cannot read a group yet (unsupported_operator)"
     }
   ],
   emptyValue: 'null or "" means empty. Omitting the key means empty too, except on a CREATE, where an element the row omits starts at its default (defaultValue, defaultToToday or defaultToNow in the schema; a default that no longer fits the element is left out and the element starts empty). On upsert, an omitted key KEEPS its stored value while "" overwrites it; a default never applies to an update.',
@@ -1879,6 +1889,10 @@ var contract_snapshot_default = {
       {
         code: "range",
         means: "outside a declared bound \u2014 a rating past max, a number past min/max, a date outside its bounds or on a disallowed weekday"
+      },
+      {
+        code: "repeating_group_not_settable",
+        means: 'a value for a repeating group: its entries cannot be written in this version \u2014 leave it out, or send "" or null (an empty list reads as no entries)'
       },
       {
         code: "required",
@@ -2753,7 +2767,7 @@ This is a bug in keepr-mcp, not something the user did.`)) : guard(def, ctx, arg
 
 // dist/src/server.js
 var SERVER_NAME = "keepr";
-var SERVER_VERSION = "0.15.0";
+var SERVER_VERSION = "0.16.0";
 var WEBSITE_URL = "https://keepr.cloud";
 var KQL_REFERENCE_URL = `${WEBSITE_URL}/docs/guides/finding-and-lists/kql-reference`;
 function brandIcons(publicUrl = process.env.KEEPR_PUBLIC_URL || "https://api.keepr.cloud") {

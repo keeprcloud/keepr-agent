@@ -3,6 +3,12 @@
 Each release lists the two versions it carries: the skill's (which is also the
 plugin's) and the server's.
 
+## 2.14.0 — 2026-10-12
+
+Skill 2.14.0, keepr-mcp 0.16.0.
+
+- Your assistant is ready for repeating groups. When a card has one, such as the ingredients of a recipe, keepr_schema shows the group, how many entries an item may hold, and each of its columns with its type. Entries cannot be written yet, so the assistant leaves a group out of the rows it builds; keepr says what to send. No new tools or inputs.
+
 ## 2.13.0 — 2026-10-11
 
 Skill 2.13.0, keepr-mcp 0.15.0.
