@@ -3,6 +3,12 @@
 Each release lists the two versions it carries: the skill's (which is also the
 plugin's) and the server's.
 
+## 2.16.1 — 2026-10-13
+
+Skill 2.16.1, keepr-mcp 0.17.2.
+
+- Your assistant can filter by what is inside a repeating group. keepr says how in its contract: ingredient has (name = butter and amount > 2) finds the items where one entry holds both, two such blocks may be answered by different entries, and ingredient is empty and ingredient.count >= 5 ask how many entries there are. keepr writes the group and its columns by id when a filter is saved. No new tools or inputs.
+
 ## 2.16.0 — 2026-10-13
 
 Skill 2.16.0, keepr-mcp 0.17.1.
