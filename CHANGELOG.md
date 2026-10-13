@@ -3,6 +3,12 @@
 Each release lists the two versions it carries: the skill's (which is also the
 plugin's) and the server's.
 
+## 2.17.0 — 2026-10-13
+
+Skill 2.17.0, keepr-mcp 0.18.0.
+
+- Your assistant can change one entry of a long list without sending the rest. On a card with a repeating group, such as the ingredients of a recipe, keepr_update_item takes entries: add an entry at the end or at a place, change only the columns that change, move one, or remove one, each named by its id. Two people changing different entries at the same moment no longer overwrite each other, and each change is one line in the item's history naming the entry. To add the same entry to many items, the dry run and its confirm token apply as for any change to many. On the command line, keepr.py entry does the same. No new tools.
+
 ## 2.16.1 — 2026-10-13
 
 Skill 2.16.1, keepr-mcp 0.17.2.

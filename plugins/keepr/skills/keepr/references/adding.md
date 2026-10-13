@@ -183,6 +183,29 @@ only the collection's own items, and it never deletes.
 Items with an external id are better changed with `keepr_ingest` in `upsert`
 mode.
 
+## One entry of a repeating group
+
+A card can hold a repeating group — the ingredients of a recipe, the lines of
+an invoice — whose value is a list of entries, each with its own id. To change
+**one** entry, don't resend the list: name the entry by its id (read the item
+first; never make an id up) and give `keepr_update_item` `entries`, one item,
+in a call of its own:
+
+```json example
+{ "item_id": "<24-hex>", "entries": [
+  { "op": "add",    "group": "ingredient", "elements": { "name": "salt" }, "position": 2 },
+  { "op": "update", "group": "ingredient", "entry_id": "<id>", "elements": { "amount": "2 cup" } },
+  { "op": "move",   "group": "ingredient", "entry_id": "<id>", "position": 1 },
+  { "op": "remove", "group": "ingredient", "entry_id": "<id>" } ] }
+```
+
+An update names only the columns that change; the others keep their values.
+Each operation is saved as it comes, and keepr's first refusal stops the rest —
+say which were done. Someone else editing another entry at the same moment is
+not overwritten. To add the same entry to **many items**, give `ids` or `q`
+with the same `entries` (adds only — an entry id belongs to one item) and go
+through the dry run and its `confirm` token, as for any change to many.
+
 ## Saying "me too" for the person
 
 Some cards carry a **Me too** element (its label may read "I see this too" or

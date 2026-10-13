@@ -1248,7 +1248,7 @@ async function within(promise, ms) {
 
 // dist/src/contract.snapshot.json
 var contract_snapshot_default = {
-  version: "f8f162b29a75",
+  version: "630f9f072198",
   title: "keepr write contract",
   summary: "What keepr accepts from a machine client: the element types, the batch envelope, and every error code a row can come back with. Generated from the running server, so it describes THIS deployment.",
   loop: [
@@ -1308,7 +1308,11 @@ var contract_snapshot_default = {
     itemConfirm: "POST /api/items/{id}/confirmations/{element}",
     itemUnconfirm: "DELETE /api/items/{id}/confirmations/{element}",
     itemConfirmations: "GET /api/items/{id}/confirmations",
-    itemConfirmers: "GET /api/items/{id}/confirmations/{element}/people"
+    itemConfirmers: "GET /api/items/{id}/confirmations/{element}/people",
+    itemEntryAdd: "POST /api/items/{id}/entries/{group}",
+    itemEntryUpdate: "PATCH /api/items/{id}/entries/{group}/{entryId}",
+    itemEntryRemove: "DELETE /api/items/{id}/entries/{group}/{entryId}",
+    itemEntryMove: "POST /api/items/{id}/entries/{group}/{entryId}/move"
   },
   recordCodes: {
     url: "A record's short web address is ${APP_BASE_URL}/<letter>/<code>. A code is 7 or more characters of lowercase Crockford base32 and reads in any case (i and l as 1, o as 0). Every id stays valid; a code is a second name for the record, never a permission.",
@@ -1804,7 +1808,7 @@ var contract_snapshot_default = {
     },
     {
       name: "repeating-group",
-      send: `the WHOLE list of entries, in order: [{ "elements": { "<column>": <the column's value> } }, \u2026] \u2014 an entry read with its "id" and sent back with it keeps that id, and its columns you leave out keep their values; an entry without an "id" is added (keepr issues its id \u2014 never invent one); an entry you leave out is removed; [] or "" removes every entry. A group with section headings also takes { "section": "<title>" }`,
+      send: `the WHOLE list of entries, in order: [{ "elements": { "<column>": <the column's value> } }, \u2026] \u2014 an entry read with its "id" and sent back with it keeps that id, and its columns you leave out keep their values; an entry without an "id" is added (keepr issues its id \u2014 never invent one); an entry you leave out is removed; [] or "" removes every entry. A group with section headings also takes { "section": "<title>" }. ONE entry changes without sending the others through its own door (endpoints itemEntryAdd, itemEntryUpdate, itemEntryRemove, itemEntryMove) or a bulk row's "entries": [{ "op": "add"|"update"|"remove"|"move", "group", "entryId", "elements"|"section", "position" }]`,
       note: 'each column takes what an element of its type takes (the collection schema gives columns, minEntries, maxEntries and sections); every refusal names the entry (position, from 1, and entryId) and the column. Read an item first and send its list back changed: re-sending a list unchanged changes nothing, and an entry without an id that matches a stored one exactly is that entry (a re-run of an import keeps every id). A file column and a {"$ref"} in a lookup column are not in this version (column_type_not_allowed, invalid_lookup). A filter reads a group three ways: <group> has (<conditions on its columns>) \u2014 ONE entry answers every condition inside; two blocks may be answered by different entries \u2014 <group> is empty / is not empty, and <group>.count >= 2 (headings are not entries); any other operator on a group is unsupported_operator'
     }
   ],
@@ -1868,6 +1872,10 @@ var contract_snapshot_default = {
         means: `an entry of a repeating group is not one: not an object, a key an entry does not take (an entry is { "id"?, "elements": { \u2026 } } or { "id"?, "section": "<title>" } \u2014 a column's value goes under "elements"), its id twice in the list, a section heading on a group without them or with columns beside it, or an entry made a heading (or a heading an entry); position and entryId name it`
       },
       {
+        code: "invalid_entry_op",
+        means: `an entry operation (KPR-677: add, update, remove or move ONE entry of a repeating group \u2014 the itemEntry* endpoints, a bulk row's "entries") is malformed: an unknown op or key, no entryId on update/remove/move, "elements" beside "section", an update with nothing to change, a position that is not a whole number from 1 or is past the end, the same group under "elements" and "entries", entries on a new row, or an entryId in a bulk patch (an entry id belongs to one item: over a selection only "add")`
+      },
+      {
         code: "invalid_location",
         means: "neither an address nor a coordinate pair, or the half the element's accept setting forbids"
       },
@@ -1921,7 +1929,7 @@ var contract_snapshot_default = {
       },
       {
         code: "too_many_entries",
-        means: "a repeating group's list is longer than its maxEntries (max and count carry both; section headings count)"
+        means: "a repeating group's list is longer than its maxEntries (max and count carry both; section headings count); an entry operation's add that would make it so"
       },
       {
         code: "too_many_files",
@@ -2797,7 +2805,7 @@ This is a bug in keepr-mcp, not something the user did.`)) : guard(def, ctx, arg
 
 // dist/src/server.js
 var SERVER_NAME = "keepr";
-var SERVER_VERSION = "0.17.2";
+var SERVER_VERSION = "0.18.0";
 var WEBSITE_URL = "https://keepr.cloud";
 var KQL_REFERENCE_URL = `${WEBSITE_URL}/docs/guides/finding-and-lists/kql-reference`;
 function brandIcons(publicUrl = process.env.KEEPR_PUBLIC_URL || "https://api.keepr.cloud") {
