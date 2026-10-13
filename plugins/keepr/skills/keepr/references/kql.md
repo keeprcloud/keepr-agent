@@ -34,13 +34,15 @@ slug the schema prints — `read-on`, not "Read on") or its id (below):
 | `id` | the item id |
 | `tags` | the item's tags: by **name**, alias, **path** (`"Health/Digestive"`) or id — `tags = urgent`, `tags in (urgent, "Genre/Sci-fi")`. Matches the tag **and every tag beneath it**, applied by hand or by a rule, and your own private tags. An **item used as a tag** goes by its id only (`tags = <24-hex>`; the search finds it). A name that is no tag matches nothing; one that names two tags is refused (a 400 listing each tag's path) — write the path or the id. `tags is empty` ignores your private tags. `=`, `!=`, `in`, `not in`, `is empty` only — `~` and `<` `>` are refused (a 400 that says so). Anything keepr stores (a saved filter) keeps ids: keepr rewrites the names when it saves. An access setting (who can see what) may name only *restricted* tags |
 | `notes` | the card-level Notes field |
+| `text` | the **search**: `text ~ "prius prime"` — every word somewhere in the item's text (see "Searching" below). Only `~`, `!~` and `contains` |
 | `created`, `updated` | the item's timestamps |
 | `created.by` | who added the item: a 24-hex account id or `me` (see "Who added an item" below) |
 | `set` | the element set the item's card carries (by key or id) |
 
 A name with spaces or punctuation is double-quoted: `"heart rate" > 100`. A
 quoted first segment always means an element, which is the escape hatch for an
-element literally named `card`.
+element literally named `card` — or `text`: `"text" = memo` is the element,
+`text ~ memo` the search.
 
 **Dot-walk**: after an item lookup element, a further segment reads the
 referenced item — `resident.move-in-date < 2024-01-01`, `truck.depot = salem`.
@@ -50,6 +52,38 @@ keepr allows a few hops; past them it refuses the query and says so.
 lookup element, whatever it is called: `@person = "Molly Blake"`,
 `@truck in (…)`, `@person is empty`. Only `=`, `!=`, `in`, `not in`,
 `is empty`, `is not empty` may follow a facet, and it takes no dot-walk.
+
+## Searching — `text ~`
+
+`text ~ "lost scissors"` is what a list's search box asks: the items where
+**every word** appears somewhere in their text — the words in any order, in
+any of the item's fields, each as part of a word (`cam` finds Camry, `1042`
+finds WO-1042). Case and accents do not matter (`cafe` finds Café). A
+double-quoted phrase inside the term is one word, matched in order:
+`text ~ "\"big dog\" walk"`. Every character is itself — `a.b(` is not a
+pattern — and there is no stemming, OR or NOT inside a term: `-500` is a
+part number. `text !~ "…"` is its opposite. It joins any other condition:
+`card = vehicle and text ~ camry`.
+
+What it reads: the item's text, rich text (formatting does not get in the
+way, and a link's address counts), links, emails, colors, a phone's digits
+(`555-0123` finds +12025550123), a choice's value or label, an address, a
+numbered element's number (`WO-000417`), the Notes and the item's tags by
+name. What it does not: numbers, dates, amounts, measurements, yes/no, ratings,
+people, linked items' titles and file names — filter those by their element
+instead. It never finds anything the person cannot read.
+
+It is exact: the count and the items come from the same search, never a
+sample. Quote a number you search for (`text ~ "1042"`): unquoted, keepr
+refuses it, because a number keeps its value and loses how it was written
+(`007`). keepr caps a term's length and its number of words, and refuses an
+empty one or any operator but `~` / `!~` with a sentence that says so. On a
+list with a great many fields a very long term is refused too ("use fewer or
+shorter words"), and a search that runs too long answers 503 rather than a
+short list: say so, and try fewer or longer words. A filter that decides who
+sees what (an access setting, a link, a group built from records, a public
+view), a total's filter, and a notification a person writes for themselves
+cannot hold a search, and keepr refuses it there.
 
 ## Element ids — `#k7f3q2xa`
 

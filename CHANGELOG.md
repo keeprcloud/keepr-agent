@@ -3,6 +3,12 @@
 Each release lists the two versions it carries: the skill's (which is also the
 plugin's) and the server's.
 
+## 2.16.0 — 2026-10-13
+
+Skill 2.16.0, keepr-mcp 0.17.1.
+
+- Your assistant can search a list the way its search box does. text ~ "lost scissors" in a filter finds the items with every word somewhere in their text, case and accents aside, with a quoted phrase matched in order; the skill says what a search reads and what it leaves to a filter, and that keepr refuses one where a filter decides who sees what. An element called text is now written "text". No new tools or inputs.
+
 ## 2.15.1 — 2026-10-13
 
 Skill 2.15.1, keepr-mcp 0.17.1.
