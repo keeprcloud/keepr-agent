@@ -1248,7 +1248,7 @@ async function within(promise, ms) {
 
 // dist/src/contract.snapshot.json
 var contract_snapshot_default = {
-  version: "cac3388564a9",
+  version: "ed936fbbd4f0",
   title: "keepr write contract",
   summary: "What keepr accepts from a machine client: the element types, the batch envelope, and every error code a row can come back with. Generated from the running server, so it describes THIS deployment.",
   loop: [
@@ -2074,6 +2074,9 @@ var contract_snapshot_default = {
     failed: "the row was refused; errors[] says why",
     "would-create": "dry run: this row would create an item",
     "would-update": "dry run: this row would change an existing item"
+  },
+  features: {
+    repeatingGroups: true
   }
 };
 
@@ -2195,6 +2198,16 @@ var ContractCache = class {
   hasEndpoint(name) {
     const endpoints = this.body.endpoints;
     return Boolean(endpoints && typeof endpoints === "object" && name in endpoints);
+  }
+  /**
+   * Whether this deployment has switched repeating groups OFF (the contract's
+   * `features.repeatingGroups`, KPR-755): a card change that adds one is then
+   * refused (repeating_groups_off). Only an explicit `false` is off — a
+   * deployment older than the `features` block says nothing, and a client
+   * must not refuse what that server would allow.
+   */
+  get repeatingGroupsOff() {
+    return this.body.features?.repeatingGroups === false;
   }
   /** Whether the deployment takes a SETUP of existing cards (the contract's `setups`, KPR-190). */
   get takesSetup() {
@@ -2784,7 +2797,7 @@ This is a bug in keepr-mcp, not something the user did.`)) : guard(def, ctx, arg
 
 // dist/src/server.js
 var SERVER_NAME = "keepr";
-var SERVER_VERSION = "0.17.0";
+var SERVER_VERSION = "0.17.1";
 var WEBSITE_URL = "https://keepr.cloud";
 var KQL_REFERENCE_URL = `${WEBSITE_URL}/docs/guides/finding-and-lists/kql-reference`;
 function brandIcons(publicUrl = process.env.KEEPR_PUBLIC_URL || "https://api.keepr.cloud") {

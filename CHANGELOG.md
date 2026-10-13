@@ -3,6 +3,12 @@
 Each release lists the two versions it carries: the skill's (which is also the
 plugin's) and the server's.
 
+## 2.15.1 — 2026-10-13
+
+Skill 2.15.1, keepr-mcp 0.17.1.
+
+- Your assistant knows when repeating groups are switched off. keepr now says in its contract whether repeating groups are on, and while they are off keepr_schema warns that a card change adding one would be refused, so the assistant does not propose a group keepr cannot save. A group a card already holds reads and saves as before. No new tools or inputs.
+
 ## 2.15.0 — 2026-10-13
 
 Skill 2.15.0, keepr-mcp 0.17.0.
