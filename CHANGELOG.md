@@ -3,6 +3,12 @@
 Each release lists the two versions it carries: the skill's (which is also the
 plugin's) and the server's.
 
+## 2.18.0 — 2026-10-14
+
+Skill 2.18.0, keepr-mcp 0.18.0.
+
+- Your assistant can bring a spreadsheet of entries back into keepr. keepr.py csv reads an .xlsx as well as a CSV, keepr's own Excel export among them: dates come back as dates, a choice's label as its value, and a unit or currency in a column's heading as that unit. On a card with a repeating group, lines that share the item's key become one item whose entries are those lines, in order, so a sheet exported one line per entry imports into another collection as the same entries. A bad line is named by its line number and column before anything is sent, and a refusal on the dry run says which line it came from. Rows that share the --id-column are now always one item (they used to be sent as rows of their own). An export copies into another collection; loaded back into the collection it came from, it adds the items again. No new tools or inputs.
+
 ## 2.17.0 — 2026-10-13
 
 Skill 2.17.0, keepr-mcp 0.18.0.
