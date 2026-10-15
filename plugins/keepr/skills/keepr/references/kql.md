@@ -267,6 +267,39 @@ reached only through publishing or a link have no author, so
 - **currency**: compared only within one currency — `total > 20USD` never
   matches a CAD amount, and a CAD amount IS `!= 20USD`. `~` matches nothing.
 
+## A repeating group's entries
+
+A repeating group holds a list of entries, each with its own columns
+(`keepr_schema` lists the group and its columns). A query asks three things of
+it, and nothing else:
+
+| question | query |
+| --- | --- |
+| One entry answers both conditions | `ingredient has (name = butter and amount > 2)` |
+| Different entries may answer | `ingredient has (name = butter) and ingredient has (name = salt)` |
+| No entry answers (items with no entries too) | `not ingredient has (name = nuts)` |
+| No entries / some | `ingredient is empty` / `ingredient is not empty` |
+| How many entries | `ingredient.count >= 5` |
+
+- **The difference that matters** is the parentheses: inside one `has (…)`
+  every condition must hold on the **same** entry; two blocks may be answered by
+  two entries. "Recipes with more than 2 of butter" is the first, "recipes that
+  use butter and salt" the second.
+- Inside the parentheses it is ordinary KQL (`and`, `or`, `not`, any operator
+  the column's type takes), one condition per column, named as in the schema
+  or by its `#id`. A dotted path, a date part, a `{{reference}}` and a second
+  `has` inside a block are refused, and so is any other operator on the group
+  itself (`ingredient = butter`).
+- `.count` takes a number with `=`, `!=`, `>`, `>=`, `<`, `<=`, `in` and
+  `not in`. A section heading is never an entry and never counted.
+- A block counts as one condition plus each condition inside it, toward the
+  query's condition limit.
+- A column the key may not read looks empty in every entry. A name that is not
+  one of the group's columns matches nothing and keepr says so: check the
+  column against `schema` before you report "none".
+- To count or total **entries** rather than items (how much of each product
+  the invoice lines add up to) use `keepr_chart`, `charts.md`.
+
 ## What does not error
 
 An element name or id the collection does not have, a card key nobody uses, or a
@@ -308,5 +341,7 @@ Written against the showcase collections; the element names are theirs — read
 | Things I added at the weekend | `created.by = me and created.weekday in (sat, sun)` |
 | Expenses logged during working hours | `card = expense and created.hour >= 9 and created.hour < 17` |
 | Renewals due in December, any year | `card = policy and renews-on.month = dec` |
+| Recipes with more than 2 of butter in one entry | `card = recipe and ingredient has (name = butter and amount > 2)` |
+| Invoices with no lines yet | `card = invoice and line is empty` |
 
 Count without listing: `keepr_get_items` with `mode: count`.

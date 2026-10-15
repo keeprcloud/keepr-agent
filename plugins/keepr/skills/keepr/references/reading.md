@@ -34,6 +34,24 @@ label and card. If the person has not said which one they mean, ask them;
 never pick one. Then send `q` again with that `#id` (`kql.md`, "When keepr
 asks which element").
 
+## A repeating group on an item
+
+An item whose card has a repeating group carries its entries, in order, under
+the group's name in the **structured** result of `keepr_get_items` (the text
+lists titles only, as always): `{ id, elements: { <column>: value } }` for an
+entry, `{ id, section: "<title>" }` for a heading, and an empty value when the
+item holds none. Report entries from there, not from the title, and keep each
+entry's `id` if you will change one afterwards (`adding.md`).
+
+- A column the key may not read is left out of every entry; do not say the
+  entry has no value there.
+- To find items by what their entries hold, or by how many they hold, use
+  `has (…)`, `is empty` and `.count` (`kql.md`): "recipes with more than 2 of
+  butter" is one question on one entry, not a count you work out from a page.
+- A list can be sorted by how many entries a group holds with `sort_field`
+  naming the group.
+- Totals and counts **over entries** come from `keepr_chart` (`charts.md`).
+
 ## The rules
 
 **Never present a page as the whole.** `items` answers `N of TOTAL items in

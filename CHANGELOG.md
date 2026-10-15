@@ -3,6 +3,12 @@
 Each release lists the two versions it carries: the skill's (which is also the
 plugin's) and the server's.
 
+## 2.22.0 — 2026-10-15
+
+Skill 2.22.0, keepr-mcp 0.21.0.
+
+- Your assistant knows repeating groups end to end. It can ask for items by what their entries hold: one entry that answers every condition (ingredient has (name = butter and amount > 2)), different entries (two has blocks), no entry, no entries, and how many (.count). It knows to read an item's entries first and send the whole list back changed, or change one entry on its own, how an import of a list re-runs without duplicating, and how to propose a repeating group on a card with its columns. It tells the person when a file cannot be a column. No new tools or inputs.
+
 ## 2.21.0 — 2026-10-15
 
 Skill 2.21.0, keepr-mcp 0.21.0.

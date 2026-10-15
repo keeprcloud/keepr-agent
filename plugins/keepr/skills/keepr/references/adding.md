@@ -183,6 +183,22 @@ only the collection's own items, and it never deletes.
 Items with an external id are better changed with `keepr_ingest` in `upsert`
 mode.
 
+## A repeating group in a row
+
+A repeating group is written in a row as the **whole list** of its entries,
+each `{ "elements": { "<column>": value } }` (a heading is `{ "section":
+"<title>" }`), in the order they should hold. Send the columns the schema lists
+and none that keepr works out. The ingest rules still hold:
+
+- **A re-run changes nothing.** On an `upsert`, the list replaces the stored
+  one, and an entry identical to a stored entry keeps its id, so a source that
+  has no keepr ids can be loaded again. Run the dry run and read the row
+  errors: each names the group, the entry's place in the list and the column.
+- A refusal about an entry names the group, the entry's place in the list
+  and the column: say which, and fix that entry rather than resending the rest.
+- To change one entry of an item already in keepr, don't resend the list: see
+  below.
+
 ## One entry of a repeating group
 
 A card can hold a repeating group — the ingredients of a recipe, the lines of

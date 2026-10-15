@@ -65,6 +65,31 @@ keepr refuses an ambiguous value rather than guessing, and so do you.
   person gave, and nothing more. When keepr says a list is longer than the
   element holds, ask which to keep — never drop entries silently.
 
+## A repeating group
+
+A repeating group is one element on the card that holds a **list of entries**,
+each with its own columns (a recipe's ingredients, an invoice's lines).
+`keepr_schema` prints the group, the columns under it with what each takes,
+how many entries it holds and whether it has section headings.
+
+- **Read the item first.** Each entry comes back with an `id` keepr issued
+  (`{ id, elements }`, or `{ id, section }` for a heading). Never invent an id.
+- **A write sends the whole list.** An entry sent back with its `id` stays that
+  entry, and the columns you leave out keep their values. An entry without an
+  `id` is added. An entry you leave out is **removed**, and an empty list
+  removes them all. So a change to one line sent as a short list deletes the
+  others: to change **one** entry use `entries` on `keepr_update_item`
+  (`adding.md`, "One entry of a repeating group").
+- **Columns keepr works out** (the schema marks them) are never sent, and a
+  total over the group is keepr's too.
+- **A file cannot be a column.** If the person wants a photo on a line, say
+  keepr cannot hold it in an entry; the card can have a file element beside
+  the group.
+- **Do not tell the person a limit from memory.** The group's own minimum and
+  maximum are in the schema; when a list is refused as too long or too short,
+  keepr's refusal carries the numbers. Ask which entries to keep rather than
+  dropping any.
+
 ## Linking items
 
 A lookup element points at another item: by its id when you know it, or by

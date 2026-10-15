@@ -114,6 +114,54 @@ refused before anything is created — never created without its parent. An
 item cannot move to another card later, so settle the parents before any rows
 are written.
 
+## A repeating group on a card
+
+An element can be a **repeating group**: a list of entries inside each item,
+every entry with its own columns (a recipe's ingredients, an invoice's lines).
+Propose it like any element, with the columns and limits under `options`:
+
+```json example
+{
+  "name": "Recipe",
+  "elements": [
+    { "name": "title", "dataType": "text-small", "options": { "isTitle": true } },
+    { "name": "ingredient", "label": "Ingredient", "dataType": "repeating-group",
+      "options": {
+        "minEntries": 1,
+        "sections": true,
+        "columns": [
+          { "name": "name", "label": "Name", "dataType": "text-small", "options": { "required": true } },
+          { "name": "amount", "label": "Amount", "dataType": "measurement", "options": { "measure": "volume", "defaultUnit": "cup" } },
+          { "name": "note", "label": "Note", "dataType": "text-small" }
+        ] } }
+  ]
+}
+```
+
+- **Ask the person** what the list is, which columns each entry has and what
+  they hold, and whether it needs a minimum or section headings. Leave
+  the maximum out unless they name one: keepr has a default and a ceiling, and
+  `keepr_schema` shows what the card ends up with. Never state either from
+  memory.
+- **A column is an element of its own**, taking the types and options any
+  element does with a few exceptions: a column cannot be another group, a
+  count of confirmations or a file, and cannot be required only when another
+  element says so. keepr's preview names the one that was refused.
+- **`keepr_schema` warns when repeating groups are switched off** on this
+  keepr, and a proposal that adds one is then refused. Say so; do not work
+  around it.
+- **Changing a group.** Send the group by name with the whole `options.columns`
+  list as `keepr_schema` printed it, changed: a column left out of the list is
+  removed from the card (what entries hold under it stays on them, hidden, and
+  comes back if a column of that name is added again). Adding a column or a
+  choice needs nothing more. **Removing or renaming a column** hides what the
+  entries hold under it, so tell the person; **retyping one** is refused while
+  any item holds entries in the group. The preview lists each as
+  `group.column`, with how many items hold entries. On a card other collections use, a change only grows.
+- **A column that keepr works out** (a line total, an element that sums the
+  group) is a formula on the element; the schema marks the result as never
+  sent.
+
 ## Changing a card
 
 ### The hazard, stated once
