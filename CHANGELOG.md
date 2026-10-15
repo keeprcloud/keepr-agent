@@ -3,6 +3,12 @@
 Each release lists the two versions it carries: the skill's (which is also the
 plugin's) and the server's.
 
+## 2.21.0 — 2026-10-15
+
+Skill 2.21.0, keepr-mcp 0.21.0.
+
+- Your assistant can total a repeating group's entries. keepr_chart takes entries: "line" to count each entry instead of each item, measures a column written line.amount, and groups by a column or by the item's own element, so it can answer how much of each product the invoice lines add up to, or the lines' total per customer. Without entries a chart still counts items, and grouping by a column counts each item once in each value its entries hold. The answer says whether it counted entries or items.
+
 ## 2.20.0 — 2026-10-14
 
 Skill 2.20.0, keepr-mcp 0.20.0.

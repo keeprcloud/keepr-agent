@@ -117,6 +117,29 @@ its label. Tell the person the label, never the id.
    not said which one they mean, ask them, never pick, and ask again with the
    `#id` (`kql.md`, "When keepr asks which element").
 
+## Entries of a repeating group
+
+A card may hold a **repeating group** (`keepr_schema` lists it with its
+columns): lines on an invoice, ingredients in a recipe. A chart counts either
+the items or the group's **entries**, and the two answer different questions:
+
+- *"How much did we sell of each product?"* counts **entries**:
+  `"entries": "line"` beside `card_id`. `count` then counts entries ("Count
+  entries"), a measure reads one of the group's columns, written
+  `"<group>.<column>"` (`{ "op": "sum", "element": "line.amount" }`), and the
+  rows may be a column (`"groupBy": { "on": "line.product" }`) or the item's
+  own element — each entry placed by its item's value, so `"on": "customer"`
+  gives the invoice lines' total per customer. An item's own element is never
+  measured per entry (keepr refuses it: it would count once for each entry).
+- *"How many recipes use butter?"* counts **items**: no `entries`, and a
+  filter one entry answers, `ingredient has (name = butter and amount > 2)`
+  (`kql.md`). Grouped by a column (`"on": "ingredient.name"`) without
+  `entries`, each item counts once in each value its entries hold.
+
+The answer says which it counted ("keepr counted 128 Line entries in 40
+items"). A column is never the chart's date, and has no latest value. A
+column someone is not allowed to see is left out of the chart for them.
+
 ## A worked example
 
 A **Car** collection has a **Fill-up** card (key `fill-up`) whose elements
