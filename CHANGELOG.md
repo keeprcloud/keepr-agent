@@ -3,6 +3,12 @@
 Each release lists the two versions it carries: the skill's (which is also the
 plugin's) and the server's.
 
+## 2.20.0 — 2026-10-14
+
+Skill 2.20.0, keepr-mcp 0.20.0.
+
+- Your assistant can set up the related lists an item shows. keepr_schema now lists each card's related lists: the named lists of linked items, such as an epic's open work items, each with the card it lists, the lookup it goes through and its filter. A setup can add one or change one, matched by its id or name: keepr_propose_setup takes collection.relatedLists, previews each list as added, changed or unchanged, and refuses what the card would refuse, such as a name already in use or a lookup that does not point at the card. A setup never removes a list. keepr.py setup takes them too. No new tools.
+
 ## 2.19.0 — 2026-10-14
 
 Skill 2.19.0, keepr-mcp 0.19.0.

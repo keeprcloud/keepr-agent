@@ -1248,7 +1248,7 @@ async function within(promise, ms) {
 
 // dist/src/contract.snapshot.json
 var contract_snapshot_default = {
-  version: "1590c8c662ad",
+  version: "ee59116d4283",
   title: "keepr write contract",
   summary: "What keepr accepts from a machine client: the element types, the batch envelope, and every error code a row can come back with. Generated from the running server, so it describes THIS deployment.",
   loop: [
@@ -1668,7 +1668,8 @@ var contract_snapshot_default = {
     changes: "An entry that matches what is there CHANGES it rather than adding one: tile, table and form by their tier, a page layout, saved filter or quick add (pinned for everyone) by id or exact name. The preview marks each step change: added | changed | unchanged, with before and after; unchanged entries are skipped; a failed apply puts every change back.",
     judged: "The preview runs layout bodies through the apply's validators when the card and everything its elements come from exist, and filter queries when the setup creates no cards, element sets or tags.",
     rules: "collection.automations: rules of kind rule | threshold | expected-item | generate-items, as POST \u2026/automations takes them (no enabled), naming cards by { ref } (one the setup makes), { key }, { globalKey } or id. collection.notifications: collection-tier notification definitions, matched by key. An entry matches an existing rule by id or exact name (a notification by id or key) and changes it; managed rules (driven fields, automatic tags) are rule_managed. The preview carries each rule's rule preview and state on | paused. A rule that notifies, changes other records, creates records or runs on a clock, and every notification, arrives PAUSED with awaitingPerson: true, whoever applies; a change to what a running one does pauses it (willPause). Only a person turns one on (403 person_must_enable to a key). A key needs write.",
-    charts: "collection.charts and collection.dashboards entries take an optional id; one that matches a chart or dashboard for everyone (by id, else exact name) CHANGES it in place (its pin stays) rather than being chart_name_taken / dashboard_name_taken. A dashboard tile names a chart by chartRef (the setup's) or chartId (one for everyone in the collection). Steps carry change, id, before and after; a failed apply puts each back."
+    charts: "collection.charts and collection.dashboards entries take an optional id; one that matches a chart or dashboard for everyone (by id, else exact name) CHANGES it in place (its pin stays) rather than being chart_name_taken / dashboard_name_taken. A dashboard tile names a chart by chartRef (the setup's) or chartId (one for everyone in the collection). Steps carry change, id, before and after; a failed apply puts each back.",
+    relatedLists: "collection.relatedLists: [{ id?, cardRef, name, sourceCardRef, via?, filter?, hidden? }] \u2014 the named lists of linked items an item view shows. cardRef is a card the setup makes or one this collection owns; sourceCardRef the card whose items it lists (this collection's, a sub-collection's, or the card itself); via the lookup on it, by name or #id (absent: any lookup that points here); filter KQL as typed. An entry matches one of that card's own lists by id, else name, and changes it (it says the whole list); a setup never removes a list (hidden: true keeps it out of view). Steps of kind relatedList carry change, before and after; a key needs cards only."
   },
   writeContract: {
     maxBatch: 200,
@@ -2228,6 +2229,10 @@ var ContractCache = class {
   /** Whether a setup may change the charts and dashboards a collection has (`setups.charts`, KPR-215). */
   get takesSetupChartChanges() {
     return Boolean(this.body.setups?.charts);
+  }
+  /** Whether a setup may add and change a card's related lists (`setups.relatedLists`, KPR-721). */
+  get takesSetupRelatedLists() {
+    return Boolean(this.body.setups?.relatedLists);
   }
   /** Whether a setup may carry automations and notifications (`setups.rules`, KPR-191). */
   get takesSetupRules() {
@@ -2809,7 +2814,7 @@ This is a bug in keepr-mcp, not something the user did.`)) : guard(def, ctx, arg
 
 // dist/src/server.js
 var SERVER_NAME = "keepr";
-var SERVER_VERSION = "0.19.0";
+var SERVER_VERSION = "0.20.0";
 var WEBSITE_URL = "https://keepr.cloud";
 var KQL_REFERENCE_URL = `${WEBSITE_URL}/docs/guides/finding-and-lists/kql-reference`;
 function brandIcons(publicUrl = process.env.KEEPR_PUBLIC_URL || "https://api.keepr.cloud") {

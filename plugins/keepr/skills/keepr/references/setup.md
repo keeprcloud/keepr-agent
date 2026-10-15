@@ -3,7 +3,7 @@
 A **setup** is everything about a collection that is not its records: how its
 cards look in a list (tile layouts), which columns its tables show, how its
 item form is grouped, its printable pages, its saved filters and quick adds,
-its tags, the **rules** that run on its records (automations), its
+the **related lists** each item shows (an epic's open work items), its tags, the **rules** that run on its records (automations), its
 notifications, and its charts and dashboards. One setup can make new cards
 too, and arrange the ones the collection already has.
 
@@ -17,6 +17,7 @@ or nothing**. The preview is what the person agrees to — so read it to them.
 | a new card, or a field added to one card | `keepr_propose_card` (`references/cards.md`) |
 | a list, table, form or page laid out differently | a setup |
 | filters or quick adds for everyone | a setup |
+| a named list on each item of the items that link to it — an epic's "Open work items" | a setup (related lists) |
 | "when X happens, do Y" — stamp a date, notify me, update linked records, make a task every week | a setup (automations) |
 | a notification for the collection | a setup (notifications) |
 | new cards **and** their layouts, filters and rules together | a setup — one preview, one apply |
@@ -52,6 +53,7 @@ blueprint — so there is nothing to translate. Every section is optional:
     "savedFilters":      [ { "name": "Open bugs", "query": "card = bug and status != done" } ],
     "quickAddTemplates": [ { "name": "New bug", "cardRef": { "ref": "bug" },
                              "defaults": { "status": { "kind": "static", "value": "open" } } } ],
+    "relatedLists":      [ … ],   // named lists of linked items on each item of a card — below
     "tags":              [ … ],   // new tags, each optionally applied by a rule — which always arrives paused,
                                   // and the person turns it on in keepr › Settings › Tags
     "automations":       [ … ],   // rules — below
@@ -160,6 +162,44 @@ query selects, with blocks placed in the sheet's units. Pages are designed
 best in keepr's page editor; propose one only from an existing page's body the
 person shows you, or for a change the person names precisely (a new name, a
 size). The preview shows a page by its subject, size and number of blocks.
+
+## Related lists
+
+A **related list** is a named list, on every item of a card, of the items that
+link to that item: an epic's **Open work items** are the work items whose Epic
+lookup holds that epic, narrowed to the ones not done. The item view shows a
+card's lists after **Related items**, in one switcher, each with its count.
+`keepr_schema` lists each card's lists — name, id, the card whose items it
+shows, the lookup it goes through, its filter — and which ones a parent card
+defines.
+
+```jsonc example
+"relatedLists": [
+  { "cardRef": { "key": "epic" }, "name": "Open work items",
+    "sourceCardRef": { "key": "work-item" }, "via": "epic", "filter": "status != done" },
+  { "cardRef": { "key": "epic" }, "name": "All work items",
+    "sourceCardRef": { "key": "work-item" }, "via": "epic" }
+]
+```
+
+- `cardRef` — the card the list is shown on: one this setup makes, or one this
+  collection **owns**. A card it uses but does not own (a parent collection's,
+  a global one) has its lists changed where it is defined; keepr refuses it here.
+- `sourceCardRef` — the card whose items it lists: one of this collection's,
+  one of a sub-collection's, or the card itself (sub-tasks). Its child cards
+  come too: a list of work items includes bugs when Bug extends Work item.
+- `via` — the lookup on that card that holds the item, by name or `#id`. Leave
+  it out for any lookup there that points at this card.
+- `filter` — written as a person types it, over the listed card's elements;
+  keepr stores it by id. `hidden: true` keeps the list without showing it.
+
+An entry matches one of that card's own lists by its `id` (from the schema) or
+its name, and **changes** it; otherwise it is added after the lists already
+there. It says the whole list: leave `via` or `filter` out and that part goes.
+A list a parent card defines is changed on that card. **A setup never removes
+a list** — hide it, and the person removes it in keepr (the card's Display tab,
+Related lists). keepr says, in the preview, when a name is taken, a lookup does
+not point here, or a card would hold more lists than it allows.
 
 ## Rules (automations)
 
