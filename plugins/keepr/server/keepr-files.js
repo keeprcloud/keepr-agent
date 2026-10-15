@@ -1248,7 +1248,7 @@ async function within(promise, ms) {
 
 // dist/src/contract.snapshot.json
 var contract_snapshot_default = {
-  version: "630f9f072198",
+  version: "1590c8c662ad",
   title: "keepr write contract",
   summary: "What keepr accepts from a machine client: the element types, the batch envelope, and every error code a row can come back with. Generated from the running server, so it describes THIS deployment.",
   loop: [
@@ -1809,7 +1809,7 @@ var contract_snapshot_default = {
     {
       name: "repeating-group",
       send: `the WHOLE list of entries, in order: [{ "elements": { "<column>": <the column's value> } }, \u2026] \u2014 an entry read with its "id" and sent back with it keeps that id, and its columns you leave out keep their values; an entry without an "id" is added (keepr issues its id \u2014 never invent one); an entry you leave out is removed; [] or "" removes every entry. A group with section headings also takes { "section": "<title>" }. ONE entry changes without sending the others through its own door (endpoints itemEntryAdd, itemEntryUpdate, itemEntryRemove, itemEntryMove) or a bulk row's "entries": [{ "op": "add"|"update"|"remove"|"move", "group", "entryId", "elements"|"section", "position" }]`,
-      note: 'each column takes what an element of its type takes (the collection schema gives columns, minEntries, maxEntries and sections); every refusal names the entry (position, from 1, and entryId) and the column. Read an item first and send its list back changed: re-sending a list unchanged changes nothing, and an entry without an id that matches a stored one exactly is that entry (a re-run of an import keeps every id). A file column and a {"$ref"} in a lookup column are not in this version (column_type_not_allowed, invalid_lookup). A filter reads a group three ways: <group> has (<conditions on its columns>) \u2014 ONE entry answers every condition inside; two blocks may be answered by different entries \u2014 <group> is empty / is not empty, and <group>.count >= 2 (headings are not entries); any other operator on a group is unsupported_operator'
+      note: 'each column takes what an element of its type takes (the collection schema gives columns, minEntries, maxEntries and sections); every refusal names the entry (position, from 1, and entryId) and the column. A calculated column (the schema marks it driven) is never sent: keepr works it out for every entry, as it works out an element that totals the group. Read an item first and send its list back changed: re-sending a list unchanged changes nothing, and an entry without an id that matches a stored one exactly is that entry (a re-run of an import keeps every id). A file column and a {"$ref"} in a lookup column are not in this version (column_type_not_allowed, invalid_lookup). A filter reads a group three ways: <group> has (<conditions on its columns>) \u2014 ONE entry answers every condition inside; two blocks may be answered by different entries \u2014 <group> is empty / is not empty, and <group>.count >= 2 (headings are not entries); any other operator on a group is unsupported_operator'
     }
   ],
   emptyValue: 'null or "" means empty. Omitting the key means empty too, except on a CREATE, where an element the row omits starts at its default (defaultValue, defaultToToday or defaultToNow in the schema; a default that no longer fits the element is left out and the element starts empty). On upsert, an omitted key KEEPS its stored value while "" overwrites it; a default never applies to an update.',
@@ -2008,6 +2008,10 @@ var contract_snapshot_default = {
       {
         code: "forbidden_item",
         means: "an upsert matched an item the caller may not modify"
+      },
+      {
+        code: "formula_too_costly",
+        means: "the row's calculations over a repeating group \u2014 its calculated columns and the totals that read the group \u2014 would need more work than one save allows, so nothing is written for the row; element (and column) name the costliest when the caller can read it. Send fewer entries per item, or ask the card's manager to simplify the formula"
       },
       {
         code: "internal",
@@ -2805,7 +2809,7 @@ This is a bug in keepr-mcp, not something the user did.`)) : guard(def, ctx, arg
 
 // dist/src/server.js
 var SERVER_NAME = "keepr";
-var SERVER_VERSION = "0.18.0";
+var SERVER_VERSION = "0.19.0";
 var WEBSITE_URL = "https://keepr.cloud";
 var KQL_REFERENCE_URL = `${WEBSITE_URL}/docs/guides/finding-and-lists/kql-reference`;
 function brandIcons(publicUrl = process.env.KEEPR_PUBLIC_URL || "https://api.keepr.cloud") {

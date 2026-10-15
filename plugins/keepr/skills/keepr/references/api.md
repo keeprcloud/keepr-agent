@@ -190,12 +190,14 @@ curl -s -H "Authorization: Bearer $KEEPR_API_KEY" \
 
 | param | meaning |
 | --- | --- |
-| `q` | required, at least 2 characters after trimming. A case-insensitive **substring**, not a query |
+| `q` | required, at least 2 characters after trimming. Items match the way a list's search box does: the **words** are all required (in any field, or the notes), each a substring, case and accents aside, a `"quoted phrase"` in order, no stemming; collections and cards match the whole text as one substring. For items, at most 200 characters and 8 words; otherwise `items` comes back empty with `itemsRefused: {code, message}` (a 400 when `types=items`) |
 | `types` | comma-separated subset of `collections,cards,items`; default all three |
 | `limit` | per bucket, default 20, max 50. No pagination — search is a jump-off, not a listing |
 
 Each bucket uses exactly the read scope of its own list endpoint. Items are
-matched on `notes` and text-bearing element values; the response has
+matched on `notes`, the tags you can read and the element values a list's
+search box reads (text, links, rich text, a phone by its digits, a choice by
+its label, a location's address, a number sequence as spelled); the response has
 every bucket, empty when not searched:
 
 ```jsonc

@@ -3,6 +3,12 @@
 Each release lists the two versions it carries: the skill's (which is also the
 plugin's) and the server's.
 
+## 2.19.0 — 2026-10-14
+
+Skill 2.19.0, keepr-mcp 0.19.0.
+
+- Your assistant knows what keepr works out in a repeating group. On a card whose group has a calculated column, such as a line total of quantity times price, or an element that totals the group, such as an invoice's subtotal, keepr works the values out itself when the item is saved, so the assistant never sends them: keepr_schema marks those columns as worked out by keepr. When a save's calculations would need more work than one save allows, keepr refuses the row, says which calculation, and writes nothing. No new tools or inputs.
+
 ## 2.18.0 — 2026-10-14
 
 Skill 2.18.0, keepr-mcp 0.18.0.
