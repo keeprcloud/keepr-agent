@@ -196,6 +196,13 @@ and none that keepr works out. The ingest rules still hold:
   errors: each names the group, the entry's place in the list and the column.
 - A refusal about an entry names the group, the entry's place in the list
   and the column: say which, and fix that entry rather than resending the rest.
+- **A value keepr could not work out is a warning, not a failure.** When a
+  calculated column or total divides by zero in one entry, or works out a text
+  that is not one of its choices, keepr stores that value blank and writes the
+  rest. The row (and `keepr_update_item`, for a whole-list save or an entry
+  operation) then lists it as `line, entry 3, total: division by zero`. Tell the
+  person which entry and column came out blank, and fix its inputs; don't send
+  a value for a calculated column. A dry run writes nothing, so it cannot say.
 - To change one entry of an item already in keepr, don't resend the list: see
   below.
 

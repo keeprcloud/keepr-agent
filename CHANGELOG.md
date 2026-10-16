@@ -3,6 +3,30 @@
 Each release lists the two versions it carries: the skill's (which is also the
 plugin's) and the server's.
 
+## 2.25.0 — 2026-10-16
+
+Skill 2.25.0, keepr-mcp 0.24.0. Also the first release of 2.24.0, 2.23.0 and 2.22.1, below.
+
+- Your assistant can set the order a related list shows its items in. keepr_schema says each list's order, such as a procedure's steps by step number, and a setup's collection.relatedLists takes sort: { element, direction }, the element by name or #id, previewed with the rest of the list. Leave it out for the default order. No new tools.
+
+## 2.24.0 — 2026-10-16
+
+Skill 2.24.0, keepr-mcp 0.23.0.
+
+- Your assistant hears when a calculation could not work out a value. When a save leaves a repeating group's calculated column blank in one entry, because it divides by zero or works out a text that is not one of its choices, keepr_update_item (a whole-list save and each entry operation) and keepr_ingest now list it by group, entry and column, such as line, entry 3, total: division by zero, so the assistant can tell the person which line to fix. A save with nothing to report prints nothing new. No new tools or inputs.
+
+## 2.23.0 — 2026-10-16
+
+Skill 2.23.0, keepr-mcp 0.22.0.
+
+- Your assistant knows how large one item may grow. keepr refuses a change that would leave an item holding more than 8 MB, such as one more long entry on a list that is already very long, and writes nothing; it says how large the item would be and which element holds the most, so the assistant can suggest moving entries to another item or shortening text. An item already that large can still be made smaller. keepr_schema's contract gives the limit. No new tools or inputs.
+
+## 2.22.1 — 2026-10-15
+
+Skill 2.22.1, keepr-mcp 0.21.1.
+
+- An import can link a repeating group's entries to other rows of the same import. In keepr_ingest, a lookup column inside an entry takes {"$ref": "<external id>"} as a lookup element does, so an invoice's lines can name products written earlier in the same import, and a re-run keeps every entry. A reference that names nothing fails that row and says which entry and column. No new tools or inputs.
+
 ## 2.22.0 — 2026-10-15
 
 Skill 2.22.0, keepr-mcp 0.21.0.

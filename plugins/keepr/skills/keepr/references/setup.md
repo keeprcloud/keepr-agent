@@ -178,7 +178,10 @@ defines.
   { "cardRef": { "key": "epic" }, "name": "Open work items",
     "sourceCardRef": { "key": "work-item" }, "via": "epic", "filter": "status != done" },
   { "cardRef": { "key": "epic" }, "name": "All work items",
-    "sourceCardRef": { "key": "work-item" }, "via": "epic" }
+    "sourceCardRef": { "key": "work-item" }, "via": "epic" },
+  { "cardRef": { "key": "procedure" }, "name": "Steps",
+    "sourceCardRef": { "key": "step" }, "via": "procedure",
+    "sort": { "element": "step_number", "direction": "asc" } }
 ]
 ```
 
@@ -192,10 +195,15 @@ defines.
   it out for any lookup there that points at this card.
 - `filter` — written as a person types it, over the listed card's elements;
   keepr stores it by id. `hidden: true` keeps the list without showing it.
+- `sort` — the order the list shows its items in: an element of the listed
+  card, by name or `#id`, and `direction` `asc` (the default) or `desc`. Leave
+  it out for the default order, newest first. Rich text, a file or a repeating
+  group has no order, and keepr refuses it. Items that tie keep the default
+  order among themselves.
 
 An entry matches one of that card's own lists by its `id` (from the schema) or
 its name, and **changes** it; otherwise it is added after the lists already
-there. It says the whole list: leave `via` or `filter` out and that part goes.
+there. It says the whole list: leave `via`, `filter` or `sort` out and that part goes.
 A list a parent card defines is changed on that card. **A setup never removes
 a list** — hide it, and the person removes it in keepr (the card's Display tab,
 Related lists). keepr says, in the preview, when a name is taken, a lookup does

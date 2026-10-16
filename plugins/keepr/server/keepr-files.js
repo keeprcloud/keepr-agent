@@ -1248,7 +1248,7 @@ async function within(promise, ms) {
 
 // dist/src/contract.snapshot.json
 var contract_snapshot_default = {
-  version: "ee59116d4283",
+  version: "4c8d934b5654",
   title: "keepr write contract",
   summary: "What keepr accepts from a machine client: the element types, the batch envelope, and every error code a row can come back with. Generated from the running server, so it describes THIS deployment.",
   loop: [
@@ -1659,7 +1659,7 @@ var contract_snapshot_default = {
     tags: "OPTIONAL on a row: the item's hand-applied tags, the whole list, as tag names, aliases, paths (Parent/Child) or 24-hex ids. Names resolve among the tags of this collection and the collection above it \u2014 GET /api/collections/{id}/schema lists them under tags. An item tag (a card's items used as tags) goes by its id only: GET /api/tags/search finds it by its item's title. keepr never creates a tag on a write: a name that is no tag here is unknown_tag, one that could be two is ambiguous_tag (with candidates), a private tag is private_tag_not_allowed. On an upsert the list replaces the stored one, except that a restricted tag is kept when the list leaves it out; [] takes off every tag you may take off. A RESTRICTED tag (restricted: true in the schema) decides who can see what: only a person signed in to keepr puts one on or takes one off, so a row that adds or removes one is session_required \u2014 ask the person to do it in keepr. A new item may also come back carrying a restricted tag the collection puts on new items of its card. Absent or null changes nothing. At most 50. Send tags or tagIds, not both.",
     tagIds: "OPTIONAL on a row, instead of tags: the same whole list as 24-hex tag ids only.",
     tagAutoIds: "NEVER sent: tags a rule applies are written by the rule; a row carrying the key is refused.",
-    warnings: 'A row that succeeded may carry warnings[]: { code: "tag_dropped", tagIds } names tags it sent that were deleted since \u2014 left off, the rest written.',
+    warnings: `A row that succeeded may carry warnings[]: { code: "tag_dropped", tagIds } names tags it sent that were deleted since \u2014 left off, the rest written; { code: "formula_warning", element, column?, position?, entryId?, message } names a value a calculation of a repeating group could not work out (a division by zero, a result outside a choice column's choices) \u2014 stored blank, the rest written \u2014 only about a value the key may read.`,
     blueprints: "A card blueprint (blueprintPreview / blueprintApply) may bring NEW collection tags in collection.tags ({ localId, name, color?, icon?, description?, aliases?, parentRef?: { ref }, rule? }), each optionally applied by a rule ({ cardRef, where?, match?, strict?, related? }; its filters name tags by name). A key needs write beside cards for it. Every rule arrives PAUSED: it tags nothing until it is resumed (leave that to the person, in keepr), and the apply answers what each would tag (rules[].preview). A blueprint tag is never restricted."
   },
   setups: {
@@ -1669,7 +1669,7 @@ var contract_snapshot_default = {
     judged: "The preview runs layout bodies through the apply's validators when the card and everything its elements come from exist, and filter queries when the setup creates no cards, element sets or tags.",
     rules: "collection.automations: rules of kind rule | threshold | expected-item | generate-items, as POST \u2026/automations takes them (no enabled), naming cards by { ref } (one the setup makes), { key }, { globalKey } or id. collection.notifications: collection-tier notification definitions, matched by key. An entry matches an existing rule by id or exact name (a notification by id or key) and changes it; managed rules (driven fields, automatic tags) are rule_managed. The preview carries each rule's rule preview and state on | paused. A rule that notifies, changes other records, creates records or runs on a clock, and every notification, arrives PAUSED with awaitingPerson: true, whoever applies; a change to what a running one does pauses it (willPause). Only a person turns one on (403 person_must_enable to a key). A key needs write.",
     charts: "collection.charts and collection.dashboards entries take an optional id; one that matches a chart or dashboard for everyone (by id, else exact name) CHANGES it in place (its pin stays) rather than being chart_name_taken / dashboard_name_taken. A dashboard tile names a chart by chartRef (the setup's) or chartId (one for everyone in the collection). Steps carry change, id, before and after; a failed apply puts each back.",
-    relatedLists: "collection.relatedLists: [{ id?, cardRef, name, sourceCardRef, via?, filter?, hidden? }] \u2014 the named lists of linked items an item view shows. cardRef is a card the setup makes or one this collection owns; sourceCardRef the card whose items it lists (this collection's, a sub-collection's, or the card itself); via the lookup on it, by name or #id (absent: any lookup that points here); filter KQL as typed. An entry matches one of that card's own lists by id, else name, and changes it (it says the whole list); a setup never removes a list (hidden: true keeps it out of view). Steps of kind relatedList carry change, before and after; a key needs cards only."
+    relatedLists: "collection.relatedLists: [{ id?, cardRef, name, sourceCardRef, via?, filter?, hidden?, sort? }] \u2014 the named lists of linked items an item view shows. cardRef is a card the setup makes or one this collection owns; sourceCardRef the card whose items it lists (this collection's, a sub-collection's, or the card itself); via the lookup on it, by name or #id (absent: any lookup that points here); filter KQL as typed; sort { element, direction: asc | desc } the order it shows its items in, the element on the source card by name or #id (absent: the default order). An entry matches one of that card's own lists by id, else name, and changes it (it says the whole list); a setup never removes a list (hidden: true keeps it out of view). Steps of kind relatedList carry change, before and after; a key needs cards only."
   },
   writeContract: {
     maxBatch: 200,
@@ -1689,7 +1689,8 @@ var contract_snapshot_default = {
       defaultMaxEntries: 100,
       maxEntriesCeiling: 500,
       maxColumns: 200
-    }
+    },
+    itemBytes: 8388608
   },
   elementTypes: [
     {
@@ -1810,7 +1811,7 @@ var contract_snapshot_default = {
     {
       name: "repeating-group",
       send: `the WHOLE list of entries, in order: [{ "elements": { "<column>": <the column's value> } }, \u2026] \u2014 an entry read with its "id" and sent back with it keeps that id, and its columns you leave out keep their values; an entry without an "id" is added (keepr issues its id \u2014 never invent one); an entry you leave out is removed; [] or "" removes every entry. A group with section headings also takes { "section": "<title>" }. ONE entry changes without sending the others through its own door (endpoints itemEntryAdd, itemEntryUpdate, itemEntryRemove, itemEntryMove) or a bulk row's "entries": [{ "op": "add"|"update"|"remove"|"move", "group", "entryId", "elements"|"section", "position" }]`,
-      note: 'each column takes what an element of its type takes (the collection schema gives columns, minEntries, maxEntries and sections); every refusal names the entry (position, from 1, and entryId) and the column. A calculated column (the schema marks it driven) is never sent: keepr works it out for every entry, as it works out an element that totals the group. Read an item first and send its list back changed: re-sending a list unchanged changes nothing, and an entry without an id that matches a stored one exactly is that entry (a re-run of an import keeps every id). A file column and a {"$ref"} in a lookup column are not in this version (column_type_not_allowed, invalid_lookup). A filter reads a group three ways: <group> has (<conditions on its columns>) \u2014 ONE entry answers every condition inside; two blocks may be answered by different entries \u2014 <group> is empty / is not empty, and <group>.count >= 2 (headings are not entries); any other operator on a group is unsupported_operator'
+      note: 'each column takes what an element of its type takes (the collection schema gives columns, minEntries, maxEntries and sections); every refusal names the entry (position, from 1, and entryId) and the column. A calculated column (the schema marks it driven) is never sent: keepr works it out for every entry, as it works out an element that totals the group. Read an item first and send its list back changed: re-sending a list unchanged changes nothing, and an entry without an id that matches a stored one exactly is that entry (a re-run of an import keeps every id). A file column is not in this version (column_type_not_allowed). A lookup column takes an item id or, in batch ingest only, a {"$ref"}, resolved as a top-level one is (ref_unresolved, ref_wrong_card name the entry and column). A filter reads a group three ways: <group> has (<conditions on its columns>) \u2014 ONE entry answers every condition inside; two blocks may be answered by different entries \u2014 <group> is empty / is not empty, and <group>.count >= 2 (headings are not entries); any other operator on a group is unsupported_operator'
     }
   ],
   emptyValue: 'null or "" means empty. Omitting the key means empty too, except on a CREATE, where an element the row omits starts at its default (defaultValue, defaultToToday or defaultToNow in the schema; a default that no longer fits the element is left out and the element starts empty). On upsert, an omitted key KEEPS its stored value while "" overwrites it; a default never applies to an update.',
@@ -2025,6 +2026,10 @@ var contract_snapshot_default = {
       {
         code: "item_locked",
         means: "the record's card has locked it (record.lock in the schema): an upsert row that would change it \u2014 an element value, its visibility, its tags \u2014 or an attachment added to or removed from it, is refused and nothing is written (as PUT refuses); a row that changes nothing is skipped, never refused. A manager's unlock reopens it, and the write that lands closes it again. A dry run refuses what its commit will: a row repeating a record an earlier row of the request creates, or one whose unlock an earlier row spends, is judged against that record as the commit will meet it"
+      },
+      {
+        code: "item_too_large",
+        means: "the row would leave the item holding more than limits.itemBytes (8 MB) of element values, so nothing is written for the row; limit, size and element (the largest element the caller can change) say how far. An item already past it may always be saved smaller or unchanged. Send fewer entries or shorter text per item"
       },
       {
         code: "lookup_filtered_out",
@@ -2814,7 +2819,7 @@ This is a bug in keepr-mcp, not something the user did.`)) : guard(def, ctx, arg
 
 // dist/src/server.js
 var SERVER_NAME = "keepr";
-var SERVER_VERSION = "0.21.0";
+var SERVER_VERSION = "0.24.0";
 var WEBSITE_URL = "https://keepr.cloud";
 var KQL_REFERENCE_URL = `${WEBSITE_URL}/docs/guides/finding-and-lists/kql-reference`;
 function brandIcons(publicUrl = process.env.KEEPR_PUBLIC_URL || "https://api.keepr.cloud") {
