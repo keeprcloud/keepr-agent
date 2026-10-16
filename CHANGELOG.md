@@ -3,6 +3,12 @@
 Each release lists the two versions it carries: the skill's (which is also the
 plugin's) and the server's.
 
+## 2.25.1 — 2026-10-16
+
+Skill 2.25.1, keepr-mcp 0.24.1.
+
+- Your assistant hears keepr's "this took too long" answer at once. When a search or filter runs past keepr's time limit, such as a filter on a repeating group's entries with nothing narrowing the list first, keepr says what to change, and keepr_get_items, keepr_update_item and keepr.py now pass that on straight away instead of running the same slow search two more times first. Any other 503 is still tried again. No new tools or inputs.
+
 ## 2.25.0 — 2026-10-16
 
 Skill 2.25.0, keepr-mcp 0.24.0. Also the first release of 2.24.0, 2.23.0 and 2.22.1, below.

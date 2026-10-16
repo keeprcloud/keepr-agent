@@ -205,6 +205,7 @@ import { request as httpsRequest } from "node:https";
 import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
 var RETRY_STATUSES = /* @__PURE__ */ new Set([429, 502, 503, 504]);
+var FINAL_503_CODE = "query_timeout";
 var RETRIES = 3;
 var TIMEOUT_MS = 12e4;
 var PACE_BELOW_REMAINING = 5;
@@ -315,14 +316,25 @@ var KeeprHttp = class {
       const rate = readRateLimit(res.headers);
       if (rate)
         this.lastRateLimit = rate;
+      let text = null;
       if (RETRY_STATUSES.has(res.status) && attempt < attempts - 1) {
-        const wait = this.backoffFor(res, attempt);
-        if (opts.maxWaitMs === void 0 || wait <= opts.maxWaitMs) {
-          await this.sleepImpl(wait);
-          continue;
+        if (res.status === 503) {
+          try {
+            text = await res.text();
+          } catch {
+            text = null;
+          }
+        }
+        if (text === null || !isFinal503(text)) {
+          const wait = this.backoffFor(res, attempt);
+          if (opts.maxWaitMs === void 0 || wait <= opts.maxWaitMs) {
+            await this.sleepImpl(wait);
+            continue;
+          }
         }
       }
-      const text = await res.text();
+      if (text === null)
+        text = await res.text();
       let parsed = null;
       let nonJson = false;
       if (text.length) {
@@ -436,6 +448,19 @@ var KeeprHttp = class {
     this.lastRateLimit = null;
   }
 };
+function isFinal503(text) {
+  let body;
+  try {
+    body = JSON.parse(text);
+  } catch {
+    return false;
+  }
+  if (!body || typeof body !== "object")
+    return false;
+  const b = body;
+  const nested = b.payload && typeof b.payload === "object" ? b.payload.code : void 0;
+  return b.code === FINAL_503_CODE || nested === FINAL_503_CODE;
+}
 function fileChanged(err) {
   let e = err;
   for (let depth = 0; e && depth < 4; depth++) {
@@ -2819,7 +2844,7 @@ This is a bug in keepr-mcp, not something the user did.`)) : guard(def, ctx, arg
 
 // dist/src/server.js
 var SERVER_NAME = "keepr";
-var SERVER_VERSION = "0.24.0";
+var SERVER_VERSION = "0.24.1";
 var WEBSITE_URL = "https://keepr.cloud";
 var KQL_REFERENCE_URL = `${WEBSITE_URL}/docs/guides/finding-and-lists/kql-reference`;
 function brandIcons(publicUrl = process.env.KEEPR_PUBLIC_URL || "https://api.keepr.cloud") {

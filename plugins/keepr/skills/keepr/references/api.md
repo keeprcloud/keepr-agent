@@ -588,3 +588,4 @@ row fails".
 | 404 | the collection isn't visible to this key — wrong id, or outside its allowlist |
 | 413 | over the per-call size limit (`limits` in the contract); send fewer rows |
 | 429 | rate limited; honour `Retry-After` — except a 429 carrying `resetsAt` (a daily budget spent), which is an answer until then and is never retried |
+| 503 | with `code: query_timeout`, a read stopped at the list's time limit; the message says what to narrow. It is an answer: the same request stops again, so change the filter rather than retry. Any other 503 is back-pressure and worth one more try |
