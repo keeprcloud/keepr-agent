@@ -137,8 +137,12 @@ the items or the group's **entries**, and the two answer different questions:
   `entries`, each item counts once in each value its entries hold.
 
 The answer says which it counted ("keepr counted 128 Line entries in 40
-items"). A column is never the chart's date, and has no latest value. A
-column someone is not allowed to see is left out of the chart for them.
+items"). Counting entries, a date column of the group can be the chart's
+date: `"time": { "on": "dose.due", "range": { "preset": "last12m" } }`
+counts the doses due in the last 12 months, each placed by its own due date
+("doses due by month"), and the latest value of a column is the newest
+entry's. Counting items, a column is never the chart's date. A column
+someone is not allowed to see is left out of the chart for them.
 
 ## A worked example
 

@@ -3,6 +3,12 @@
 Each release lists the two versions it carries: the skill's (which is also the
 plugin's) and the server's.
 
+## 2.27.0 — 2026-10-16
+
+Skill 2.27.0, keepr-mcp 0.26.0.
+
+- Your assistant can chart a repeating group's entries by a date of their own. When keepr_chart counts entries, the chart's date can be a date column of that group, such as each dose's due date, so "doses due in the last 12 months, by month" places every dose by its own date, compares it with the year before, and finds the latest dose. A card beneath that keeps the group under another name has its entries counted too. No new tools or inputs.
+
 ## 2.26.0 — 2026-10-16
 
 Skill 2.26.0, keepr-mcp 0.25.0.
