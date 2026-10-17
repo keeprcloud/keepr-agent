@@ -3,6 +3,12 @@
 Each release lists the two versions it carries: the skill's (which is also the
 plugin's) and the server's.
 
+## 2.29.0 — 2026-10-17
+
+Skill 2.29.0, keepr-mcp 0.28.0.
+
+- A chart over a repeating group's entries counts only the entries its filter's block matches. With line has (product = widget) in the filter, keepr_chart counts, totals and averages the Widget lines alone, not every line of an invoice that holds one; a block on that group under or or not is refused with a sentence saying how to fix it. No new tools or inputs.
+
 ## 2.28.0 — 2026-10-16
 
 Skill 2.28.0, keepr-mcp 0.27.0.

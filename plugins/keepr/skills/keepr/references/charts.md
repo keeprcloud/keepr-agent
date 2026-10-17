@@ -136,6 +136,15 @@ the items or the group's **entries**, and the two answer different questions:
   (`kql.md`). Grouped by a column (`"on": "ingredient.name"`) without
   `entries`, each item counts once in each value its entries hold.
 
+Counting entries, the filter's block on the counted group picks the
+**entries** as well as the items: `"entries": "line"` with `"filter": "line
+has (product = widget)"` counts, totals and averages only the Widget lines,
+not every line of an invoice that holds one. Two blocks joined by `and` are
+asked of one entry together. Such a block must be at the top of the filter
+or joined by `and`; under `or` or `not` keepr refuses it
+(`entries_block_not_required`) — move it to the top, or group or split by a
+column instead. A block on another group only picks items.
+
 The answer says which it counted ("keepr counted 128 Line entries in 40
 items"). Counting entries, a date column of the group can be the chart's
 date: `"time": { "on": "dose.due", "range": { "preset": "last12m" } }`
