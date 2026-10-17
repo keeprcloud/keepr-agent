@@ -141,8 +141,12 @@ items"). Counting entries, a date column of the group can be the chart's
 date: `"time": { "on": "dose.due", "range": { "preset": "last12m" } }`
 counts the doses due in the last 12 months, each placed by its own due date
 ("doses due by month"), and the latest value of a column is the newest
-entry's. Counting items, a column is never the chart's date. A column
-someone is not allowed to see is left out of the chart for them.
+entry's. Counting items, a column is never the chart's date. A date column
+holding one date also takes the parts that repeat — `"groupBy": { "on":
+"dose.given", "bucket": "weekday" }` counts the doses given on each day of the
+week (a date and time column adds `hourOfDay`), and each row opens the items
+holding such a dose. A column someone is not allowed to see is left out of the chart for
+them.
 
 ## A worked example
 

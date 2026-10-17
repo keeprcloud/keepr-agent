@@ -3,6 +3,12 @@
 Each release lists the two versions it carries: the skill's (which is also the
 plugin's) and the server's.
 
+## 2.28.0 — 2026-10-16
+
+Skill 2.28.0, keepr-mcp 0.27.0.
+
+- Your assistant can ask about the day, hour or month of a date inside a repeating group. A filter reads a date column's .weekday, .hour and .month inside has (…), such as dose has (given.weekday = mon and vaccine = flu) for a flu dose given on a Monday, and keepr_chart can group a group's entries by a date column's day of the week, hour of the day or month of the year, each row opening its items. No new tools or inputs.
+
 ## 2.27.0 — 2026-10-16
 
 Skill 2.27.0, keepr-mcp 0.26.0.

@@ -280,6 +280,7 @@ it, and nothing else:
 | No entry answers (items with no entries too) | `not ingredient has (name = nuts)` |
 | No entries / some | `ingredient is empty` / `ingredient is not empty` |
 | How many entries | `ingredient.count >= 5` |
+| One entry's date falls on a day, hour or month | `dose has (given.weekday = mon and vaccine = flu)` |
 
 - **The difference that matters** is the parentheses: inside one `has (…)`
   every condition must hold on the **same** entry; two blocks may be answered by
@@ -287,9 +288,13 @@ it, and nothing else:
   use butter and salt" the second.
 - Inside the parentheses it is ordinary KQL (`and`, `or`, `not`, any operator
   the column's type takes), one condition per column, named as in the schema
-  or by its `#id`. A dotted path, a date part, a `{{reference}}` and a second
-  `has` inside a block are refused, and so is any other operator on the group
-  itself (`ingredient = butter`).
+  or by its `#id`. A date or date and time column holding one date takes its
+  `.weekday`, `.hour` (a date and time only) and `.month`, as a date element
+  does at the top, read in the collection's time zone: `dose has (given.hour
+  >= 9 and given.hour < 17)` is a dose given in working hours (a column
+  holding several dates in an entry is refused there). Any other dotted path, a
+  `{{reference}}` and a second `has` inside a block are refused, and so is any
+  other operator on the group itself (`ingredient = butter`).
 - `.count` takes a number with `=`, `!=`, `>`, `>=`, `<`, `<=`, `in` and
   `not in`. A section heading is never an entry and never counted.
 - A block counts as one condition plus each condition inside it, toward the
