@@ -117,7 +117,9 @@ To put a file INTO one of the
 card's file elements (a photo field, say), pass `keepr_attach_file` (or
 `keepr_attach_local_file`) the element's name as `element`; its description
 says what that replaces. Without
-`element` the file is one of the item's other attachments.
+`element` the file is one of the item's other attachments. A repeating group's
+file column (a photo for each step, say) takes the group as `element`, plus the
+entry's id as `entry_id` and the column's name as `column`.
 
 **When you cannot send the files yourself, ask the person for them.** Files on
 their phone or computer that you cannot read, photos they mention but have not
@@ -207,7 +209,7 @@ Two rules hold in every chapter:
 
 ## This copy
 
-This is keepr skill **2.25.1**. Every fact that changes comes from keepr, so a
+This is keepr skill **2.26.0**. Every fact that changes comes from keepr, so a
 copy a release behind is still right about the way of working.
 
 ## Files

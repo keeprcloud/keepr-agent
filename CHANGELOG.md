@@ -3,6 +3,12 @@
 Each release lists the two versions it carries: the skill's (which is also the
 plugin's) and the server's.
 
+## 2.26.0 — 2026-10-16
+
+Skill 2.26.0, keepr-mcp 0.25.0.
+
+- Your assistant can put a file into a repeating group's file column, such as a photo for each step of a procedure. keepr_attach_file and keepr_request_upload take the group as element, plus the entry's id as entry_id and the column as column; each is checked first and refused with a sentence naming what is wrong. An entry you remove takes its files with it. A file element works as before.
+
 ## 2.25.1 — 2026-10-16
 
 Skill 2.25.1, keepr-mcp 0.24.1.

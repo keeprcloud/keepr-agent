@@ -286,6 +286,10 @@ that field — the vehicle's photo, the signed form — is put there with
 `keepr_attach_file` and its `element` argument, which uploads the file and
 then binds it to the element. Its description says what a single file element
 does with the file already there. An import row never sets a file element.
+A repeating group's **file column** takes files the same way, one entry at a
+time: `element` is the group, `entry_id` the entry (read the item for its
+entries' ids) and `column` the file column. An entry you remove takes its
+files with it — so it is refused while the collection's attachments are off.
 
 **A folder of files, matched to the records you just created** — the common
 case: a directory of subjects and their photos. `keepr_attach_folder` does it,

@@ -1273,7 +1273,7 @@ async function within(promise, ms) {
 
 // dist/src/contract.snapshot.json
 var contract_snapshot_default = {
-  version: "4c8d934b5654",
+  version: "72e7452fc13d",
   title: "keepr write contract",
   summary: "What keepr accepts from a machine client: the element types, the batch envelope, and every error code a row can come back with. Generated from the running server, so it describes THIS deployment.",
   loop: [
@@ -1825,8 +1825,8 @@ var contract_snapshot_default = {
     },
     {
       name: "file",
-      send: "nothing: an attachment of this item, set with keepr_attach_file (element) or the item form",
-      note: "stored as a 24-hex attachment id, or an array of up to 20 with allowMultiple; an import row, a bulk edit or an automation may only re-send the stored value unchanged (anything else, a blank included, is file_not_settable)"
+      send: "nothing: an attachment of this item, set with keepr_attach_file (element \u2014 and for a repeating group's file column, element + entry_id + column) or the item form",
+      note: "stored as a 24-hex attachment id, or an array of up to 20 with allowMultiple; an import row, a bulk edit or an automation may only re-send the stored value unchanged (anything else, a blank included, is file_not_settable). A repeating group may hold a file column: each entry's value is the same shape, and its files go with the entry when it is removed"
     },
     {
       name: "confirmations",
@@ -1836,7 +1836,7 @@ var contract_snapshot_default = {
     {
       name: "repeating-group",
       send: `the WHOLE list of entries, in order: [{ "elements": { "<column>": <the column's value> } }, \u2026] \u2014 an entry read with its "id" and sent back with it keeps that id, and its columns you leave out keep their values; an entry without an "id" is added (keepr issues its id \u2014 never invent one); an entry you leave out is removed; [] or "" removes every entry. A group with section headings also takes { "section": "<title>" }. ONE entry changes without sending the others through its own door (endpoints itemEntryAdd, itemEntryUpdate, itemEntryRemove, itemEntryMove) or a bulk row's "entries": [{ "op": "add"|"update"|"remove"|"move", "group", "entryId", "elements"|"section", "position" }]`,
-      note: 'each column takes what an element of its type takes (the collection schema gives columns, minEntries, maxEntries and sections); every refusal names the entry (position, from 1, and entryId) and the column. A calculated column (the schema marks it driven) is never sent: keepr works it out for every entry, as it works out an element that totals the group. Read an item first and send its list back changed: re-sending a list unchanged changes nothing, and an entry without an id that matches a stored one exactly is that entry (a re-run of an import keeps every id). A file column is not in this version (column_type_not_allowed). A lookup column takes an item id or, in batch ingest only, a {"$ref"}, resolved as a top-level one is (ref_unresolved, ref_wrong_card name the entry and column). A filter reads a group three ways: <group> has (<conditions on its columns>) \u2014 ONE entry answers every condition inside; two blocks may be answered by different entries \u2014 <group> is empty / is not empty, and <group>.count >= 2 (headings are not entries); any other operator on a group is unsupported_operator'
+      note: `each column takes what an element of its type takes (the collection schema gives columns, minEntries, maxEntries and sections); every refusal names the entry (position, from 1, and entryId) and the column. A calculated column (the schema marks it driven) is never sent: keepr works it out for every entry, as it works out an element that totals the group. Read an item first and send its list back changed: re-sending a list unchanged changes nothing, and an entry without an id that matches a stored one exactly is that entry (a re-run of an import keeps every id). A file column holds the item's attachment ids like a file element (set by a person or keepr_attach_file with element + entry_id + column; an import row or bulk edit may only re-send what the entry holds, file_not_settable otherwise) \u2014 an entry removed lets its files go after the write (a key needs delete for it; never while the collection's attachments are off), a moved entry keeps them, and an entry without an id is matched to a stored one without its file columns, so a re-run keeps the photos people attached. A lookup column takes an item id or, in batch ingest only, a {"$ref"}, resolved as a top-level one is (ref_unresolved, ref_wrong_card name the entry and column). A filter reads a group three ways: <group> has (<conditions on its columns>) \u2014 ONE entry answers every condition inside; two blocks may be answered by different entries \u2014 <group> is empty / is not empty, and <group>.count >= 2 (headings are not entries); any other operator on a group is unsupported_operator`
     }
   ],
   emptyValue: 'null or "" means empty. Omitting the key means empty too, except on a CREATE, where an element the row omits starts at its default (defaultValue, defaultToToday or defaultToNow in the schema; a default that no longer fits the element is left out and the element starts empty). On upsert, an omitted key KEEPS its stored value while "" overwrites it; a default never applies to an update.',
@@ -1844,11 +1844,11 @@ var contract_snapshot_default = {
     shape: [
       {
         code: "attachment_in_use",
-        means: "409 on DELETE /api/items/{id}/attachments/{aid}: the attachment is the value of a file element (element names it) \u2014 clear or replace the value with an item write instead; never met by a row"
+        means: "409 on DELETE /api/items/{id}/attachments/{aid}: the attachment is the value of a file element (element names it), or of a file column of one entry of a repeating group (element names the group, with column and entryId) \u2014 clear or replace the value with an item write instead (an entry: its own door, or remove the entry); never met by a row"
       },
       {
         code: "attachments_disabled",
-        means: "a new or changed file value while the collection's attachments are switched off (the stored value, unchanged, still saves)"
+        means: "a new or changed file value while the collection's attachments are switched off (the stored value, unchanged, still saves) \u2014 or a row that removes a repeating group's entry holding a file then (its files would go with it)"
       },
       {
         code: "confirmations_not_settable",
@@ -2039,6 +2039,10 @@ var contract_snapshot_default = {
       {
         code: "formula_too_costly",
         means: "the row's calculations over a repeating group \u2014 its calculated columns and the totals that read the group \u2014 would need more work than one save allows, so nothing is written for the row; element (and column) name the costliest when the caller can read it. Send fewer entries per item, or ask the card's manager to simplify the formula"
+      },
+      {
+        code: "insufficient_scope",
+        means: "the row removes a repeating group's entry whose file column holds files, and letting files go needs a key or connection with delete (`requiredScope`); nothing was written for it \u2014 send the entry again, or use a credential that has delete"
       },
       {
         code: "internal",
@@ -2844,7 +2848,7 @@ This is a bug in keepr-mcp, not something the user did.`)) : guard(def, ctx, arg
 
 // dist/src/server.js
 var SERVER_NAME = "keepr";
-var SERVER_VERSION = "0.24.1";
+var SERVER_VERSION = "0.25.0";
 var WEBSITE_URL = "https://keepr.cloud";
 var KQL_REFERENCE_URL = `${WEBSITE_URL}/docs/guides/finding-and-lists/kql-reference`;
 function brandIcons(publicUrl = process.env.KEEPR_PUBLIC_URL || "https://api.keepr.cloud") {
@@ -3614,6 +3618,10 @@ function storedName(name) {
   return n;
 }
 
+// dist/src/entryRules.js
+var GROUP_NAME_RE = /^[A-Za-z0-9][A-Za-z0-9 _-]{0,99}$/;
+var ENTRY_ID_RE = /^[a-z][0-9a-z]{9}$/;
+
 // dist/src/agentPaths.js
 import { statSync as statSync2 } from "node:fs";
 import { readdir, readFile, stat } from "node:fs/promises";
@@ -3867,7 +3875,9 @@ var attachFileTool = {
     external_id: z.string().optional().describe("The external_id of a row written by keepr_ingest in this session."),
     files: z.array(z.custom()).min(1).max(20).describe("Files: {filename, content_base64, content_type?} for a small file held in the conversation (about a megabyte at most; the file as the person gave it, not resized or converted) \u2014 or {path} for a file on the computer this server runs on."),
     skip_if_present: z.boolean().optional().describe("Default true. Skips a file whose name is already attached, so re-running after adding two photos uploads two photos. With `element`, an attachment already there is reused only when no element holds it and its name and size both match; anything else is uploaded fresh."),
-    element: z.string().optional().describe(`A file element of the item's card to put the files into (its name, as keepr_schema lists it, dataType "file", with accept, maxSizeMb and allowMultiple). A single file element takes one file and is replaced; a list is appended to, 20 files at most. Without it, the files are the item's other attachments.`)
+    element: z.string().optional().describe(`A file element of the item's card to put the files into (its name, as keepr_schema lists it, dataType "file", with accept, maxSizeMb and allowMultiple). A single file element takes one file and is replaced; a list is appended to, 20 files at most. Without it, the files are the item's other attachments. With entry_id and column, the repeating group instead.`),
+    entry_id: z.string().optional().describe("With element (a repeating group) and column: the entry to put the files in, by the id keepr gave it (read the item's entries)."),
+    column: z.string().optional().describe("With element and entry_id: a file column of that group (keepr_schema lists a group's columns). It takes files as a file element does.")
   },
   handler: async (args, ctx) => {
     let itemId = typeof args.item_id === "string" ? args.item_id : "";
@@ -3897,6 +3907,15 @@ var attachFileTool = {
       return fail(`${quoted(collection.name)} is archived and is read-only for everyone, so nothing can be attached.`);
     }
     const elementName = typeof args.element === "string" ? args.element.trim() : "";
+    const entryId = typeof args.entry_id === "string" ? args.entry_id.trim() : "";
+    const columnName = typeof args.column === "string" ? args.column.trim() : "";
+    if ((entryId || columnName) && !(entryId && columnName && elementName)) {
+      return fail("entry_id and column name a file column of one entry: give both, with element set to the repeating group that holds them.");
+    }
+    if (entryId && (!ENTRY_ID_RE.test(entryId) || !GROUP_NAME_RE.test(elementName))) {
+      return fail(`entry_id is an entry's id as keepr issued it (ten letters and digits), and element the repeating group's name as keepr_schema lists it \u2014 read the item for its entries.`);
+    }
+    const placeName = entryId ? `"${columnName}" in entry ${entryId} of "${elementName}"` : `"${elementName}"`;
     let target = null;
     let current = [];
     if (elementName) {
@@ -3904,21 +3923,41 @@ var attachFileTool = {
       if (!schema.ok)
         return failFromResponse(schema, "reading the elements of this item's collection");
       const card = (schema.body?.cards ?? []).find((c) => c.id === String(item.body?.card_id ?? ""));
-      const fileElements = (card?.elements ?? []).filter((e) => e.dataType === "file");
-      target = fileElements.find((e) => e.name === elementName) ?? null;
-      if (!target) {
-        return fail(`"${elementName}" is not a file element of this item's card.` + (fileElements.length ? ` Its file elements: ${fileElements.map((e) => identifierText(String(e.name))).join(", ")}.` : " The card has no file element \u2014 leave out `element` to attach the files as other attachments."));
+      if (entryId) {
+        const groups = (card?.elements ?? []).filter((e) => e.dataType === "repeating-group");
+        const group = groups.find((e) => e.name === elementName) ?? null;
+        if (!group) {
+          const withFiles = groups.filter((g) => (g.columns ?? []).some((c) => c.dataType === "file"));
+          return fail(`"${elementName}" is not a repeating group of this item's card.` + (withFiles.length ? ` Its groups with a file column: ${withFiles.map((g) => identifierText(String(g.name))).join(", ")}.` : " The card has no group with a file column."));
+        }
+        const fileColumns = (group.columns ?? []).filter((c) => c.dataType === "file");
+        target = fileColumns.find((c) => c.name === columnName) ?? null;
+        if (!target) {
+          return fail(`"${columnName}" is not a file column of "${elementName}".` + (fileColumns.length ? ` Its file columns: ${fileColumns.map((c) => identifierText(String(c.name))).join(", ")}.` : " The group has no file column."));
+        }
+        const list = item.body?.elements?.[elementName];
+        const entry = (Array.isArray(list) ? list : []).find((e) => !!e && typeof e === "object" && e.id === entryId);
+        if (!entry)
+          return fail(`"${elementName}" holds no entry ${entryId} on this item \u2014 read the item for its entries' ids.`);
+        const stored = entry.elements?.[columnName];
+        current = (Array.isArray(stored) ? stored : stored ? [stored] : []).map(String).filter(Boolean);
+      } else {
+        const fileElements = (card?.elements ?? []).filter((e) => e.dataType === "file");
+        target = fileElements.find((e) => e.name === elementName) ?? null;
+        if (!target) {
+          return fail(`"${elementName}" is not a file element of this item's card.` + (fileElements.length ? ` Its file elements: ${fileElements.map((e) => identifierText(String(e.name))).join(", ")}.` : " The card has no file element \u2014 leave out `element` to attach the files as other attachments."));
+        }
+        const stored = item.body?.elements?.[elementName];
+        current = (Array.isArray(stored) ? stored : stored ? [stored] : []).map(String).filter(Boolean);
       }
-      const stored = item.body?.elements?.[elementName];
-      current = (Array.isArray(stored) ? stored : stored ? [stored] : []).map(String).filter(Boolean);
       if (!target.allowMultiple && files.length > 1) {
-        return fail(`"${elementName}" holds one file, and ${files.length} were given. Pass one file for it, or leave out \`element\` to attach the rest as other attachments.`);
+        return fail(`${placeName} holds one file, and ${files.length} were given. Pass one file for it, or leave out \`element\` to attach the rest as other attachments.`);
       }
       if (target.allowMultiple && current.length + files.length > MAX_FILES) {
-        return fail(`"${elementName}" holds at most ${MAX_FILES} files; it has ${current.length}, and ${files.length} more would pass that.`);
+        return fail(`${placeName} holds at most ${MAX_FILES} files; it has ${current.length}, and ${files.length} more would pass that.`);
       }
       if (!target.allowMultiple && current.length && ctx.hasScope("delete") === false) {
-        return fail(`"${elementName}" already holds a file, and putting another there REPLACES it: the old file is deleted (restorable for 30 days), which needs Can delete records. ${ctx.deleteRefusal()}`);
+        return fail(`${placeName} already holds a file, and putting another there REPLACES it: the old file is deleted (restorable for 30 days), which needs Can delete records. ${ctx.deleteRefusal()}`);
       }
     }
     const present = /* @__PURE__ */ new Map();
@@ -3926,9 +3965,10 @@ var attachFileTool = {
       const existing = await ctx.http.request({ path: `/api/items/${itemId}/attachments` });
       if (existing.ok && Array.isArray(existing.body)) {
         for (const a of existing.body)
-          present.set(String(a.originalName ?? ""), { id: String(a._id ?? ""), element: a.element ?? null, size: typeof a.size === "number" ? a.size : null });
+          present.set(String(a.originalName ?? ""), { id: String(a._id ?? ""), element: a.element ?? null, entryId: a.entryId ?? null, column: a.column ?? null, size: typeof a.size === "number" ? a.size : null });
       }
     }
+    const inTarget = (a) => a.element === elementName && (entryId ? a.entryId === entryId && a.column === columnName : !a.column);
     const bindReplaces = !!target && !target.allowMultiple && current.length > 0;
     const toBind = [];
     const allowPath = ctx.config.keySource !== "bearer";
@@ -3951,8 +3991,8 @@ var attachFileTool = {
         continue;
       }
       if (there && target && there.id && there.size === size) {
-        if (there.element === elementName && current.includes(there.id)) {
-          skipped.push({ filename, reason: `already in "${elementName}"` });
+        if (inTarget(there) && current.includes(there.id)) {
+          skipped.push({ filename, reason: `already in ${placeName}` });
           continue;
         }
         if (there.element === null && !bindReplaces && !toBind.includes(there.id)) {
@@ -3967,11 +4007,11 @@ var attachFileTool = {
         continue;
       }
       if (target && target.accept === "image" && !PHOTO_EXT.has(ext) && !String(spec.content_type ?? "").startsWith("image/")) {
-        failed.push({ filename, message: `"${elementName}" takes photos only (JPEG, PNG, WebP, GIF, AVIF, TIFF, HEIC) \u2014 a PDF or a document never fits it. Leave out \`element\` to attach it as another attachment.` });
+        failed.push({ filename, message: `${placeName} takes photos only (JPEG, PNG, WebP, GIF, AVIF, TIFF, HEIC) \u2014 a PDF or a document never fits it. Leave out \`element\` to attach it as another attachment.` });
         continue;
       }
       if (target && typeof target.maxSizeMb === "number" && size > target.maxSizeMb * 1024 * 1024) {
-        failed.push({ filename, message: `larger than ${target.maxSizeMb} MB, the limit of "${elementName}".` });
+        failed.push({ filename, message: `larger than ${target.maxSizeMb} MB, the limit of ${placeName}.` });
         continue;
       }
       let form;
@@ -4005,7 +4045,7 @@ var attachFileTool = {
         continue;
       }
       uploaded.push({ attachmentId: String(res.body?._id ?? ""), filename, bytes: size });
-      present.set(filename, { id: String(res.body?._id ?? ""), element: null, size });
+      present.set(filename, { id: String(res.body?._id ?? ""), element: null, entryId: null, column: null, size });
       if (target && res.body?._id)
         toBind.push(String(res.body._id));
     }
@@ -4014,7 +4054,11 @@ var attachFileTool = {
     if (target && toBind.length) {
       const replacing = !target.allowMultiple && current.length > 0;
       const value = target.allowMultiple ? [...current, ...toBind] : toBind[0];
-      const put = await ctx.http.request({
+      const put = entryId ? await ctx.http.request({
+        method: "PATCH",
+        path: `/api/items/${itemId}/entries/${encodeURIComponent(elementName)}/${entryId}`,
+        body: { elements: { [columnName]: value } }
+      }) : await ctx.http.request({
         method: "PUT",
         path: `/api/items/${itemId}`,
         body: { elements: { [elementName]: value }, merge: true }
@@ -4033,10 +4077,10 @@ var attachFileTool = {
       failed.length ? `PARTIAL \u2014 ${uploaded.length} attached to "${title}", ${failed.length} failed.` : `Attached ${uploaded.length} file${uploaded.length === 1 ? "" : "s"} to "${title}".`
     ];
     if (target && bound.length) {
-      lines.push("", !target.allowMultiple && current.length ? `Put into "${elementName}", replacing the file that was there (deleted softly \u2014 History can bring it back for 30 days).` : `Put into "${elementName}" (${bound.length} file${bound.length === 1 ? "" : "s"}).`);
+      lines.push("", !target.allowMultiple && current.length ? `Put into ${placeName}, replacing the file that was there (deleted softly \u2014 History can bring it back for 30 days).` : `Put into ${placeName} (${bound.length} file${bound.length === 1 ? "" : "s"}).`);
     }
     if (bindError)
-      lines.push("", `NOT PUT INTO "${elementName}" \u2014 keepr refused the bind: ${bindError}`, "The uploaded files stay on the item as other attachments.");
+      lines.push("", `NOT PUT INTO ${placeName} \u2014 keepr refused the bind: ${bindError}`, "The uploaded files stay on the item as other attachments.");
     if (uploaded.length) {
       lines.push("", "ATTACHED:");
       for (const u of uploaded)
@@ -4052,7 +4096,7 @@ var attachFileTool = {
       for (const f of failed)
         lines.push(`  ${f.filename} \u2014 ${f.message}`);
     }
-    const next = tooLarge.length ? routesFor(tooLarge, itemId, collectionId, elementName || null, allowPath) : null;
+    const next = tooLarge.length ? routesFor(tooLarge, itemId, collectionId, elementName || null, allowPath, entryId ? { entry_id: entryId, column: columnName } : null) : null;
     if (next)
       lines.push("", ...next.lines);
     const result = {
@@ -4061,22 +4105,23 @@ var attachFileTool = {
       uploaded,
       skipped,
       failed,
-      ...target ? { element: elementName, bound, ...bindError ? { bindError } : {} } : {},
+      ...target ? { element: elementName, ...entryId ? { entry_id: entryId, column: columnName } : {}, bound, ...bindError ? { bindError } : {} } : {},
       ...next ? { next: next.calls } : {}
     };
     return failed.length || bindError ? fail(lines.join("\n"), result) : ok(lines.join("\n"), result);
   }
 };
-function routesFor(names, itemId, collectionId, element, allowPath) {
-  const request = { tool: "keepr_request_upload", args: { collection: collectionId, entries: names.map((name) => ({ item_id: itemId, name, ...element ? { element } : {} })) } };
+function routesFor(names, itemId, collectionId, element, allowPath, entry = null) {
+  const place = element ? { element, ...entry ?? {} } : {};
+  const request = { tool: "keepr_request_upload", args: { collection: collectionId, entries: names.map((name) => ({ item_id: itemId, name, ...place })) } };
   const lines = [`NEXT \u2014 ${names.length === 1 ? "this file is" : "these files are"} too big to send inline (about a megabyte at most). Do NOT resize or convert ${names.length === 1 ? "it" : "them"}.`];
   const calls = [];
   if (allowPath) {
-    const byPath = { tool: "keepr_attach_file", args: { item_id: itemId, files: names.map(() => ({ path: "<where the file is on this computer>" })), ...element ? { element } : {} } };
+    const byPath = { tool: "keepr_attach_file", args: { item_id: itemId, files: names.map(() => ({ path: "<where the file is on this computer>" })), ...place } };
     lines.push("  If the file is on the computer this server runs on (Claude Code, the extension, the plugin), give its path \u2014 streamed from disk, up to 100 MB:", `    keepr_attach_file ${JSON.stringify(byPath.args)}`, "  Many files in one folder: keepr_attach_folder.", "  If you cannot reach the file (it is on the person's phone, or only in the chat), ask the person for it with a link:");
     calls.push(byPath);
   } else {
-    const local = { tool: LOCAL_FILE_TOOL, args: { item_id: itemId, files: names.map(() => ({ path: "<where the file is on that computer>" })), ...element ? { element } : {} }, when: LOCAL_TOOLS_PRESENT };
+    const local = { tool: LOCAL_FILE_TOOL, args: { item_id: itemId, files: names.map(() => ({ path: "<where the file is on that computer>" })), ...place }, when: LOCAL_TOOLS_PRESENT };
     lines.push("  This connector cannot read files from the person's computer. If keepr's local file tools are among your tools (the keepr plugin adds them in Claude Code, and in Cowork on the person's computer) and the file is on that computer, attach it from there by its path \u2014 streamed from disk, up to 100 MB:", `    ${LOCAL_FILE_TOOL} ${JSON.stringify(local.args)}`, "  Many files in one folder: keepr_attach_folder, from the same local tools.", "  Otherwise (no local file tools, or the file is only in the chat or on a phone), ask the person for it with a link \u2014 they drop it in keepr, and you can check it arrived:");
     calls.push(local);
   }
@@ -4170,7 +4215,9 @@ var attachLocalFileTool = {
     item_id: z.string().describe("The item to attach to, 24 hex characters."),
     files: z.array(z.custom()).min(1).max(20).describe("Files: {path, filename?, content_type?} \u2014 path is where the file is on this computer (in Cowork, inside a folder the person selected for the session, under /sessions/<name>/mnt/); filename renames it in keepr. Hidden files, and anything in a hidden folder of the home folder, are not attached."),
     skip_if_present: z.boolean().optional().describe("Default true. Skips a file whose name is already attached, so re-running after adding two photos uploads two photos. With `element`, an attachment already there is reused only when no element holds it and its name and size both match; anything else is uploaded fresh."),
-    element: z.string().optional().describe("A file element of the item's card to put the files into, by its name. A single file element is replaced; a list is appended to.")
+    element: z.string().optional().describe("A file element of the item's card to put the files into, by its name. A single file element is replaced; a list is appended to. With entry_id and column, the repeating group instead."),
+    entry_id: z.string().optional().describe("With element (a repeating group) and column: the entry to put the files in, by its id."),
+    column: z.string().optional().describe("With element and entry_id: a file column of that group.")
   },
   handler: async (args, ctx) => {
     const itemId = typeof args.item_id === "string" ? args.item_id.trim() : "";
@@ -4189,7 +4236,9 @@ var attachLocalFileTool = {
       item_id: itemId,
       files: files.map((f) => ({ path: f.path, ...f.filename ? { filename: f.filename } : {}, ...f.content_type ? { content_type: f.content_type } : {} })),
       ...args.skip_if_present !== void 0 ? { skip_if_present: args.skip_if_present } : {},
-      ...args.element !== void 0 ? { element: args.element } : {}
+      ...args.element !== void 0 ? { element: args.element } : {},
+      ...args.entry_id !== void 0 ? { entry_id: args.entry_id } : {},
+      ...args.column !== void 0 ? { column: args.column } : {}
     }, ctx);
   }
 };

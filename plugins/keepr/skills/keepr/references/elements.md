@@ -112,4 +112,8 @@ a free no-op) or look the id up and send it plain.
 A file element is never filled by a row. Upload the file onto the item and put
 it in the element with `keepr_attach_file` and its `element` (`adding.md`,
 "Attachments"); a row may only carry the element's stored value back
-unchanged, or leave it out.
+unchanged, or leave it out. A repeating group's file column is the same, entry
+by entry: `keepr_attach_file` with `element` (the group), `entry_id` and
+`column`, and a row only re-sends what an entry holds. A replace row
+(`merge: false`) that leaves out a group whose entries hold files is refused:
+send the group back, or merge.
