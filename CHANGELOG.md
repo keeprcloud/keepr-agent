@@ -3,6 +3,12 @@
 Each release lists the two versions it carries: the skill's (which is also the
 plugin's) and the server's.
 
+## 2.30.0 — 2026-10-17
+
+Skill 2.30.0, keepr-mcp 0.29.0.
+
+- Private items have left keepr, so your assistant no longer sees or sets whether an item is private. keepr_ingest rows and keepr_update_item take no visibility, keepr_schema no longer lists a per-card private-items setting, and keepr.py no longer knows the private_not_allowed answer. Both write tools now refuse an argument, or a row field, they do not take, instead of quietly dropping it, so a call that still sends visibility is told. Private tags are unchanged. No new tools. Also in this release: Your assistant arranges tiles in six columns. A card's tile in the item list is now three rows of six columns, so a field can take half the tile or five sixths of it; the assistant sends cols: 6 with spans in sixths, and a tile it writes in thirds, the way tiles were before, is doubled by keepr as it is saved. A setup's preview draws each field's width out of the tile's columns (4/6). And a card can define a named action people press, with inputs they fill in when they press it (keepr_schema lists the card-actions endpoint).
+
 ## 2.29.0 — 2026-10-17
 
 Skill 2.29.0, keepr-mcp 0.28.0.

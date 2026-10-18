@@ -103,14 +103,15 @@ belongs to this collection, and `scope: "card"` on a card the collection does
 not own is refused, not moved. A form layout is card-tier
 only, on a card the collection owns. A page layout also has a `name`.
 
-**Tile** — the card as it appears in the item list. A grid of **3 columns and at
-most 3 rows**; each row's spans add up to 3 at most, and each element appears
-once:
+**Tile** — the card as it appears in the item list. A grid of **6 columns and at
+most 3 rows**: say `"cols": 6`, and each row's spans add up to 6 at most; each
+element appears once:
 
 ```json
 { "kind": "tile", "cardRef": { "key": "task" },
-  "body": { "rows": [ [ { "element": "title", "span": 2 }, { "element": "status", "span": 1 } ],
-                      [ { "element": "due", "span": 1 }, { "element": "owner", "span": 2 } ] ] } }
+  "body": { "cols": 6,
+            "rows": [ [ { "element": "title", "span": 4 }, { "element": "status", "span": 2 } ],
+                      [ { "element": "due", "span": 3 }, { "element": "owner", "span": 3 } ] ] } }
 ```
 
 Every type needs room to be read, and a span narrower than that is refused,
@@ -118,9 +119,17 @@ never quietly widened:
 
 | element type | span at least |
 | --- | --- |
-| short text, email, url, location, a looked-up record | 2 |
-| long text, rich text | 2 — alone in the body at 3, it is the tile's paragraph |
-| everything else (numbers, dates, choices, a person, a phone, a file's photo…) | 1 |
+| short text, email, url, location, a looked-up record | 4 |
+| long text, rich text | 4 — alone in the body at 6, it is the tile's paragraph |
+| everything else (numbers, dates, choices, a person, a phone, a file's photo…) | 2 |
+
+A tile body with **no `cols`** is read in thirds — the three-column grid tiles
+had before — and keepr doubles every span as it writes it (`"span": 1` becomes
+2 of 6). So a body written for three columns still works, but always send
+`"cols": 6` with spans in sixths: that is how keepr stores every tile once
+the owner's migration has run (a setup's preview draws each width out of six,
+`title (4/6)`), and an odd width (3 of 6 is half the tile) has no spelling in
+thirds. Spans in sixths sent without `cols` are read as thirds and doubled.
 
 The tile's header — its badge, date, Open and ⋯ — is keepr's; the body is
 what you arrange. Zero rows is a tile of identity and date alone.

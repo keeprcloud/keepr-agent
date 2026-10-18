@@ -72,8 +72,8 @@ say how many items that is before you start, and stop at a page if the user
 did not ask for the walk.
 
 **A short `get` is "not readable by this key", never "deleted".** The API
-omits an item it cannot show — wrong id, another collection, a private item,
-outside the key's allowlist — and says nothing about which. `get` counts
+omits an item it cannot show — wrong id, another collection, a card the key
+cannot read, outside the key's allowlist — and says nothing about which. `get` counts
 them: `2 of 3 requested — 1 not readable by this key`. Report exactly that
 phrase. Do not say the item is gone, was deleted, or does not exist; you do
 not know that, and the user may be looking straight at it in the web app.

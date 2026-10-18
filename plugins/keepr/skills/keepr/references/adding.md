@@ -59,7 +59,6 @@ A rows file is JSON. Minimum viable:
   It is set once, when the item is created: an upsert that sends a different
   one still writes the row, and the row's note says the date was not changed
   (`keepr_ingest` calls the field `created_at`).
-- **`visibility`** (`"shared"` | `"private"`) is optional.
 - **`tags`** is the item's tags, by the names `schema` lists under TAGS — a
   name, or the path when two tags share a name (`"Genre/Sci-fi"`), or an id.
   An item used as a tag (a card whose items are tags) goes by its id:
