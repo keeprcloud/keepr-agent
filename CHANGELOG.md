@@ -3,6 +3,18 @@
 Each release lists the two versions it carries: the skill's (which is also the
 plugin's) and the server's.
 
+## 2.32.2 — 2026-10-19
+
+Skill 2.32.2, keepr-mcp 0.31.2. Also the first release of 2.32.1, below.
+
+- Your assistant no longer retries when keepr says its API is older than your data. A write refused with api_older_than_data is sent once and the answer is relayed at once, since the same request would be refused again until that API is updated.
+
+## 2.32.1 — 2026-10-19
+
+Skill 2.32.1, keepr-mcp 0.31.1.
+
+- Tiles have one width: six columns. The setup tool and the skill's setup guide now say a tile body is cols: 6 with spans in sixths and no longer describe the old three-column reading. A setup written for three columns still applies (keepr doubles its spans), but write new ones in sixths.
+
 ## 2.32.0 — 2026-10-19
 
 Skill 2.32.0, keepr-mcp 0.31.0. Also the first release of 2.31.0, below.

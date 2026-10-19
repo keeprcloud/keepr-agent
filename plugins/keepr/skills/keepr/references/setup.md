@@ -123,13 +123,12 @@ never quietly widened:
 | long text, rich text | 4 — alone in the body at 6, it is the tile's paragraph |
 | everything else (numbers, dates, choices, a person, a phone, a file's photo…) | 2 |
 
-A tile body with **no `cols`** is read in thirds — the three-column grid tiles
-had before — and keepr doubles every span as it writes it (`"span": 1` becomes
-2 of 6). So a body written for three columns still works, but always send
-`"cols": 6` with spans in sixths: that is how keepr stores every tile once
-the owner's migration has run (a setup's preview draws each width out of six,
-`title (4/6)`), and an odd width (3 of 6 is half the tile) has no spelling in
-thirds. Spans in sixths sent without `cols` are read as thirds and doubled.
+Send `"cols": 6` with spans in sixths: a setup's preview draws each width out
+of six (`title (4/6)`), and an odd width (3 of 6 is half the tile) has no
+spelling in thirds. A setup written before tiles had six columns, with no
+`cols`, still applies: keepr reads it in thirds and doubles every span
+(`"span": 1` becomes 2 of 6), so spans in sixths sent without `cols` would be
+doubled again.
 
 The tile's header — its badge, date, Open and ⋯ — is keepr's; the body is
 what you arrange. Zero rows is a tile of identity and date alone.

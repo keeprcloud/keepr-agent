@@ -205,7 +205,7 @@ import { request as httpsRequest } from "node:https";
 import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
 var RETRY_STATUSES = /* @__PURE__ */ new Set([429, 502, 503, 504]);
-var FINAL_503_CODE = "query_timeout";
+var FINAL_503_CODES = ["query_timeout", "api_older_than_data"];
 var RETRIES = 3;
 var TIMEOUT_MS = 12e4;
 var PACE_BELOW_REMAINING = 5;
@@ -463,7 +463,7 @@ function isFinal503(text) {
     return false;
   const b = body;
   const nested = b.payload && typeof b.payload === "object" ? b.payload.code : void 0;
-  return b.code === FINAL_503_CODE || nested === FINAL_503_CODE;
+  return FINAL_503_CODES.includes(b.code) || FINAL_503_CODES.includes(nested);
 }
 function fileChanged(err) {
   let e = err;
@@ -2860,7 +2860,7 @@ This is a bug in keepr-mcp, not something the user did.`)) : guard(def, ctx, arg
 
 // dist/src/server.js
 var SERVER_NAME = "keepr";
-var SERVER_VERSION = "0.31.0";
+var SERVER_VERSION = "0.31.2";
 var WEBSITE_URL = "https://keepr.cloud";
 var KQL_REFERENCE_URL = `${WEBSITE_URL}/docs/guides/finding-and-lists/kql-reference`;
 function brandIcons(publicUrl = process.env.KEEPR_PUBLIC_URL || "https://api.keepr.cloud") {
