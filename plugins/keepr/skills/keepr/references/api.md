@@ -381,6 +381,28 @@ curl -s -H "Authorization: Bearer $KEEPR_API_KEY" \
 Both answer the count keepr holds now. Who confirmed is the collection's
 managers' alone; the contract names the doors and what each refusal means.
 
+### Comments on an item
+
+A key reads an item's comments, and adds one as its person, through these
+doors (the contract's `endpoints` and `comments` say what each takes and
+refuses). Editing and deleting a comment are the person's, signed in to keepr.
+
+```bash
+curl -s -H "Authorization: Bearer $KEEPR_API_KEY" \
+  "https://api.keepr.cloud/api/items/<itemId>/comments?skip=0&limit=50"    # oldest first; the total in X-Total-Count
+curl -s -H "Authorization: Bearer $KEEPR_API_KEY" \
+  "https://api.keepr.cloud/api/items/<itemId>/comments/<commentId>/history" # one comment and its earlier versions
+curl -s -X POST -H "Authorization: Bearer $KEEPR_API_KEY" -H "Content-Type: application/json" \
+  -H "Idempotency-Key: $(uuidgen)" \
+  -d '{"body": "Part ordered; fitting booked for Tuesday."}' \
+  "https://api.keepr.cloud/api/items/<itemId>/comments"
+```
+
+Make the `Idempotency-Key` once per comment and send the same one if you
+retry that add: keepr answers the retry with the comment it already made
+instead of adding a second. The rules for what a comment says are in
+`adding.md`, "A comment on an item, as the person".
+
 ## 4. Audit
 
 ```bash
@@ -438,6 +460,23 @@ curl -s -X POST -H "Authorization: Bearer $KEEPR_API_KEY" \
 Every element needs a `name`, a `label` (`{singular, plural}`) and a `dataType`
 the contract's `elementTypes` lists. The server slugifies and de-duplicates the `key` you
 ask for, so read the key back from the response rather than assuming.
+
+**Give every new card an `icon` and a `color`** (`references/cards.md`, "Every
+new card gets an icon and a color"). `icon` is the exact name of an icon in
+keepr's catalog, and `color` a hex (`#2f9e44`, `#abc`) or one of the catalog's
+hue keys (`emerald`, stored as its hex); `""` is none. The catalog is public:
+
+```bash
+curl -s "https://api.keepr.cloud/api/docs/icons?q=book&limit=12"
+# { "icons": [{ "name": "BOOK", "category": "…", "keywords": [...] }, …],
+#   "hues": [{ "key": "emerald", "label": "Emerald", "hex": "#10A37F" }, …], … }
+```
+
+`q` takes words (every one must match; best first; none found is an empty
+list). Any other icon name is refused with up to five close matches — on a
+create, a change, its preview and a blueprint alike — and nothing is written. A
+card that already holds an unknown name keeps saving while its icon is not
+changed.
 
 **Several cards at once — a card blueprint** (keepr 2.1; docs/SCHEMA.md "Card
 blueprints"). `POST /api/collections/{id}/blueprints/preview` with

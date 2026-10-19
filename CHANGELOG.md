@@ -3,6 +3,18 @@
 Each release lists the two versions it carries: the skill's (which is also the
 plugin's) and the server's.
 
+## 2.32.0 — 2026-10-19
+
+Skill 2.32.0, keepr-mcp 0.31.0. Also the first release of 2.31.0, below.
+
+- Your assistant gives every new card an icon and a color, and never guesses an icon's name. keepr_schema with icons looks up the icon names keepr accepts by what a card is for, best first, with the 24 colors; keepr_propose_card and keepr_propose_setup give a new card that has none an icon found by its name and a color, and say which. keepr refuses an icon it does not have, naming up to five close matches, and takes a color as a hex or a color's name like emerald. Also in this release, unpublished until now: assistants read an item's comments and add one for you; private items have left keepr, and both write tools refuse an argument they do not take; tiles are laid out in six columns; a card can define a named action with inputs; and charts over a repeating group count only the entries the filter matches.
+
+## 2.31.0 — 2026-10-18
+
+Skill 2.31.0, keepr-mcp 0.30.0.
+
+- Your assistant can read an item's comments and add one for you. keepr_get_items with comments: true lists an item's comments oldest first, with who wrote each, when, whether it was edited and whether an assistant added it, and comment_id reads one comment with its earlier versions. The new keepr_add_comment tool adds a comment under your name, on a card that takes comments and an item you can edit; keepr records that an assistant added it, everyone who can read the item sees it, and a retry after a lost connection never adds it twice. Only you can edit or delete a comment, in keepr. Also in this release, unpublished until now: private items have left keepr, so assistants no longer see or set whether an item is private, and both write tools refuse an argument they do not take; tiles are laid out in six columns; a card can define a named action with inputs; and charts over a repeating group count only the entries the filter matches.
+
 ## 2.30.0 — 2026-10-17
 
 Skill 2.30.0, keepr-mcp 0.29.0.

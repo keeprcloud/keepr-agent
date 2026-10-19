@@ -246,6 +246,39 @@ only: you never see it, so never guess at it. If keepr refuses (the
 collection does not let readers confirm, or the person's email is not
 confirmed yet), say so in keepr's words; there is no way around it.
 
+## A comment on an item, as the person
+
+A card can take **comments**: a dated journal under each item, beside the
+record rather than in it (`keepr_schema` says which cards take them). Add one
+when the person asks you to ("note on the boiler that the part is ordered",
+"leave a hand-off on KPR-12 saying what's left"), or when the job you were
+given is to record what happened on an item and its card takes comments. A
+comment is not a place for a value the card has an element for: a status, a
+date or a total goes in its element, through `keepr_update_item`.
+
+```
+keepr_add_comment  { item_id: "<24-hex>", body: "Part ordered from Northwind; fitting booked for Tuesday." }
+```
+
+- **It is the person's comment.** keepr names them its author and records
+  that a connection added it. Write it as they would say it, in their voice
+  and about what they asked — never as a hand-off from someone else, never
+  signed with another person's name, never as if a person typed it when they
+  did not ask for it. Everyone who can read the item reads it.
+- **Show it first when it is long or is about other people.** For a one-line
+  note the person dictated, add it; for anything you composed, show the text
+  and add it once they agree.
+- **Once.** Each call is a new comment. If the answer says keepr could not be
+  reached, read the item's comments before adding it again; if it says keepr
+  already had it, it is there once.
+- **Only the person edits or deletes a comment**, in keepr. Asked to change
+  or remove one, say so and point them to the item; never add a "correction"
+  that pretends to replace someone else's words.
+- A refusal says why and what the person can do — comments off for the card,
+  the person only reads the item, an archived collection, a connection that
+  cannot write, a body too long. Pass it on in their words; there is no way
+  around it, and the comment does not go on another item instead.
+
 ## Attachments — files onto the items you just made
 
 Only when the collection has attachments on (`schema` says so; otherwise every

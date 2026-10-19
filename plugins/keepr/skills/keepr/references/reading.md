@@ -20,6 +20,7 @@ error — you would report "none" for a question that had an answer.
 | `keepr_schema` | the cards and elements — read this first |
 | `keepr_get_items` with `collection` and `q` | a page of items, count first |
 | `keepr_get_items` with `ids` (or `item_id`) | one or more items in full, up to 100 |
+| `keepr_get_items` with `item_id` and `comments: true` | an item's comments, oldest first; `comment_id` for one with its history |
 | `keepr_search` | free-text substring search across collections, cards, items and tags — tags by name and items used as tags by title; `types` narrows it (`tags` for tags alone) |
 | `keepr_chart` | a total, count, average, earliest/latest or share, by month or by category — worked out by keepr over every item; or a saved chart. `charts.md` |
 
@@ -33,6 +34,25 @@ When a name in `q` could mean more than one element — two cards each with a
 label and card. If the person has not said which one they mean, ask them;
 never pick one. Then send `q` again with that `#id` (`kql.md`, "When keepr
 asks which element").
+
+## An item's comments
+
+On a card that takes comments (`keepr_schema` says so), each item has a
+journal of dated comments by the people who work on it. Read it when the
+question is about what was said or decided on an item, or before you add to
+it (`adding.md`):
+
+```
+keepr_get_items  { item_id: "<24-hex>", comments: true }                 # oldest first; skip / limit page them
+keepr_get_items  { item_id: "<24-hex>", comment_id: "<24-hex>" }         # one comment, with every earlier version of its text
+```
+
+Each line says who wrote it and when, whether an assistant added it for its
+person, and whether it was edited. A note from before comments has no author:
+say so rather than guessing one. A deleted comment shows as a placeholder only
+where the card keeps deleted comments visible; never report what one said
+unless its own read gives the text. Quote a comment as its author's words, and
+keep the answer's "more" line in mind: a long journal is paged.
 
 ## A repeating group on an item
 

@@ -359,6 +359,10 @@ var KeeprHttp = class {
   }
   baseHeaders(opts, auth) {
     const headers = { Accept: "application/json" };
+    for (const [name, value] of Object.entries(opts.headers ?? {})) {
+      if (!/^(authorization|x-keepr-client|content-type|content-length)$/i.test(name))
+        headers[name] = value;
+    }
     if (auth && !opts.anonymous)
       headers.Authorization = `Bearer ${auth}`;
     if (this.client)
@@ -1273,7 +1277,7 @@ async function within(promise, ms) {
 
 // dist/src/contract.snapshot.json
 var contract_snapshot_default = {
-  version: "e18b35ee0602",
+  version: "db0bf62a46ab",
   title: "keepr write contract",
   summary: "What keepr accepts from a machine client: the element types, the batch envelope, and every error code a row can come back with. Generated from the running server, so it describes THIS deployment.",
   loop: [
@@ -1298,7 +1302,8 @@ var contract_snapshot_default = {
       "A key or grant with delete may hard-delete at most deletesPerKeyPerDay items per UTC day; past that, 429 delete_budget_exhausted with limit, used, remaining, requested and resetsAt, and nothing is deleted. A bulk that would overrun the budget is refused whole.",
       "A key confined to a collection allowlist gets 404 \u2014 not 403 \u2014 for everything outside it.",
       "A keepr client names itself on every request with X-Keepr-Client: keepr-skill/<version> (<channel>) or keepr-mcp/<version> (<channel>). One below the oldest supported release gets 426 code client_too_old, with latest and guide; GET /api/docs/clients has the versions and how to update each channel. A request without the header is never refused for it.",
-      "Session-only surfaces refuse keys: sharing and grants, collection delete and transfer, share links, password and email changes, API key management, all /api/admin/*. The refusal is 403 code session_required whatever the key holds \u2014 no scope fixes it."
+      "Session-only surfaces refuse keys: sharing and grants, collection delete and transfer, share links, password and email changes, API key management, all /api/admin/*. The refusal is 403 code session_required whatever the key holds \u2014 no scope fixes it.",
+      "Comments on an item (endpoints itemComments, itemComment, itemCommentHistory, itemCommentAdd): a key or grant reads them with read and adds one with write, as the person it acts for; editing or deleting a comment is session-only (403 session_required)."
     ]
   },
   endpoints: {
@@ -1338,7 +1343,17 @@ var contract_snapshot_default = {
     itemEntryAdd: "POST /api/items/{id}/entries/{group}",
     itemEntryUpdate: "PATCH /api/items/{id}/entries/{group}/{entryId}",
     itemEntryRemove: "DELETE /api/items/{id}/entries/{group}/{entryId}",
-    itemEntryMove: "POST /api/items/{id}/entries/{group}/{entryId}/move"
+    itemEntryMove: "POST /api/items/{id}/entries/{group}/{entryId}/move",
+    itemComments: "GET /api/items/{id}/comments",
+    itemComment: "GET /api/items/{id}/comments/{commentId}",
+    itemCommentHistory: "GET /api/items/{id}/comments/{commentId}/history",
+    itemCommentAdd: "POST /api/items/{id}/comments"
+  },
+  comments: {
+    body: "markdown text, at most 20,000 characters after trimming (comment_too_long past it, with limit); blank is comment_blank",
+    maxBody: 2e4,
+    idempotency: 'Send an Idempotency-Key header (8 to 128 letters, digits, ".", "_", ":" or "-"), made once per comment and sent again on every retry of it: a resend answers 200 with the comment already made, never a second one; the same key with another body is 409 idempotency_key_reused.',
+    author: "A comment is the person's: its author is the account the credential acts for, and createdVia says which kind of credential added it. Everyone who can read the item reads it; only the person, signed in, edits or deletes it."
   },
   recordCodes: {
     url: "A record's short web address is ${APP_BASE_URL}/<letter>/<code>. A code is 7 or more characters of lowercase Crockford base32 and reads in any case (i and l as 1, o as 0). Every id stays valid; a code is a second name for the record, never a permission.",
@@ -2845,7 +2860,7 @@ This is a bug in keepr-mcp, not something the user did.`)) : guard(def, ctx, arg
 
 // dist/src/server.js
 var SERVER_NAME = "keepr";
-var SERVER_VERSION = "0.29.0";
+var SERVER_VERSION = "0.31.0";
 var WEBSITE_URL = "https://keepr.cloud";
 var KQL_REFERENCE_URL = `${WEBSITE_URL}/docs/guides/finding-and-lists/kql-reference`;
 function brandIcons(publicUrl = process.env.KEEPR_PUBLIC_URL || "https://api.keepr.cloud") {
@@ -3262,6 +3277,9 @@ var KeeprContext = class {
     const who = this.startup.accountEmail ?? this.startup.accountName ?? "an account";
     const how = this.config.keySource === "bearer" && this.credential === "connection" ? " through this connection" : `${this.config.keySource === "bearer" ? "" : ` at ${this.config.baseUrl}`}${this.config.apiKey && this.credential === "key" ? ` with key ${keyDisplayPrefix(this.config.apiKey)}\u2026` : this.usesConnection ? " through a connection made with keepr_connect" : ""}`;
     lines.push(`Acting as ${who}${how}.`, `${this.collections.length} collection${this.collections.length === 1 ? "" : "s"} reachable.`, `Contract ${this.contract.version}${this.contract.isLive ? "" : " (from a build-time snapshot; the live contract could not be fetched)"}.`, this.keyScopeKnownAtStartup ? this.scopeSentence() : "Write scope is unknown until the first write is attempted \u2014 this deployment does not report it.");
+    if (!this.filesOnly) {
+      lines.push("A comment added through keepr_add_comment is published as this person and read by everyone who can read its item; only the person can edit or delete it, in keepr.");
+    }
     const notice = updateNotice(this.updates);
     if (notice)
       lines.push(`

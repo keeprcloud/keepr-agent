@@ -139,7 +139,7 @@ what they can do, only in the collections they allowed, never admin. Which
 scopes it holds is the server's answer, not this skill's: `keepr_collections`
 prints them (the `auth.scopes` keepr reports),
 and a refusal names the one it needed (`requiredScope`) — pass that on to the
-person in their words. This skill never deletes. It cannot share, delete collections, or manage keys — a 403 on
+person in their words. This skill never deletes. It cannot share, delete collections, manage keys, or edit or delete a comment — a 403 on
 one of those is the design, not a bug. **A 404 on a collection means it is
 not reachable this way** — the id is wrong, or the person did not allow it.
 
@@ -189,9 +189,9 @@ demand rather than up front.
 
 | the user wants to… | open |
 | --- | --- |
-| know what is there — list, look up, count, find, summarise | `references/reading.md` |
+| know what is there — list, look up, count, find, summarise; what was said on an item (its comments) | `references/reading.md` |
 | how much, how many, the average — totals by month or by category | `references/charts.md` |
-| put records in — a sentence, a list, a spreadsheet, a document, files; change items already there, one or many | `references/adding.md` |
+| put records in — a sentence, a list, a spreadsheet, a document, files; change items already there, one or many; a comment on an item | `references/adding.md` |
 | make or change a card — add an element, rename a field, create a card | `references/cards.md` |
 | set up a collection — tile, table, form and page layouts, filters, quick adds, rules ("when X, do Y"), notifications; see or pause its rules; who changed what | `references/setup.md` |
 | filter with a query — the `q` syntax, dates and their weekday, hour or month, who added it, operators | `references/kql.md` |
@@ -209,7 +209,7 @@ Two rules hold in every chapter:
 
 ## This copy
 
-This is keepr skill **2.30.0**. Every fact that changes comes from keepr, so a
+This is keepr skill **2.32.0**. Every fact that changes comes from keepr, so a
 copy a release behind is still right about the way of working.
 
 ## Files

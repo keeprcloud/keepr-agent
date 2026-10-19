@@ -2,7 +2,7 @@
 	"manifest_version": "0.3",
 	"name": "keepr",
 	"display_name": "keepr",
-	"version": "0.29.0",
+	"version": "0.31.0",
 	"description": "Read, add and change the records you keep in keepr, from Claude.",
 	"long_description": "Connects Claude to your keepr account through its API. Read your collections, add records from a sentence, a list or a spreadsheet, and propose changes to cards — each write is dry-run first and shown to you before anything is committed. No key needed: the first time, Claude opens keepr in your browser and you click Allow. Or paste an API key from keepr (My Profile → API keys); it is stored by Claude, never in a file.",
 	"author": {
@@ -60,7 +60,7 @@
 		},
 		{
 			"name": "keepr_get_items",
-			"description": "Reads items from a keepr collection: a page of them, a count, or specific items by id, each with its tags by name (private tags included)."
+			"description": "Reads items from a keepr collection: a page of them, a count, specific items by id, or an item's comments, each with its tags by name (private tags included)."
 		},
 		{
 			"name": "keepr_search",
@@ -81,6 +81,10 @@
 		{
 			"name": "keepr_update_item",
 			"description": "Changes elements on existing keepr items, and adds or takes off their tags."
+		},
+		{
+			"name": "keepr_add_comment",
+			"description": "Adds a comment to one keepr item, as the person this connection acts for: keepr names them its author and records that a connection added it."
 		},
 		{
 			"name": "keepr_propose_card",

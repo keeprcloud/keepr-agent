@@ -62,9 +62,42 @@ answers to is refused with each one's `#id`, and you ask the person which
 id, never its title — `owner = Jane` is refused, with the matching records,
 and the whole apply is undone; so is a key nothing in the
 collection has. Table layouts are for cards in the spec
-(`{ "card": "task", "columns": ["kpr", "title", "status"] }`). A card may also
-carry `icon`, `color`, `displayTemplate` (`"{{kpr}} {{title}}"`),
-`elementSets` (set keys) and `options` (`primaryDate`…).
+(`{ "card": "task", "columns": ["kpr", "title", "status"] }`). A card also
+carries `icon` and `color` (below), and may carry `displayTemplate`
+(`"{{kpr}} {{title}}"`), `elementSets` (set keys) and `options` (`primaryDate`…).
+
+### Every new card gets an icon and a color
+
+A card's icon on its color is its badge: every item of the card wears it in
+lists, lookups, pickers and search. **When you create a card, always give it
+both**, chosen for what the card is for, and never guess an icon's name — keepr
+accepts only the icons in its own catalog, by their exact names (upper case
+with underscores, like `BOOK_OPEN`).
+
+1. **Look the icons up, once for the whole spec**, by what each card is for:
+   `keepr_schema` with `icons: ["book", "wine", "dog"]` lists the names keepr
+   accepts for each word, best first, and the colors. Take a name from the
+   answer. When a word finds nothing, try another: the card's name, then what
+   its items are.
+2. **Pick the color from the same answer**: send a hue's key (`emerald`) and
+   keepr stores its hex, or send a hex like `#2f9e44`. Give the cards of one
+   collection different colors, so a mixed list is easy to scan.
+3. **Say what you picked, card by card**, when you show the proposal: *"Book
+   gets the BOOK_OPEN icon on Emerald; Wine gets WINE on Deep red."*
+
+keepr's proposal tool fills a card the spec left without an icon or a color
+(an empty one counts as left out) from the catalog itself, and says so ("ICONS
+AND COLORS picked…"): read that out like your own picks, and pass `icon` /
+`color` when its pick does not fit.
+A name keepr does not have is refused before anything is written, with up to
+five close matches — choose one of those, never another guess.
+
+**Changing the icons of cards that exist** is a card change like any other
+(`change` with `icon` and `color`, one card at a time, each previewed). Look
+every new name up first and send only names the catalog listed. Then tell the
+person, per card, the icon it had and the one it gets. A card that already
+holds a name keepr does not know keeps saving other changes; only a new icon
+is checked.
 
 A spec may also bring **new tags** — `"tags": [{ "name": "Work" }, { "name":
 "Late", "parent": "Work", "rule": { "card": "task", "where": "status = open" }
@@ -208,8 +241,9 @@ to skip the preview: it is where the token comes from.
 - **Removal only through `remove`**, by name, and only for the card's own
   elements. An inherited element belongs to the parent card; say so and stop.
 - `name`, `description`, `options` (merged), `color`, `icon` are card fields
-  and pass through. **`key` is refused**: it is the card's stable handle, and
-  saved filters and links break when it changes.
+  and pass through — an icon looked up first, as above. **`key` is refused**:
+  it is the card's stable handle, and saved filters and links break when it
+  changes.
 
 ### Reading the preview
 
