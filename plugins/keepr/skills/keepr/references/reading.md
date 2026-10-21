@@ -21,6 +21,8 @@ error — you would report "none" for a question that had an answer.
 | `keepr_get_items` with `collection` and `q` | a page of items, count first |
 | `keepr_get_items` with `ids` (or `item_id`) | one or more items in full, up to 100 |
 | `keepr_get_items` with `item_id` and `comments: true` | an item's comments, oldest first; `comment_id` for one with its history |
+| `keepr_combined_lists` | the person's saved combined lists and the ones keepr suggests; with a list or a match, its sources and the elements to filter it by |
+| `keepr_get_items` with `combined_list` or `match` | the rows of one kind of record across every collection the person has, each saying which collection it is in |
 | `keepr_search` | free-text substring search across collections, cards, items and tags — tags by name and items used as tags by title; `types` narrows it (`tags` for tags alone) |
 | `keepr_chart` | a total, count, average, earliest/latest or share, by month or by category — worked out by keepr over every item; or a saved chart. `charts.md` |
 
@@ -34,6 +36,62 @@ When a name in `q` could mean more than one element — two cards each with a
 label and card. If the person has not said which one they mean, ask them;
 never pick one. Then send `q` again with that `#id` (`kql.md`, "When keepr
 asks which element").
+
+## One kind of record across every collection
+
+Some questions name a kind of record, not a collection: "what recipes do I
+have?", "which vehicles are due for service?", "what help articles mention
+refunds?". The records may be in the person's own collection, one shared with
+them and a published one they follow, and a read of one collection answers
+only a part. A **combined list** reads one kind of record across all of them:
+every collection the person lists, own, shared or followed, each row saying
+which collection it lives in. keepr finds the sources and lines their elements
+up; what the person may read is unchanged.
+
+Use one when the question names a kind of record and `keepr_collections` shows
+the same kind of card in two or more collections, or when a search turns the
+same thing up in several. Do not use one for a question about a named
+collection, for totals (`keepr_chart`, one collection at a time), or to write:
+a combined list is read-only, so a change goes to the collection a row names.
+
+```
+keepr_combined_lists  {}                                  # saved lists (id, name) and suggestions (each with a match)
+keepr_combined_lists  { combined_list: "<id or name>" }   # its sources, and the elements it can be filtered by
+keepr_get_items       { combined_list: "<id or name>", search: "…", limit: 25 }
+keepr_get_items       { match: <a suggestion's match>, q: "…", sort_field: "…", exclude: [{ collection: "<id>" }] }
+keepr_get_items       { match: <…>, mode: "count" }
+```
+
+- **Find the list first.** Ask `keepr_combined_lists` before reading, and
+  prefer a list the person saved (it is their own choice of what belongs in it)
+  over a suggestion. Pass a suggestion's `match` exactly as given; never make
+  one up from ids you guessed. If nothing is saved or suggested, say that
+  keepr has no combined list for it yet and read the collections one by one.
+- **A saved list brings its own filter and sort.** To ask something else of
+  the same records, take the list's `match` from `keepr_combined_lists` and add
+  your own `q`. `search` (plain words) and `limit` work with a saved list.
+- **Name elements as keepr lists them.** `keepr_combined_lists` with a list or
+  a match names each element it can be filtered or sorted by, and how many of
+  the sources have it. Use that name in `q`; if it means more than one element,
+  ask the person which (`kql.md`, "When keepr asks which element").
+- **Say where each row is from.** Every row names its collection: report
+  "3 from your recipes, 2 from your sister's" rather than one blended count,
+  and open or change a row in the collection it names.
+- **Page by cursor, until it ends.** The last page's `nextCursor` goes back
+  with the same arguments; there is no `skip`, and a cursor is lost if the
+  arguments change. A "that's all" is only true when `nextCursor` is empty.
+- **Read the source lines.** A source marked `PARTIAL` was not read in time:
+  its rows may be missing, so say the list may be incomplete. A source that
+  lacks an element your filter names matches nothing there: say that source
+  was not searched on it, not that it has no such records. A count marked
+  "at least" is a floor.
+- **A key limited to some collections reads fewer sources**, and the answer
+  says so. It cannot list or look up saved lists by name (keepr keeps those to
+  the person signed in); it can read one by the id the person gives, and a
+  suggestion's match. Report the answer as covering only the collections the
+  key may read, never as everything the person has.
+- When keepr says it does not offer combined lists yet, the person's keepr is
+  older than this skill: say so, and read the collections one at a time.
 
 ## An item's comments
 

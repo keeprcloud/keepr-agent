@@ -1277,7 +1277,7 @@ async function within(promise, ms) {
 
 // dist/src/contract.snapshot.json
 var contract_snapshot_default = {
-  version: "db0bf62a46ab",
+  version: "c18c78152a78",
   title: "keepr write contract",
   summary: "What keepr accepts from a machine client: the element types, the batch envelope, and every error code a row can come back with. Generated from the running server, so it describes THIS deployment.",
   loop: [
@@ -1303,7 +1303,8 @@ var contract_snapshot_default = {
       "A key confined to a collection allowlist gets 404 \u2014 not 403 \u2014 for everything outside it.",
       "A keepr client names itself on every request with X-Keepr-Client: keepr-skill/<version> (<channel>) or keepr-mcp/<version> (<channel>). One below the oldest supported release gets 426 code client_too_old, with latest and guide; GET /api/docs/clients has the versions and how to update each channel. A request without the header is never refused for it.",
       "Session-only surfaces refuse keys: sharing and grants, collection delete and transfer, share links, password and email changes, API key management, all /api/admin/*. The refusal is 403 code session_required whatever the key holds \u2014 no scope fixes it.",
-      "Comments on an item (endpoints itemComments, itemComment, itemCommentHistory, itemCommentAdd): a key or grant reads them with read and adds one with write, as the person it acts for; editing or deleting a comment is session-only (403 session_required)."
+      "Comments on an item (endpoints itemComments, itemComment, itemCommentHistory, itemCommentAdd): a key or grant reads them with read and adds one with write, as the person it acts for; editing or deleting a comment is session-only (403 session_required).",
+      "Combined lists (endpoints combinedListResolve, combinedListQuery, combinedLists, combinedList, combinedListItems, combinedListSuggestions): a key or grant reads them with read, as the person it acts for, and only the sources inside its collection allowlist. A credential confined to some collections is refused the saved-list definitions (the list, one list) with 403 session_required; it may still read a saved list by its id, read a definition it sends, and ask for suggestions."
     ]
   },
   endpoints: {
@@ -1347,7 +1348,13 @@ var contract_snapshot_default = {
     itemComments: "GET /api/items/{id}/comments",
     itemComment: "GET /api/items/{id}/comments/{commentId}",
     itemCommentHistory: "GET /api/items/{id}/comments/{commentId}/history",
-    itemCommentAdd: "POST /api/items/{id}/comments"
+    itemCommentAdd: "POST /api/items/{id}/comments",
+    combinedListResolve: "POST /api/combined-lists/resolve",
+    combinedListQuery: "POST /api/combined-lists/query",
+    combinedLists: "GET /api/combined-lists",
+    combinedList: "GET /api/combined-lists/{id}",
+    combinedListItems: "GET /api/combined-lists/{id}/items",
+    combinedListSuggestions: "GET /api/combined-lists/suggestions"
   },
   comments: {
     body: "markdown text, at most 20,000 characters after trimming (comment_too_long past it, with limit); blank is comment_blank",
@@ -1756,12 +1763,12 @@ var contract_snapshot_default = {
     },
     {
       name: "number",
-      send: 'a number, or a numeric string (en-US grouping read: "1,234,567.5")',
-      note: 'a decimals setting ROUNDS the value; min/max and nonNegative are enforced; a percent element takes the number shown (12.5 for 12.5 %, never 0.125), or "12.5%" \u2014 a "%" on any other element is refused (type); thousands grouping is display only, and commas that do not group in threes ("1,23", a decimal comma "1,5") are refused (type)'
+      send: 'a number, or a numeric string (en-US grouping read: "1,234,567.5"; a fraction read: "3/4", "1 1/2", "1-1/2")',
+      note: 'a decimals setting ROUNDS the value; min/max and nonNegative are enforced; a percent element takes the number shown (12.5 for 12.5 %, never 0.125), or "12.5%" \u2014 a "%" on any other element is refused (type); thousands grouping is display only, and commas that do not group in threes ("1,23", a decimal comma "1,5") are refused (type); a fraction is stored as its number (1.5), and a malformed one ("1/0", "1//2") is refused (type); fractions: true is display only (1.5 reads "1 1/2")'
     },
     {
       name: "decimal",
-      send: "a number, or a numeric string",
+      send: 'a number, or a numeric string (a fraction too: "1 1/2")',
       note: "as number, with the element's declared precision"
     },
     {
@@ -1821,8 +1828,8 @@ var contract_snapshot_default = {
     },
     {
       name: "measurement",
-      send: '{ value, unit }, a number in the default unit, or a parseable string like "8 lb 7 oz"',
-      note: "the stored base is computed \u2014 never send it"
+      send: '{ value, unit }, a number in the default unit, or a parseable string like "8 lb 7 oz" or "1 1/2 cup"',
+      note: 'the stored base is computed \u2014 never send it; a fraction is read in the string or the value ("3/4 in", { value: "1 1/2", unit: "cup" }) and stored as its number; fractions: true is display only'
     },
     {
       name: "user",
@@ -1948,7 +1955,7 @@ var contract_snapshot_default = {
       },
       {
         code: "repeating_group_not_settable",
-        means: 'a value for a repeating group on a path that does not write entries (a rule, multi add, quick add, a public form) \u2014 leave it out, or send "" or null; items, bulk and ingest write entries'
+        means: `a value for a repeating group on a path that does not write entries (a rule, multi add, quick add) \u2014 leave it out, or send "" or null; items, bulk, ingest and a public form's submit write entries, and a rule's create-item may copy the trigger item's entries into a group of the new item with the whole value "{{trigger.<group>}}"`
       },
       {
         code: "required",
@@ -2860,7 +2867,7 @@ This is a bug in keepr-mcp, not something the user did.`)) : guard(def, ctx, arg
 
 // dist/src/server.js
 var SERVER_NAME = "keepr";
-var SERVER_VERSION = "0.31.2";
+var SERVER_VERSION = "0.32.0";
 var WEBSITE_URL = "https://keepr.cloud";
 var KQL_REFERENCE_URL = `${WEBSITE_URL}/docs/guides/finding-and-lists/kql-reference`;
 function brandIcons(publicUrl = process.env.KEEPR_PUBLIC_URL || "https://api.keepr.cloud") {

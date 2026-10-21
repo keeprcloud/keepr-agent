@@ -3,6 +3,12 @@
 Each release lists the two versions it carries: the skill's (which is also the
 plugin's) and the server's.
 
+## 2.33.0 — 2026-10-20
+
+Skill 2.33.0, keepr-mcp 0.32.0.
+
+- Your assistant can read one kind of record across all your collections. A combined list gathers the same kind of record from your own collections, ones shared with you and published ones you follow, and every row says which collection it is in. The new keepr_combined_lists tool shows your saved lists and the ones keepr suggests, and what each holds; keepr_get_items reads one with combined_list or match, filtered, searched and sorted, a page at a time with no row repeated or missed. An assistant connected with access to only some collections reads only those, and says so. Also in this release, unpublished until now: new cards get an icon and a color from keepr's catalog; assistants read an item's comments and add one for you; tiles are laid out in six columns; and a write refused because the API is older than your data is no longer retried.
+
 ## 2.32.2 — 2026-10-19
 
 Skill 2.32.2, keepr-mcp 0.31.2. Also the first release of 2.32.1, below.

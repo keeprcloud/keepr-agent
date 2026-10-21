@@ -403,6 +403,36 @@ retry that add: keepr answers the retry with the comment it already made
 instead of adding a second. The rules for what a comment says are in
 `adding.md`, "A comment on an item, as the person".
 
+### Combined lists
+
+One kind of record across every collection the person lists (own, shared with
+them, global ones they follow), each row naming its collection. The contract's
+`endpoints` name the doors (`combinedLists`, `combinedList`, `combinedListItems`,
+`combinedListSuggestions`, `combinedListResolve`, `combinedListQuery`); a key
+needs only read scope, and acts as its person. `match` is exactly one of
+`{ "bundleCard": { "package", "localId" } }`, `{ "card" }`, `{ "cards": [..] }`
+or `{ "elementSet" }`; at most 25 sources (more is refused, listing them),
+100 rows a page.
+
+```bash
+curl -s -H "Authorization: Bearer $KEEPR_API_KEY" https://api.keepr.cloud/api/combined-lists              # the person's saved lists
+curl -s -H "Authorization: Bearer $KEEPR_API_KEY" https://api.keepr.cloud/api/combined-lists/suggestions   # [{ match, label, sources, collections }]
+curl -s -H "Authorization: Bearer $KEEPR_API_KEY" "https://api.keepr.cloud/api/combined-lists/<id>/items?limit=25&search=soup"
+curl -s -X POST -H "Authorization: Bearer $KEEPR_API_KEY" -H "Content-Type: application/json" \
+  -d '{"match": {"bundleCard": {"package": "<id>", "localId": "vehicle"}}}' \
+  https://api.keepr.cloud/api/combined-lists/resolve           # the sources, and the elements to filter by (each with a token)
+curl -s -X POST -H "Authorization: Bearer $KEEPR_API_KEY" -H "Content-Type: application/json" \
+  -d '{"match": {…}, "q": "mileage > 60000", "sort": {"field": "title", "direction": "asc"}, "limit": 25}' \
+  https://api.keepr.cloud/api/combined-lists/query              # { items, cursor, sources, unknown? }
+```
+
+Page with the answer's `cursor` (send it back as `cursor`, with the same
+`match`, `q`, `search` and `sort`); there is no skip. The first page's
+`sources[].count` are the per-source counts. A source with `status: "partial"`
+was not read in time. A key confined to some collections reads only the sources
+inside them, and is refused the saved-list definitions (the list, one list) as
+the signed-in person's alone; it can still read a list by id and send a `match`.
+
 ## 4. Audit
 
 ```bash
