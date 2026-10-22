@@ -3,6 +3,18 @@
 Each release lists the two versions it carries: the skill's (which is also the
 plugin's) and the server's.
 
+## 2.33.2 — 2026-10-21
+
+Skill 2.33.2, keepr-mcp 0.32.1. Also the first release of 2.33.1, below.
+
+- The skill and the connector know one more row code from keepr's published contract, plan_limit, so neither reports the contract as newer than itself. Nothing sends it yet, and nothing your assistant does changes.
+
+## 2.33.1 — 2026-10-21
+
+Skill 2.33.1, keepr-mcp 0.32.0.
+
+- Your assistant can set up a total on the card that a repeating group's entries name: a supply's Used from the job lines that name it, a service plan's Last done from the service records whose lines name it. The skill's card guide shows the rollup whose link is a lookup column, written group.column, and says that every entry naming the item counts once. Also in this release, unpublished until now: your assistant can read one kind of record across all your collections; new cards get an icon and a color from keepr's catalog; assistants read an item's comments and add one for you; tiles are laid out in six columns; and a write refused because the API is older than your data is no longer retried.
+
 ## 2.33.0 — 2026-10-20
 
 Skill 2.33.0, keepr-mcp 0.32.0.

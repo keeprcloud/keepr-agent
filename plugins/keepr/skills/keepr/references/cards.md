@@ -194,6 +194,23 @@ Propose it like any element, with the columns and limits under `options`:
 - **A column that keepr works out** (a line total, an element that sums the
   group) is a formula on the element; the schema marks the result as never
   sent.
+- **A total on the card the entries name** (a supply's *Used* from the job
+  lines that name it, a service plan's *Last done* from the service records
+  whose lines name it) is a rollup on that card whose link is a lookup
+  **column**, written `"<group>.<column>"`:
+
+  ```json example
+  { "name": "used", "dataType": "decimal", "sourceCard": "job",
+    "options": { "drivenFrom": { "linkElementName": "supplies.supply",
+      "sourceElementName": "supplies.quantity", "aggregate": "sum" } } }
+  ```
+
+  Every entry that names the item counts once, so a job with two lines naming
+  the supply counts both. The value is a column of the same group, or an
+  element of the record that holds the entry (`"sourceElementName": "date"`
+  with `"aggregate": "latest"`); a sum or an average needs a column. A
+  `where` narrows the records, not the entries. keepr's preview refuses a
+  group, a column or a card that does not fit, and names it.
 
 ## Changing a card
 

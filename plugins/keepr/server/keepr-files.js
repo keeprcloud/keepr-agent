@@ -1277,7 +1277,7 @@ async function within(promise, ms) {
 
 // dist/src/contract.snapshot.json
 var contract_snapshot_default = {
-  version: "c18c78152a78",
+  version: "e6102c4c88a8",
   title: "keepr write contract",
   summary: "What keepr accepts from a machine client: the element types, the batch envelope, and every error code a row can come back with. Generated from the running server, so it describes THIS deployment.",
   loop: [
@@ -2092,6 +2092,10 @@ var contract_snapshot_default = {
         means: "a plain 24-hex id is not a readable item of this collection"
       },
       {
+        code: "plan_limit",
+        means: `the row would take the collection's owner past a limit of their plan (meter: items, storage, rules, people, forms or submissions; limit is the limit that applies), so nothing is written for the row and the rows before it stand. used, plan and lifts are added only when the caller is the collection's owner; anyone else is told to ask the owner. Reading, editing, exporting and deleting are never refused for a plan; the same 409 answers every other door that adds (docs/SCHEMA.md "Plan limits")`
+      },
+      {
         code: "private_tag_not_allowed",
         means: "a tags entry is a private tag: only its owner sees it and it is never on an item, so a row carries collection tags only"
       },
@@ -2867,7 +2871,7 @@ This is a bug in keepr-mcp, not something the user did.`)) : guard(def, ctx, arg
 
 // dist/src/server.js
 var SERVER_NAME = "keepr";
-var SERVER_VERSION = "0.32.0";
+var SERVER_VERSION = "0.32.1";
 var WEBSITE_URL = "https://keepr.cloud";
 var KQL_REFERENCE_URL = `${WEBSITE_URL}/docs/guides/finding-and-lists/kql-reference`;
 function brandIcons(publicUrl = process.env.KEEPR_PUBLIC_URL || "https://api.keepr.cloud") {
