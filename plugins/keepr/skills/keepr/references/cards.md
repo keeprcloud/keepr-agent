@@ -126,6 +126,15 @@ shows on an element like it (`allowMultiple` for "Allow multiple", say). An
 option the element's type does not take is refused by the preview, by name;
 read the refusal rather than guessing another.
 
+**A date holds one value.** A date element, with a time or without, never
+takes `allowMultiple`, and a list sent to one is refused, naming it. For several
+dates on one record (doses, visits, nights away), add a repeating group with a
+date column: each entry is one date, with room for what goes with it. For a
+span, use two date elements, a start and an end (`rangeEnd` on the start). An
+element that already holds several dates keeps them until keepr cuts each to
+its earliest; leave its `allowMultiple` exactly as the schema shows it, and
+never add it to another.
+
 **A change to the shape of stored values waits for an answer.** Turning
 "Allow multiple" on or off on a card whose items hold values (or another
 change that would turn single values into lists, or lists into single values)
@@ -164,7 +173,7 @@ Propose it like any element, with the columns and limits under `options`:
         "sections": true,
         "columns": [
           { "name": "name", "label": "Name", "dataType": "text-small", "options": { "required": true } },
-          { "name": "amount", "label": "Amount", "dataType": "measurement", "options": { "measure": "volume", "defaultUnit": "cup" } },
+          { "name": "amount", "label": "Amount", "dataType": "measurement", "options": { "measure": "volume", "measures": ["volume", "mass", "count"], "defaultUnit": "cup" } },
           { "name": "note", "label": "Note", "dataType": "text-small" }
         ] } }
   ]
@@ -176,6 +185,37 @@ Propose it like any element, with the columns and limits under `options`:
   the maximum out unless they name one: keepr has a default and a ceiling, and
   `keepr_schema` shows what the card ends up with. Never state either from
   memory.
+- **A measurement in several measures.** A recipe's amount is 2 cups on one
+  line, 250 g on the next and 3 eggs on another, so the example's `amount`
+  lists every measure it allows in `measures`, its own `measure` first (at most
+  five). Most measurements are one measure: add `measures` only when the
+  person's values really differ in kind. Such an element takes no `min`, `max`
+  or display rules, and taking a measure away later asks what to do with the
+  values in it.
+- **Units of their own.** keepr already counts in pinch, dash, handful, clove,
+  slice, can, jar, stick, bunch, sprig, head, bale, flake, crate, carton, sack,
+  tray, skein and piece (and each, dozen, box, pack and more): use those first.
+  For a unit keepr has no name for, a measurement element lists its own in
+  `ownUnits`, each `{ "singular": "smidgen", "plural": "smidgens" }` (at most
+  20; letters, spaces, hyphens and apostrophes; the plural is filled in when
+  left out). keepr gives each an id (`own:smidgen`) and `keepr_schema` shows it.
+  A name keepr already reads as a built-in unit is refused (`unit_name_taken`).
+  Values are counted in them and never converted: 2 smidgens is never 2 dashes.
+  Such an element takes no `min`, `max` or display rules.
+  - **Renaming** a unit keeps its id: send the list back with each unit's `id`,
+    the name changed. A unit sent without its id keeps the id of the unit with
+    that name.
+  - **Removing** a unit that items hold is refused (`values_need_conversion`,
+    direction `ownUnits`) until the person says what to do: `"convertValues":
+    "move"` with `"moveUnits": { "own:smidgen": "<another unit id>" }` moves
+    each value to that unit keeping its number (`""` empties it), or
+    `"convertValues": "clear"` empties them all. Ask the person which; never
+    choose for them. The refusal lists the units still allowed (`into`).
+    Taking away a measure and an own unit that both hold values is refused in
+    one save: do the measures first, then the own units.
+  - **An own unit belongs to its element.** Two elements' "smidgen" are one
+    unit only while both call it that (a rename keeps the id): copy or
+    compare an own-unit value between elements only where the names match.
 - **A column is an element of its own**, taking the types and options any
   element does with a few exceptions: a column cannot be another group, a
   count of confirmations or a file, and cannot be required only when another
@@ -211,6 +251,21 @@ Propose it like any element, with the columns and limits under `options`:
   with `"aggregate": "latest"`); a sum or an average needs a column. A
   `where` narrows the records, not the entries. keepr's preview refuses a
   group, a column or a card that does not fit, and names it.
+
+  To show what such a total is made of, read its source records, with the
+  item that shows the total and the total's name as the request's query:
+
+  ```http example
+  GET /api/items?driven_item=<the item>&driven_element=<the total>
+  ```
+
+  The rows are the RECORDS holding the entries, so their count is not the total's;
+  the **`X-Driven-Entry-Count`** header says how many entries those records
+  hold (only records the key may read; a `count` total less this is how many
+  sit in records it cannot open). A `latest` lists its records winner first,
+  in the total's own order, when no other sort is asked
+  (**`X-Driven-Source-Order: latest`**): the first row holds the entry the
+  value came from, unless that record is one the key cannot read.
 
 ## Changing a card
 

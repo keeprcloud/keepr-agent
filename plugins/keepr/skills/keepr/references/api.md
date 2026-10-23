@@ -64,7 +64,7 @@ better thing to hand a model composing rows.
 
 ```jsonc example
 {
-  "collection": { "id": "…", "name": "My Books", "allowAttachments": true, "status": "active" },
+  "collection": { "id": "…", "name": "My Books", "allowAttachments": true, "maxSizeMb": 100, "status": "active" },
   "cards": [
     { "id": "…", "key": "book", "name": "Book", "parentCardId": null,
       "elements": [
@@ -453,6 +453,15 @@ curl -s -X POST -H "Authorization: Bearer $KEEPR_API_KEY" \
 ```
 
 Only when the collection's `allowAttachments` is true.
+
+**How large a file may be.** The schema read says it: `collection.maxSizeMb`
+is the most one file may be in that collection (its plan's per-file cap
+included), and each file element's `maxSizeMb` is that element's **effective**
+limit, already no more than the collection's. Check the size before you upload:
+a larger file is refused, and keepr's answer names the limit it met. An upload
+that would take the collection's owner past their storage is refused too, its
+message saying so: tell the person in those words; deleting files makes room,
+and only the owner can change what the collection allows.
 
 **Into a file element.** The upload answers the attachment's `_id`. Bind it
 with a merge PUT of the item — the id as a single file element's value, or the

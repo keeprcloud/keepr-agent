@@ -263,7 +263,16 @@ reached only through publishing or a link have no author, so
 - **measurement**: compared in the canonical unit, so `weight = "8 lb 7 oz"`
   finds 8.4375 lb; `~` matches nothing. A bound reads the way it is written:
   `mileage < "8 L/100km"` finds the items using LESS than 8 L/100km (the
-  better economies), even though fuel economy is stored as km/L.
+  better economies), even though fuel economy is stored as km/L. A
+  measurement that allows several measures (a recipe's amount in volume,
+  mass or count) compares only within the measure of the unit you write:
+  `amount > "1 kg"` looks at masses alone, and `amount != "250 g"` finds the
+  volumes and counts too. Comparing it with another element is refused. A
+  unit of the element's own (`ownUnits`, keepr_schema lists them) is written
+  by its name, `amount >= "2 smidgens"`, and compares only with values in that
+  one unit: never with another own unit, a count or a volume. Across cards the
+  name is read on each card: another card's unit of that name, never another
+  unit that happens to share its id.
 - **currency**: compared only within one currency — `total > 20USD` never
   matches a CAD amount, and a CAD amount IS `!= 20USD`. `~` matches nothing.
 

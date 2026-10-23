@@ -3,6 +3,30 @@
 Each release lists the two versions it carries: the skill's (which is also the
 plugin's) and the server's.
 
+## 2.37.0 — 2026-10-22
+
+Skill 2.37.0, keepr-mcp 0.36.0. Also the first release of 2.36.0, 2.35.0 and 2.33.3, below.
+
+- Your assistant can take everything out of a collection: keepr.py export-all makes one zip of every item, card definition and file the sign-in can read, with no item cap and the change history and sub-collections if asked, waits for keepr to finish it and saves it; the connector's keepr_get_items says that everything in a collection is one Export everything in keepr. Your assistant knows how large a file may be before it uploads one: keepr_schema says the most one file may be in a collection and each file element's real limit, and the skill's guide reads the same from the schema. A file over the limit is refused with file_too_large naming the limit, and an upload past the collection owner's storage is refused with plan_limit (nothing is refused for storage yet: every account has room). Your assistant knows a date holds one value: it never sets a date element to hold several dates, and keeps a list of dates in a repeating group with a date column (a span is two date elements, a start and an end). Also in this release, unpublished until now: your assistant can use the units a measurement element names for itself, such as a smidgen or a baker's dozen; it can fill in a measurement that allows several measures; it can show what a total over a repeating group's entries is made of; the skill and the connector know keepr's plan_limit row code; a total on a card can read a column across the repeating group entries that name its item; your assistant can read one kind of record across all your collections; new cards get an icon and a color from keepr's catalog; assistants read an item's comments and add one for you; tiles are laid out in six columns; and a write refused because the API is older than your data is no longer retried.
+
+## 2.36.0 — 2026-10-22
+
+Skill 2.36.0, keepr-mcp 0.35.0.
+
+- Your assistant can use the units a measurement element names for itself, such as a smidgen, a dollop or a baker's dozen: keepr_schema lists each one with its id and names, the assistant writes "2 smidgens" or { value, unit } with the id or a name, and filters compare only within that unit. It can add own units to a card, rename one by keeping its id, and when a unit that items hold is removed it asks the person whether to move those values to another unit or clear them. keepr also counts in pinch, dash, handful, clove, slice, can, jar, stick, bunch, sprig, head, bale, flake, crate, carton, sack, tray, skein and piece. Also in this release, unpublished until now: your assistant can fill in a measurement that allows several measures, such as a recipe's amount that is 2 cups on one ingredient, 250 g on the next and 3 eggs on another. keepr_schema says which measures an element allows and lists the units of each, and the assistant writes each value in its own unit; a unit of none of them is refused with the element named; your assistant can show what a total over a repeating group's entries is made of; the skill and the connector know keepr's plan_limit row code; a total on a card can read a column across the repeating group entries that name its item; your assistant can read one kind of record across all your collections; new cards get an icon and a color from keepr's catalog; assistants read an item's comments and add one for you; tiles are laid out in six columns; and a write refused because the API is older than your data is no longer retried.
+
+## 2.35.0 — 2026-10-22
+
+Skill 2.35.0, keepr-mcp 0.34.0.
+
+- Your assistant can fill in a measurement that allows several measures, such as a recipe's amount that is 2 cups on one ingredient, 250 g on the next and 3 eggs on another. keepr_schema says which measures an element allows and lists the units of each, and the assistant writes each value in its own unit; a unit of none of them is refused with the element named. Also in this release, unpublished until now: your assistant can show what a total over a repeating group's entries is made of; the skill and the connector know keepr's plan_limit row code; a total on a card can read a column across the repeating group entries that name its item; your assistant can read one kind of record across all your collections; new cards get an icon and a color from keepr's catalog; assistants read an item's comments and add one for you; tiles are laid out in six columns; and a write refused because the API is older than your data is no longer retried.
+
+## 2.33.3 — 2026-10-22
+
+Skill 2.33.3, keepr-mcp 0.32.1.
+
+- Your assistant can show what a total over a repeating group's entries is made of. The skill's card guide says how to read a total's source records, that the X-Driven-Entry-Count header gives how many entries those records hold (only records you can read), and that a latest lists its records winner first. Also in this release, unpublished until now: the skill and the connector know keepr's plan_limit row code; a total on the card that a repeating group's entries name; reading one kind of record across all your collections; new cards get an icon and a color from keepr's catalog; assistants read an item's comments and add one for you; tiles are laid out in six columns; and a write refused because the API is older than your data is no longer retried.
+
 ## 2.33.2 — 2026-10-21
 
 Skill 2.33.2, keepr-mcp 0.32.1. Also the first release of 2.33.1, below.

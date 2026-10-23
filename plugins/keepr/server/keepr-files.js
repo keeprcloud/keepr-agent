@@ -1277,7 +1277,7 @@ async function within(promise, ms) {
 
 // dist/src/contract.snapshot.json
 var contract_snapshot_default = {
-  version: "e6102c4c88a8",
+  version: "ab059dcb346d",
   title: "keepr write contract",
   summary: "What keepr accepts from a machine client: the element types, the batch envelope, and every error code a row can come back with. Generated from the running server, so it describes THIS deployment.",
   loop: [
@@ -1784,12 +1784,12 @@ var contract_snapshot_default = {
     {
       name: "date",
       send: '"YYYY-MM-DD"',
-      note: 'locale dates (12/05/2024) and epoch numbers are REFUSED as ambiguous; a precision element also takes "YYYY-MM" or "YYYY" and floors to it; allowMultiple takes an array of at most 1,000 dates'
+      note: 'locale dates (12/05/2024) and epoch numbers are REFUSED as ambiguous; a precision element also takes "YYYY-MM" or "YYYY" and floors to it; ONE date \u2014 a list is refused (type), and a list of dates belongs in a repeating group; only an element that already holds several (allowMultiple, legacy) takes an array of at most 1,000'
     },
     {
       name: "date-time",
       send: "an ISO-8601 timestamp",
-      note: "a bare YYYY-MM-DD becomes midnight UTC; allowMultiple takes an array of at most 1,000"
+      note: "a bare YYYY-MM-DD becomes midnight UTC; ONE timestamp \u2014 a list is refused (type); only an element that already holds several (allowMultiple, legacy) takes an array of at most 1,000"
     },
     {
       name: "time",
@@ -1829,7 +1829,7 @@ var contract_snapshot_default = {
     {
       name: "measurement",
       send: '{ value, unit }, a number in the default unit, or a parseable string like "8 lb 7 oz" or "1 1/2 cup"',
-      note: 'the stored base is computed \u2014 never send it; a fraction is read in the string or the value ("3/4 in", { value: "1 1/2", unit: "cup" }) and stored as its number; fractions: true is display only'
+      note: 'the stored base is computed \u2014 never send it; a fraction is read in the string or the value ("3/4 in", { value: "1 1/2", unit: "cup" }) and stored as its number; fractions: true is display only; an element with measures takes a unit of any of them ("2 cup", "250 g", "3 each") and each value keeps its own, a bare number being the default unit; an element with ownUnits also takes its own units by id or by name ("2 smidgens", { value: 2, unit: "smidgen" }), counted, never converted'
     },
     {
       name: "user",
@@ -1895,7 +1895,7 @@ var contract_snapshot_default = {
       },
       {
         code: "file_too_large",
-        means: "the file is larger than the element's maxSizeMb (limitMb carries it)"
+        means: "the file is larger than its effective per-file cap: the element's maxSizeMb, lowered to the collection's per-file cap where that is smaller (limitMb carries the cap met; the schema read gives both)"
       },
       {
         code: "file_wrong_kind",
@@ -1939,7 +1939,7 @@ var contract_snapshot_default = {
       },
       {
         code: "invalid_unit",
-        means: "not a unit of that measurement's measure, or outside the element's allowlist"
+        means: "not a unit of that measurement's measure (or of any of its measures), nor one of its own units, or outside the element's allowlist"
       },
       {
         code: "invalid_url",
@@ -2871,7 +2871,7 @@ This is a bug in keepr-mcp, not something the user did.`)) : guard(def, ctx, arg
 
 // dist/src/server.js
 var SERVER_NAME = "keepr";
-var SERVER_VERSION = "0.32.1";
+var SERVER_VERSION = "0.36.0";
 var WEBSITE_URL = "https://keepr.cloud";
 var KQL_REFERENCE_URL = `${WEBSITE_URL}/docs/guides/finding-and-lists/kql-reference`;
 function brandIcons(publicUrl = process.env.KEEPR_PUBLIC_URL || "https://api.keepr.cloud") {

@@ -37,6 +37,29 @@ label and card. If the person has not said which one they mean, ask them;
 never pick one. Then send `q` again with that `#id` (`kql.md`, "When keepr
 asks which element").
 
+## Everything in a collection, as one file
+
+"Give me all of it", "back up my collection", "I'm leaving — export
+everything": that is not a page of items, and paging `items` past its cap is
+the wrong tool. keepr makes the whole collection into **one zip** — every item
+the person can read with every value, the card definitions, every attachment
+and file as it was uploaded, and if asked the change history and the
+sub-collections — in the background, and keeps it for a week.
+
+| MCP tool | what it does |
+| --- | --- |
+| — | starts the export (or picks up the one already being made), waits for it and saves the zip |
+| — | saves an export keepr already made |
+| — | the person: the collection's ⋯ menu › **Export everything…** in keepr, which also emails them when it is ready |
+
+Through the connector there is no tool for it: tell the person to choose
+**Export everything…** in the collection's ⋯ menu, or to run the command above.
+What is in the zip is exactly what this sign-in reads — a key confined to some
+collections, or one that may not see an element, exports less than the person
+would in keepr. Say so when it matters. `manifest.json` in the zip lists the
+counts and a checksum of every part, and names any file left out and why;
+`README.txt` explains the layout.
+
 ## One kind of record across every collection
 
 Some questions name a kind of record, not a collection: "what recipes do I

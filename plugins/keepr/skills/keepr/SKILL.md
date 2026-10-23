@@ -189,7 +189,7 @@ demand rather than up front.
 
 | the user wants to… | open |
 | --- | --- |
-| know what is there — list, look up, count, find, summarise; what was said on an item (its comments); one kind of record across all the collections the person has (a combined list) | `references/reading.md` |
+| know what is there — list, look up, count, find, summarise; what was said on an item (its comments); one kind of record across all the collections the person has (a combined list); take everything out of a collection as one file | `references/reading.md` |
 | how much, how many, the average — totals by month or by category | `references/charts.md` |
 | put records in — a sentence, a list, a spreadsheet, a document, files; change items already there, one or many; a comment on an item | `references/adding.md` |
 | make or change a card — add an element, rename a field, create a card | `references/cards.md` |
@@ -209,7 +209,7 @@ Two rules hold in every chapter:
 
 ## This copy
 
-This is keepr skill **2.33.2**. Every fact that changes comes from keepr, so a
+This is keepr skill **2.37.0**. Every fact that changes comes from keepr, so a
 copy a release behind is still right about the way of working.
 
 ## Files
