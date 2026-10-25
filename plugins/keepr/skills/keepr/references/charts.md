@@ -68,12 +68,9 @@ its label. Tell the person the label, never the id.
    (`key` is your name for it: a letter, then letters, digits or `_` — no
    hyphens).
    `count` counts items and takes no element. What else an element allows
-   depends on its type, and keepr is the authority — the table is
-   docs/SCHEMA.md, "Charts" › "What a chart may ask of each data type". The
-   gist: numbers, money and measurements `sum`, `avg`, `median`, `min`, `max`
-   (a rating and a temperature are never summed); a yes/no `countYes` or
-   `shareYes`; a date its earliest (`min`) or latest (`max`); a choice or text
-   `countNonBlank` or `distinct`; an item lookup or a person `distinct` only.
+   depends on its type, and keepr is the authority: `keepr_schema` lists, under
+   WHAT KEEPR ENFORCES, the ops for each element type on the card in view.
+   Pick the op from that list, never from what the element seems to be.
    Anything else keepr refuses, naming the op — change the op, never the
    element's meaning.
    `blanks: "zero"` counts a blank as 0 where that makes sense; the default
@@ -83,13 +80,12 @@ its label. Tell the person the label, never the id.
    (`keepr_chart`'s description lists them; a `this…` preset runs from its
    start to today, not to its end); or `{ "from", "to" }` as `YYYY-MM-DD`, both
    days included.
-4. **The rows** — `groupBy: { "on": "<element>" }`. A date needs a `bucket`:
-   `day`, `week`, `month`, `quarter`, `year` (a date and time adds `hour`); or a
-   part that repeats — `weekday`, `monthOfYear`, and on `created`, `updated`
-   or a date and time `hourOfDay` — one row for each day of the week (Sunday
-   first), month or hour, every one listed, read in the collection's time
-   zone ("which day do I log the most?"); a time-of-day element `hourOfDay`
-   or `halfHour`. `"on": "created.by"` makes a row per person who added the
+4. **The rows** — `groupBy: { "on": "<element>" }`. A date needs a `bucket`
+   (`keepr_chart`'s description lists them): a stretch of time, or a part that
+   repeats, which makes one row for each day of the week (Sunday first), month
+   or hour, every one listed, read in the collection's time zone ("which day
+   do I log the most?"); a time-of-day element has buckets of its own.
+   `"on": "created.by"` makes a row per person who added the
    items (those who added most, the rest in Other; Not set for an item with
    no author). A number, an amount or a
    measurement needs ranges: `bins: { "size": 50 }` or `{ "count": 8 }`. A

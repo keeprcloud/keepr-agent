@@ -1277,7 +1277,7 @@ async function within(promise, ms) {
 
 // dist/src/contract.snapshot.json
 var contract_snapshot_default = {
-  version: "ab059dcb346d",
+  version: "cdcf12100a52",
   title: "keepr write contract",
   summary: "What keepr accepts from a machine client: the element types, the batch envelope, and every error code a row can come back with. Generated from the running server, so it describes THIS deployment.",
   loop: [
@@ -1690,7 +1690,10 @@ var contract_snapshot_default = {
       "longton/wk": "long ton/wk",
       "beat/min": "bpm",
       deg: "\xB0",
-      "mpg-uk": "imp mpg"
+      "mpg-uk": "imp mpg",
+      "N-m": "N\xB7m",
+      "ft-lb": "ft\xB7lb",
+      "in-lb": "in\xB7lb"
     }
   },
   imports: {
@@ -1738,7 +1741,15 @@ var contract_snapshot_default = {
       maxEntriesCeiling: 500,
       maxColumns: 200
     },
-    itemBytes: 8388608
+    itemBytes: 8388608,
+    kql: {
+      maxQueryLength: 2e3,
+      maxConditions: 50,
+      maxPathHops: 3,
+      maxSearchLength: 200,
+      maxSearchWords: 8
+    },
+    dateListEntries: 1e3
   },
   elementTypes: [
     {
@@ -2172,6 +2183,14 @@ var ContractCache = class {
   }
   get version() {
     return this.body.version;
+  }
+  /**
+   * The contract as held: the live one, else the build-time snapshot. For a
+   * reader that parses a block of its own (src/enforced.ts, KPR-265) and
+   * must not grow this class, which the files-only bundle also carries.
+   */
+  get document() {
+    return this.body;
   }
   get isLive() {
     return this.source === "live";
@@ -2800,6 +2819,59 @@ function failFromResponse(res, what, kql, notes = []) {
   });
 }
 
+// dist/src/resultSize.js
+var RESULT_LIMIT = 15e4;
+var RESULT_TARGET = 12e4;
+function wireSize(result) {
+  return JSON.stringify({
+    content: result.content,
+    ...result.structuredContent ? { structuredContent: result.structuredContent } : {}
+  }).length;
+}
+function count(n) {
+  return n.toLocaleString("en-US");
+}
+function cutString(text, max) {
+  if (text.length <= max)
+    return text;
+  let end = Math.max(0, max);
+  const code = text.charCodeAt(end - 1);
+  if (end > 0 && code >= 55296 && code <= 56319)
+    end -= 1;
+  return text.slice(0, end);
+}
+function boundResult(result, limit = RESULT_LIMIT, target = RESULT_TARGET) {
+  const was = wireSize(result);
+  if (was <= limit)
+    return result;
+  const said = `TRUNCATED: this answer was ${count(was)} characters, past the ${count(limit)} an assistant can read from one tool answer.`;
+  const text = result.content.filter((b) => b.type === "text").map((b) => b.text).join("\n");
+  const other = result.content.filter((b) => b.type !== "text");
+  const make = (body, notes, structured) => ({
+    content: [{ type: "text", text: [body, ...notes.length ? ["", ...notes] : []].join("\n") }, ...other],
+    ...structured && result.structuredContent ? { structuredContent: result.structuredContent } : {},
+    // The structured copy is replaced, not dropped: a client that reads it still learns it was cut.
+    ...!structured && result.structuredContent ? { structuredContent: { truncated: true, answerCharacters: was, note: "The structured copy of this answer was left out because the answer was too large." } } : {},
+    ...result.isError ? { isError: true } : {}
+  });
+  const noStructured = `${said} The structured copy is left out; the text above is whole. Ask for less (a narrower filter, a shorter range, a smaller limit) for the rest.`;
+  const first = make(text, [noStructured], false);
+  if (wireSize(first) <= target)
+    return first;
+  const noted = (kept) => `${said} The text is cut after ${count(kept)} of its ${count(text.length)} characters and the structured copy is left out. Ask for less (a narrower filter, a shorter range, a smaller limit) for the rest.`;
+  let keep = Math.min(text.length, Math.max(1e3, target - 2e3));
+  for (; ; ) {
+    let cut = cutString(text, keep);
+    const lineEnd = cut.lastIndexOf("\n");
+    if (lineEnd > keep / 2)
+      cut = cut.slice(0, lineEnd);
+    const out = make(cut, [noted(cut.length)], false);
+    if (wireSize(out) <= target || keep <= 1e3)
+      return out;
+    keep = Math.floor(keep * 0.9);
+  }
+}
+
 // dist/src/guard.js
 function neededScope(def) {
   return def.scope ?? (def.writes ? "write" : null);
@@ -2819,9 +2891,10 @@ This is a transport problem between this server and the keepr API, not a keepr o
   const needed = neededScope(def);
   if (needed && ctx.hasScope(needed) === false)
     return Promise.resolve(fail(ctx.refusalFor(needed)));
-  return run2().then((result) => {
+  return run2().then((answer) => {
+    const result = boundResult(answer);
     if (result.isError) {
-      const status = Number(result.structuredContent?.status ?? 0);
+      const status = Number(answer.structuredContent?.status ?? 0);
       if (status === 401 && ctx.usesConnection) {
         result.content.push({ type: "text", text: ctx.noteConnectionLost() });
         return result;
@@ -2871,7 +2944,7 @@ This is a bug in keepr-mcp, not something the user did.`)) : guard(def, ctx, arg
 
 // dist/src/server.js
 var SERVER_NAME = "keepr";
-var SERVER_VERSION = "0.36.0";
+var SERVER_VERSION = "0.40.0";
 var WEBSITE_URL = "https://keepr.cloud";
 var KQL_REFERENCE_URL = `${WEBSITE_URL}/docs/guides/finding-and-lists/kql-reference`;
 function brandIcons(publicUrl = process.env.KEEPR_PUBLIC_URL || "https://api.keepr.cloud") {

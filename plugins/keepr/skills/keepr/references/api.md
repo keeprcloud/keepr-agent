@@ -190,7 +190,7 @@ curl -s -H "Authorization: Bearer $KEEPR_API_KEY" \
 
 | param | meaning |
 | --- | --- |
-| `q` | required, at least 2 characters after trimming. Items match the way a list's search box does: the **words** are all required (in any field, or the notes), each a substring, case and accents aside, a `"quoted phrase"` in order, no stemming; collections and cards match the whole text as one substring. For items, at most 200 characters and 8 words; otherwise `items` comes back empty with `itemsRefused: {code, message}` (a 400 when `types=items`) |
+| `q` | required, at least 2 characters after trimming. Items match the way a list's search box does: the **words** are all required (in any field, or the notes), each a substring, case and accents aside, a `"quoted phrase"` in order, no stemming; collections and cards match the whole text as one substring. For items, a term has a cap on its length and on its words (`limits.kql.maxSearchLength` and `maxSearchWords` in the contract; `kql.md`, "Limits"); past it `items` comes back empty with `itemsRefused: {code, message}` (a 400 when `types=items`) |
 | `types` | comma-separated subset of `collections,cards,items`; default all three |
 | `limit` | per bucket, default 20, max 50. No pagination — search is a jump-off, not a listing |
 

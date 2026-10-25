@@ -46,7 +46,7 @@ element literally named `card` — or `text`: `"text" = memo` is the element,
 
 **Dot-walk**: after an item lookup element, a further segment reads the
 referenced item — `resident.move-in-date < 2024-01-01`, `truck.depot = salem`.
-keepr allows a few hops; past them it refuses the query and says so.
+keepr caps the hops; past the cap it refuses the query and says so (see "Limits").
 
 **Facet**: `@<card-key>` asks which items point at that card through *any*
 lookup element, whatever it is called: `@person = "Molly Blake"`,
@@ -76,8 +76,9 @@ instead. It never finds anything the person cannot read.
 It is exact: the count and the items come from the same search, never a
 sample. Quote a number you search for (`text ~ "1042"`): unquoted, keepr
 refuses it, because a number keeps its value and loses how it was written
-(`007`). keepr caps a term's length and its number of words, and refuses an
-empty one or any operator but `~` / `!~` with a sentence that says so. On a
+(`007`). keepr caps a term's length and its number of words (see "Limits"),
+and refuses an empty one or any operator but `~` / `!~` with a sentence that
+says so. On a
 list with a great many fields a very long term is refused too ("use fewer or
 shorter words"), and a search that runs too long answers 503 rather than a
 short list: say so, and try fewer or longer words. A filter that decides who
@@ -327,8 +328,15 @@ So a zero
 from a query you wrote from memory is not evidence of anything; check the
 element name against `schema` before you report "none".
 
-keepr caps a query's length, its number of conditions and its dot-walk hops;
-a query past a cap is refused with a sentence naming it. Split the question,
+## Limits
+
+keepr caps a query's length, its number of conditions and its dot-walk hops,
+a search term's length and its number of words, and the entries of a date
+list. **The numbers are keepr's to say, not this page's**: `keepr_schema`
+prints them under WHAT KEEPR ENFORCES.
+Read them there; never quote one from memory.
+
+A query past a cap is refused with a sentence naming it. Split the question,
 or narrow it. An element group counts one condition per id, and in a filter
 keepr stores the length is counted with every name written as its id.
 

@@ -3,6 +3,30 @@
 Each release lists the two versions it carries: the skill's (which is also the
 plugin's) and the server's.
 
+## 2.41.0 — 2026-10-24
+
+Skill 2.41.0, keepr-mcp 0.40.0. Also the first release of 2.40.0, 2.39.0 and 2.38.0, below.
+
+- Your assistant reads keepr's limits from keepr itself instead of from the skill. keepr_schema now lists what keepr enforces: how long a query or a text search may be, how many conditions and dot-walk hops a filter may have, how many entries a list of dates holds, and, for the kinds of element on the card in front of it, which totals, averages and counts a chart can work out, with a chart's caps. When keepr changes one of these, the assistant knows at once, with no new skill. Also in this release, unpublished until now: torque is a measure, so a measurement element can hold a tightening force in foot-pounds, inch-pounds or newton-meters (85 ft-lb, 100 in-lb, 120 Nm).
+
+## 2.40.0 — 2026-10-24
+
+Skill 2.40.0, keepr-mcp 0.39.0.
+
+- A big read no longer overruns what your assistant can take in at once: when a page of items or a chart would pass about 150,000 characters, your assistant is given the items or rows that fit, is told how many were left out, and is told how to read the rest (skip, a smaller limit or a filter). A single item too large for one answer is shown with its largest values replaced by a note saying where to open it.
+
+## 2.39.0 — 2026-10-24
+
+Skill 2.39.0, keepr-mcp 0.38.0.
+
+- The connector answers Claude and ChatGPT when their requests carry an Origin header: one from https://claude.ai, https://claude.com or https://chatgpt.com is now signed in as usual instead of being refused, so an assistant that sends one can connect. Any other Origin is still refused. Also in this release, unpublished until now: torque is a measure. A measurement element can hold a tightening or turning force in foot-pounds, inch-pounds or newton-meters, and your assistant reads and writes it in any of those units, converting between them (a torque never converts to energy). A filter written with the middle dot in a unit, such as 90 ft·lb, is quoted.
+
+## 2.38.0 — 2026-10-24
+
+Skill 2.38.0, keepr-mcp 0.37.0.
+
+- Torque is a measure: a measurement element can hold a tightening or turning force in foot-pounds, inch-pounds or newton-meters, and your assistant reads and writes it as 85 ft-lb, 85 lb-ft, 100 in-lb or 120 Nm, in any of its units, converting between them (a torque never converts to energy). A filter written with the middle dot in a unit, such as 90 ft·lb, is quoted. The connector's contract now lists the torque units and their symbols (contract 014a447c0608).
+
 ## 2.37.0 — 2026-10-22
 
 Skill 2.37.0, keepr-mcp 0.36.0. Also the first release of 2.36.0, 2.35.0 and 2.33.3, below.
