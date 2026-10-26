@@ -11,11 +11,11 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/zbiewend/keepr-agent.git"
+		"url": "https://github.com/keeprcloud/keepr-agent.git"
 	},
 	"homepage": "https://keepr.cloud/account/connect",
 	"documentation": "https://keepr.cloud/docs/guides/assistants",
-	"support": "https://github.com/zbiewend/keepr-agent/issues",
+	"support": "https://github.com/keeprcloud/keepr-agent/issues",
 	"icon": "icon.png",
 	"license": "MIT",
 	"keywords": [

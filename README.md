@@ -3,7 +3,7 @@
 Connect an AI assistant to the records you keep in [keepr](https://keepr.cloud).
 
 This repository is the **distribution** of the keepr plugin, built and tested
-in [`zbiewend/keepr-api`](https://github.com/zbiewend/keepr-api). Nothing here
+in [`keeprcloud/keepr-api`](https://github.com/keeprcloud/keepr-api). Nothing here
 is edited by hand: keepr-api's `skills/publish.sh` regenerates it, and the API
 deploy publishes it.
 
@@ -25,7 +25,7 @@ One plugin, three parts:
 **In Claude Code:**
 
 ```
-/plugin marketplace add zbiewend/keepr-agent
+/plugin marketplace add keeprcloud/keepr-agent
 /plugin install keepr@keepr-agent
 ```
 
@@ -37,7 +37,7 @@ plugin current by itself: `/plugin`, open **Marketplaces**, choose
 `node` on your computer, which Claude Code itself already needs.
 
 **On claude.ai, the desktop app, your phone and Cowork:** add the
-`zbiewend/keepr-agent` marketplace where your Claude manages plugins, add the
+`keeprcloud/keepr-agent` marketplace where your Claude manages plugins, add the
 keepr plugin, then open its **Connectors** tab and choose **Connect**.
 
 Nobody copies a key. Every connection is listed on your keepr profile under
@@ -60,7 +60,7 @@ Nobody copies a key. Every connection is listed on your keepr profile under
   `api.keepr.cloud`. A copy installed this way updates itself with
   `keepr.py update`.
 - **The Claude desktop extension**,
-  [`keepr.mcpb`](https://github.com/zbiewend/keepr-agent/releases/latest/download/keepr.mcpb),
+  [`keepr.mcpb`](https://github.com/keeprcloud/keepr-agent/releases/latest/download/keepr.mcpb),
   is still built for the people who use it, and is being retired. It does not
   update itself.
 
@@ -103,7 +103,7 @@ so before it can be applied.
 
 ## Reporting a problem
 
-[Issues](https://github.com/zbiewend/keepr-agent/issues) here. Never paste a
+[Issues](https://github.com/keeprcloud/keepr-agent/issues) here. Never paste a
 key or a token.
 
 ## Contact
