@@ -166,7 +166,7 @@ it is, if an import went wrong.
 
 `keepr_update_item` changes the elements you name on one item by id, and leaves
 the rest alone. To make **one change to many items** — "mark all of these done",
-"set the site on every open order" — give it `ids` (up to 100) or a KQL `q`,
+"set the site on every open order" — give it `ids` (its description says how many) or a KQL `q`,
 with `collection`:
 
 1. Call it with `dry_run: true`. keepr says how many items the change would

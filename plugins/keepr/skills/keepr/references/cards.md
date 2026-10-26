@@ -205,8 +205,8 @@ Propose it like any element, with the columns and limits under `options`:
   - **Renaming** a unit keeps its id: send the list back with each unit's `id`,
     the name changed. A unit sent without its id keeps the id of the unit with
     that name.
-  - **Removing** a unit that items hold is refused (`values_need_conversion`,
-    direction `ownUnits`) until the person says what to do: `"convertValues":
+  - **Removing** a unit that items hold is refused (keepr's answer names the
+    conversion it waits for, direction `ownUnits`) until the person says what to do: `"convertValues":
     "move"` with `"moveUnits": { "own:smidgen": "<another unit id>" }` moves
     each value to that unit keeping its number (`""` empties it), or
     `"convertValues": "clear"` empties them all. Ask the person which; never

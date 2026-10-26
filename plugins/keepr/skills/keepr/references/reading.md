@@ -19,7 +19,7 @@ error — you would report "none" for a question that had an answer.
 | `keepr_collections` | which collections this key can see, and its role in each |
 | `keepr_schema` | the cards and elements — read this first |
 | `keepr_get_items` with `collection` and `q` | a page of items, count first |
-| `keepr_get_items` with `ids` (or `item_id`) | one or more items in full, up to 100 |
+| `keepr_get_items` with `ids` (or `item_id`) | one or more items in full (keepr caps the ids a call resolves) |
 | `keepr_get_items` with `item_id` and `comments: true` | an item's comments, oldest first; `comment_id` for one with its history |
 | `keepr_combined_lists` | the person's saved combined lists and the ones keepr suggests; with a list or a match, its sources and the elements to filter it by |
 | `keepr_get_items` with `combined_list` or `match` | the rows of one kind of record across every collection the person has, each saying which collection it is in |
@@ -163,8 +163,9 @@ the 25 most recent of your 340 books" is right. If they asked for everything
 and there is more than a page, say how many there are and ask how they want
 it cut, rather than paging.
 
-**Narrow before you page.** The default page is 25 and the API's ceiling is
-200. Never walk a whole collection into context page by page to answer a
+**Narrow before you page.** A page is small by default (`keepr_get_items` says
+how small) and the API has a ceiling on it (`keepr_schema`, under WHAT KEEPR
+ENFORCES). Never walk a whole collection into context page by page to answer a
 question a query would answer. "How many are open?" is the query
 `status = open` and reading the count line, not fetching every item and
 counting. "The newest five" is a limit of 5 (the default sort is each card's primary date,

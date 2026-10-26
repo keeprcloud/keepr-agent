@@ -120,8 +120,16 @@ curl -s -H "Authorization: Bearer $KEEPR_API_KEY" \
 | `card_id` | one card by id, exact match (`include_descendants=true` to include its children). `card = <key>` inside `q` does the same by key, descendants included |
 | `sort_field` | `primaryDate` (the default — each item's card's primary date), `createdAt`, `updatedAt`, or an element name. An unknown value falls back to the default rather than erroring |
 | `sort_direction` | `asc` or `desc` (default `desc`) |
-| `limit` | page size, default 50, **max 200** |
+| `limit` | page size; keepr says its default and the most a page holds (the pointer under this table). A larger limit is cut to the most, not refused |
 | `skip` | offset, default 0 |
+
+**Pages and caps.** Every page size and cap the HTTP doors have is keepr's to
+say, not this skill's: the items page, the ids a read resolves, a search, a
+comments page, a combined list, an upload request's files and how long its link
+works, how large an attachment may be. `keepr_schema` prints them under WHAT KEEPR ENFORCES.
+
+Read them from there rather than assume; a limit above a page's most is cut to
+it, never refused, and `skip` pages on.
 
 Sorting happens before paging, and empty values sort last whichever the
 direction. The response is a **bare array** of items; the total for the whole
@@ -177,7 +185,8 @@ readable by this key — the two are indistinguishable on purpose.
 The batch form returns the **readable subset**, projected to `_id`,
 `collection_id`, `card_id` and `elements` (no `displayValue`, no timestamps, no tags),
 in no promised order. Missing, invalid and unreadable ids are **silently
-omitted**; the cap is **100 ids** and extras are ignored. A short answer is
+omitted**; there is a cap on the ids (`limits.endpoints.itemsByIds`) and extras are
+ignored, an unreadable id still counting toward it. A short answer is
 therefore "not readable by this key", never "deleted", and never a reason to
 retry.
 
@@ -192,7 +201,7 @@ curl -s -H "Authorization: Bearer $KEEPR_API_KEY" \
 | --- | --- |
 | `q` | required, at least 2 characters after trimming. Items match the way a list's search box does: the **words** are all required (in any field, or the notes), each a substring, case and accents aside, a `"quoted phrase"` in order, no stemming; collections and cards match the whole text as one substring. For items, a term has a cap on its length and on its words (`limits.kql.maxSearchLength` and `maxSearchWords` in the contract; `kql.md`, "Limits"); past it `items` comes back empty with `itemsRefused: {code, message}` (a 400 when `types=items`) |
 | `types` | comma-separated subset of `collections,cards,items`; default all three |
-| `limit` | per bucket, default 20, max 50. No pagination — search is a jump-off, not a listing |
+| `limit` | per bucket (the default and the most are `limits.endpoints.search`). No pagination — search is a jump-off, not a listing |
 
 Each bucket uses exactly the read scope of its own list endpoint. Items are
 matched on `notes`, the tags you can read and the element values a list's
@@ -218,7 +227,7 @@ curl -s -H "Authorization: Bearer $KEEPR_API_KEY" \
 — your private tags, collection tags by name or alias, and **items used as
 tags by their item's title** (`kind: "item"`, `tag.title`): that `tag._id` is
 what a row's `tags` sends to apply one. `collection_id` narrows it to that
-collection (its tags and the ones above it; its items and its sub-collections'); `limit` (max 50) and `skip` page it.
+collection (its tags and the ones above it; its items and its sub-collections'); `limit` (the most is `limits.endpoints.tagSearch`) and `skip` page it.
 
 ## 2d. Totals, counts and averages — charts
 
@@ -411,8 +420,8 @@ them, global ones they follow), each row naming its collection. The contract's
 `combinedListSuggestions`, `combinedListResolve`, `combinedListQuery`); a key
 needs only read scope, and acts as its person. `match` is exactly one of
 `{ "bundleCard": { "package", "localId" } }`, `{ "card" }`, `{ "cards": [..] }`
-or `{ "elementSet" }`; at most 25 sources (more is refused, listing them),
-100 rows a page.
+or `{ "elementSet" }`; a list reads only so many sources (more is refused,
+listing them) and so many rows a page (`limits.endpoints.combinedLists`).
 
 ```bash
 curl -s -H "Authorization: Bearer $KEEPR_API_KEY" https://api.keepr.cloud/api/combined-lists              # the person's saved lists
@@ -657,6 +666,16 @@ lists every code with its meaning on this deployment. What to do about a
 failed row is the same whichever way you reach keepr: `adding.md`, "When a
 row fails".
 
+A whole request that is refused carries a `code` and keepr's own sentence, and
+the sentence names the part to fix. What a code means before you meet it is
+keepr's to say, by the family of the door that answered (a key's scope, a card
+change, a layout, a setup, a saved filter, a chart): the contract's `refusals`
+lists each with the HTTP status it comes with and how a client meets it (the
+body's `code`; a `reason` beside a session-only refusal; an entry of `problems`
+in a setup's preview; or one chart's slot in a run).
+Never act on a code's name alone: read the sentence, and ask the person when
+the way out changes their data.
+
 ### HTTP statuses
 
 | status | meaning |
@@ -666,4 +685,4 @@ row fails".
 | 404 | the collection isn't visible to this key — wrong id, or outside its allowlist |
 | 413 | over the per-call size limit (`limits` in the contract); send fewer rows |
 | 429 | rate limited; honour `Retry-After` — except a 429 carrying `resetsAt` (a daily budget spent), which is an answer until then and is never retried |
-| 503 | with `code: query_timeout`, a read stopped at the list's time limit; the message says what to narrow. It is an answer: the same request stops again, so change the filter rather than retry. `code: api_older_than_data` is an answer too: that API is older than the data, so update the API rather than retry. Any other 503 is back-pressure and worth one more try |
+| 503 | keepr could not answer as asked. Some 503s are an answer, not back-pressure: the same request is refused or stopped again, so change it (or update the API) rather than retry. The body's `code` says which, and the contract's `refusals` says what each means (the `service` family). Any other 503 is back-pressure and worth one more try |

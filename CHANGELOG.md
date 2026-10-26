@@ -3,6 +3,12 @@
 Each release lists the two versions it carries: the skill's (which is also the
 plugin's) and the server's.
 
+## 2.43.0 — 2026-10-26
+
+Skill 2.43.0, keepr-mcp 0.42.0.
+
+- Your assistant reads how big a page of items may be, how many ids it can ask for at once, how much a search, a comments page or a combined list returns, how many files an upload request holds and for how long its link works, and how large an attachment may be, from keepr itself instead of from the skill. keepr_schema now lists them. keepr also says, for each reason a request can be refused (a key without the scope, a delete budget spent, a card change that would rewrite too many records, a chart asked something it cannot work out), what the reason means, which status it comes with and where to find it. When keepr changes one of these, the assistant knows at once, with no new skill.
+
 ## 2.42.0 — 2026-10-25
 
 Skill 2.42.0, keepr-mcp 0.41.0.
