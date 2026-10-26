@@ -20,7 +20,7 @@
 				"url": "https://keepr.cloud"
 			},
 			"homepage": "https://keepr.cloud/account/connect",
-			"repository": "https://github.com/zbiewend/keepr-agent",
+			"repository": "https://github.com/keeprcloud/keepr-agent",
 			"license": "MIT",
 			"category": "productivity",
 			"keywords": [

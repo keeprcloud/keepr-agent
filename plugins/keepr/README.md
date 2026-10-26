@@ -67,10 +67,10 @@ only you can turn it on.
 ## Updates and help
 
 New versions are published to
-[zbiewend/keepr-agent](https://github.com/zbiewend/keepr-agent). The guide is
+[keeprcloud/keepr-agent](https://github.com/keeprcloud/keepr-agent). The guide is
 at [keepr.cloud/docs/guides/assistants](https://keepr.cloud/docs/guides/assistants).
 Report a problem in the repository's
-[issues](https://github.com/zbiewend/keepr-agent/issues).
+[issues](https://github.com/keeprcloud/keepr-agent/issues).
 
 ## Contact
 
