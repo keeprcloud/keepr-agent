@@ -106,4 +106,12 @@ so before it can be applied.
 [Issues](https://github.com/zbiewend/keepr-agent/issues) here. Never paste a
 key or a token.
 
+## Contact
+
+- **Help with keepr:** support@keepr.cloud
+- **A question about your data or privacy:** privacy@keepr.cloud
+- **A security problem:** security@keepr.cloud, also published at
+  [keepr.cloud/.well-known/security.txt](https://keepr.cloud/.well-known/security.txt).
+  Please write rather than open a public issue.
+
 MIT — see [LICENSE](LICENSE).

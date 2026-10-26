@@ -1275,894 +1275,11 @@ async function within(promise, ms) {
   }
 }
 
-// dist/src/contract.snapshot.json
-var contract_snapshot_default = {
-  version: "cdcf12100a52",
-  title: "keepr write contract",
-  summary: "What keepr accepts from a machine client: the element types, the batch envelope, and every error code a row can come back with. Generated from the running server, so it describes THIS deployment.",
-  loop: [
-    "GET /api/collections/{id}/schema \u2014 the cards and elements this collection accepts",
-    "POST /api/collections/{id}/ingest with dryRun: true \u2014 validate every row, write nothing",
-    "fix the rows the dry run named",
-    "POST /api/collections/{id}/ingest \u2014 commit"
-  ],
-  auth: {
-    scheme: "Authorization: Bearer kpr_<43 chars>",
-    scopes: {
-      read: "GET, HEAD, OPTIONS",
-      write: "creating and changing items, attachments and ingest \u2014 every other method except the card surface",
-      cards: "creating and changing cards, element sets and card layouts (never delete of a collection)",
-      delete: "deleting, beside write or cards: every DELETE that removes something, bulk op delete and reject, intake-review reject, a replace-mode write carrying elements (PUT /api/items/{id}, bulk update rows, ingest upsert \u2014 whenever the effective merge is false), and a collection PUT that drops a card from cards[] \u2014 off by default, and never implied"
-    },
-    notes: [
-      "A key acts as its owner, never as a new principal, and is never an administrator.",
-      'write and cards each imply read; neither implies the other. A 403 insufficient_scope carries requiredScope ("write", "cards" or "delete") naming the scope the key lacks.',
-      'A key minted before the cards scope existed cannot change cards until it is re-minted or edited with "Can change cards".',
-      'delete is added to write or cards, never alone: a destructive route needs its base scope AND delete. Keys and grants made before 2026-09-24 do not have it; deleting needs a new key (or a reconnect) with "Can delete records".',
-      "A key or grant with delete may hard-delete at most deletesPerKeyPerDay items per UTC day; past that, 429 delete_budget_exhausted with limit, used, remaining, requested and resetsAt, and nothing is deleted. A bulk that would overrun the budget is refused whole.",
-      "A key confined to a collection allowlist gets 404 \u2014 not 403 \u2014 for everything outside it.",
-      "A keepr client names itself on every request with X-Keepr-Client: keepr-skill/<version> (<channel>) or keepr-mcp/<version> (<channel>). One below the oldest supported release gets 426 code client_too_old, with latest and guide; GET /api/docs/clients has the versions and how to update each channel. A request without the header is never refused for it.",
-      "Session-only surfaces refuse keys: sharing and grants, collection delete and transfer, share links, password and email changes, API key management, all /api/admin/*. The refusal is 403 code session_required whatever the key holds \u2014 no scope fixes it.",
-      "Comments on an item (endpoints itemComments, itemComment, itemCommentHistory, itemCommentAdd): a key or grant reads them with read and adds one with write, as the person it acts for; editing or deleting a comment is session-only (403 session_required).",
-      "Combined lists (endpoints combinedListResolve, combinedListQuery, combinedLists, combinedList, combinedListItems, combinedListSuggestions): a key or grant reads them with read, as the person it acts for, and only the sources inside its collection allowlist. A credential confined to some collections is refused the saved-list definitions (the list, one list) with 403 session_required; it may still read a saved list by its id, read a definition it sends, and ask for suggestions."
-    ]
-  },
-  endpoints: {
-    whoami: "GET /api/user-info",
-    collections: "GET /api/collections",
-    schema: "GET /api/collections/{id}/schema",
-    ingest: "POST /api/collections/{id}/ingest",
-    ingestRuns: "GET /api/collections/{id}/ingest-runs",
-    createItem: "POST /api/items",
-    createCard: "POST /api/card-definitions",
-    blueprintPreview: "POST /api/collections/{id}/blueprints/preview",
-    blueprintApply: "POST /api/collections/{id}/blueprints/apply",
-    attach: "POST /api/items/{itemId}/attachments",
-    listAttachments: "GET /api/items/{itemId}/attachments",
-    charts: "GET /api/collections/{id}/charts",
-    chartPreview: "POST /api/collections/{id}/charts/preview",
-    chartRun: "POST /api/charts/run",
-    automationPreview: "POST /api/collections/{id}/automations/preview",
-    automationList: "GET /api/collections/{id}/automations",
-    automationRuns: "GET /api/collections/{id}/automations/{automationId}/runs",
-    automationEnable: "POST /api/collections/{id}/automations/{automationId}/enable",
-    automationDisable: "POST /api/collections/{id}/automations/{automationId}/disable",
-    cardActions: "GET /api/collections/{id}/card-actions",
-    notificationDefs: "GET /api/notification-defs",
-    itemHistory: "GET /api/items/{id}/history",
-    cardHistory: "GET /api/card-definitions/{id}/history",
-    collectionHistory: "GET /api/collections/{id}/history",
-    itemsBulk: "POST /api/items/bulk",
-    resolveCode: "GET /api/codes/{kind}/{code}",
-    uploadRequestCreate: "POST /api/upload-requests",
-    uploadRequestRead: "GET /api/upload-requests/{id}",
-    uploadRequestCancel: "DELETE /api/upload-requests/{id}",
-    itemConfirm: "POST /api/items/{id}/confirmations/{element}",
-    itemUnconfirm: "DELETE /api/items/{id}/confirmations/{element}",
-    itemConfirmations: "GET /api/items/{id}/confirmations",
-    itemConfirmers: "GET /api/items/{id}/confirmations/{element}/people",
-    itemEntryAdd: "POST /api/items/{id}/entries/{group}",
-    itemEntryUpdate: "PATCH /api/items/{id}/entries/{group}/{entryId}",
-    itemEntryRemove: "DELETE /api/items/{id}/entries/{group}/{entryId}",
-    itemEntryMove: "POST /api/items/{id}/entries/{group}/{entryId}/move",
-    itemComments: "GET /api/items/{id}/comments",
-    itemComment: "GET /api/items/{id}/comments/{commentId}",
-    itemCommentHistory: "GET /api/items/{id}/comments/{commentId}/history",
-    itemCommentAdd: "POST /api/items/{id}/comments",
-    combinedListResolve: "POST /api/combined-lists/resolve",
-    combinedListQuery: "POST /api/combined-lists/query",
-    combinedLists: "GET /api/combined-lists",
-    combinedList: "GET /api/combined-lists/{id}",
-    combinedListItems: "GET /api/combined-lists/{id}/items",
-    combinedListSuggestions: "GET /api/combined-lists/suggestions"
-  },
-  comments: {
-    body: "markdown text, at most 20,000 characters after trimming (comment_too_long past it, with limit); blank is comment_blank",
-    maxBody: 2e4,
-    idempotency: 'Send an Idempotency-Key header (8 to 128 letters, digits, ".", "_", ":" or "-"), made once per comment and sent again on every retry of it: a resend answers 200 with the comment already made, never a second one; the same key with another body is 409 idempotency_key_reused.',
-    author: "A comment is the person's: its author is the account the credential acts for, and createdVia says which kind of credential added it. Everyone who can read the item reads it; only the person, signed in, edits or deletes it."
-  },
-  recordCodes: {
-    url: "A record's short web address is ${APP_BASE_URL}/<letter>/<code>. A code is 7 or more characters of lowercase Crockford base32 and reads in any case (i and l as 1, o as 0). Every id stays valid; a code is a second name for the record, never a permission.",
-    letters: {
-      collection: "c",
-      item: "i",
-      card: "d",
-      tag: "t",
-      "element-set": "e",
-      "multi-add-form": "f"
-    }
-  },
-  currencies: {
-    minorUnits: 'An amount is an integer count of minor units: { amount: 1250, currency: "USD" } is 12.50 USD. Divide by 10 to the exponent to get the major amount.',
-    exponents: {
-      AED: 2,
-      AFN: 2,
-      ALL: 2,
-      AMD: 2,
-      AOA: 2,
-      ARS: 2,
-      AUD: 2,
-      AWG: 2,
-      AZN: 2,
-      BAM: 2,
-      BBD: 2,
-      BDT: 2,
-      BHD: 3,
-      BIF: 0,
-      BMD: 2,
-      BND: 2,
-      BOB: 2,
-      BRL: 2,
-      BSD: 2,
-      BTN: 2,
-      BWP: 2,
-      BYN: 2,
-      BZD: 2,
-      CAD: 2,
-      CDF: 2,
-      CHF: 2,
-      CLP: 0,
-      CNY: 2,
-      COP: 2,
-      CRC: 2,
-      CUP: 2,
-      CVE: 2,
-      CZK: 2,
-      DJF: 0,
-      DKK: 2,
-      DOP: 2,
-      DZD: 2,
-      EGP: 2,
-      ERN: 2,
-      ETB: 2,
-      EUR: 2,
-      FJD: 2,
-      FKP: 2,
-      GBP: 2,
-      GEL: 2,
-      GHS: 2,
-      GIP: 2,
-      GMD: 2,
-      GNF: 0,
-      GTQ: 2,
-      GYD: 2,
-      HKD: 2,
-      HNL: 2,
-      HTG: 2,
-      HUF: 2,
-      IDR: 2,
-      ILS: 2,
-      INR: 2,
-      IQD: 3,
-      IRR: 2,
-      ISK: 0,
-      JMD: 2,
-      JOD: 3,
-      JPY: 0,
-      KES: 2,
-      KGS: 2,
-      KHR: 2,
-      KMF: 0,
-      KPW: 2,
-      KRW: 0,
-      KWD: 3,
-      KYD: 2,
-      KZT: 2,
-      LAK: 2,
-      LBP: 2,
-      LKR: 2,
-      LRD: 2,
-      LSL: 2,
-      LYD: 3,
-      MAD: 2,
-      MDL: 2,
-      MGA: 2,
-      MKD: 2,
-      MMK: 2,
-      MNT: 2,
-      MOP: 2,
-      MRU: 2,
-      MUR: 2,
-      MVR: 2,
-      MWK: 2,
-      MXN: 2,
-      MYR: 2,
-      MZN: 2,
-      NAD: 2,
-      NGN: 2,
-      NIO: 2,
-      NOK: 2,
-      NPR: 2,
-      NZD: 2,
-      OMR: 3,
-      PAB: 2,
-      PEN: 2,
-      PGK: 2,
-      PHP: 2,
-      PKR: 2,
-      PLN: 2,
-      PYG: 0,
-      QAR: 2,
-      RON: 2,
-      RSD: 2,
-      RUB: 2,
-      RWF: 0,
-      SAR: 2,
-      SBD: 2,
-      SCR: 2,
-      SDG: 2,
-      SEK: 2,
-      SGD: 2,
-      SHP: 2,
-      SLE: 2,
-      SOS: 2,
-      SRD: 2,
-      SSP: 2,
-      STN: 2,
-      SVC: 2,
-      SYP: 2,
-      SZL: 2,
-      THB: 2,
-      TJS: 2,
-      TMT: 2,
-      TND: 3,
-      TOP: 2,
-      TRY: 2,
-      TTD: 2,
-      TWD: 2,
-      TZS: 2,
-      UAH: 2,
-      UGX: 0,
-      USD: 2,
-      UYU: 2,
-      UZS: 2,
-      VED: 2,
-      VES: 2,
-      VND: 0,
-      VUV: 0,
-      WST: 2,
-      XAF: 0,
-      XCD: 2,
-      XCG: 2,
-      XOF: 0,
-      XPF: 0,
-      YER: 2,
-      ZAR: 2,
-      ZMW: 2,
-      ZWG: 2,
-      BOV: 2,
-      CHE: 2,
-      CHW: 2,
-      CLF: 4,
-      COU: 2,
-      MXV: 2,
-      USN: 2,
-      UYI: 0,
-      UYW: 4
-    }
-  },
-  units: {
-    composite: "A number in a two-part unit is a decimal of its first part: 5.5 in ft-in is 5.5 ft, spelled 5 ft 6 in (the whole first part, then the rest times minorPerMajor in the second, rounded to a whole one).",
-    twoPart: {
-      "lb-oz": {
-        parts: [
-          "lb",
-          "oz"
-        ],
-        minorPerMajor: 16
-      },
-      "st-lb": {
-        parts: [
-          "st",
-          "lb"
-        ],
-        minorPerMajor: 14
-      },
-      "ft-in": {
-        parts: [
-          "ft",
-          "in"
-        ],
-        minorPerMajor: 12
-      },
-      "h-min": {
-        parts: [
-          "h",
-          "min"
-        ],
-        minorPerMajor: 60
-      },
-      "min-s": {
-        parts: [
-          "min",
-          "s"
-        ],
-        minorPerMajor: 60
-      }
-    },
-    symbols: {
-      longton: "long ton",
-      C: "\xB0C",
-      F: "\xB0F",
-      floz: "fl oz",
-      mm3: "mm\xB3",
-      cm3: "cm\xB3",
-      dm3: "dm\xB3",
-      m3: "m\xB3",
-      in3: "in\xB3",
-      ft3: "ft\xB3",
-      yd3: "yd\xB3",
-      drypt: "dry pt",
-      dryqt: "dry qt",
-      peck: "pk",
-      impfloz: "imp fl oz",
-      imppt: "imp pt",
-      impqt: "imp qt",
-      impgal: "imp gal",
-      cm2: "cm\xB2",
-      m2: "m\xB2",
-      km2: "km\xB2",
-      ft2: "ft\xB2",
-      yd2: "yd\xB2",
-      mi2: "mi\xB2",
-      mm2: "mm\xB2",
-      in2: "in\xB2",
-      "floz/s": "fl oz/s",
-      "mm3/s": "mm\xB3/s",
-      "cm3/s": "cm\xB3/s",
-      "dm3/s": "dm\xB3/s",
-      "m3/s": "m\xB3/s",
-      "in3/s": "in\xB3/s",
-      "ft3/s": "ft\xB3/s",
-      "yd3/s": "yd\xB3/s",
-      "drypt/s": "dry pt/s",
-      "dryqt/s": "dry qt/s",
-      "peck/s": "pk/s",
-      "impfloz/s": "imp fl oz/s",
-      "imppt/s": "imp pt/s",
-      "impqt/s": "imp qt/s",
-      "impgal/s": "imp gal/s",
-      "floz/min": "fl oz/min",
-      "mm3/min": "mm\xB3/min",
-      "cm3/min": "cm\xB3/min",
-      "dm3/min": "dm\xB3/min",
-      "m3/min": "m\xB3/min",
-      "in3/min": "in\xB3/min",
-      "ft3/min": "ft\xB3/min",
-      "yd3/min": "yd\xB3/min",
-      "drypt/min": "dry pt/min",
-      "dryqt/min": "dry qt/min",
-      "peck/min": "pk/min",
-      "impfloz/min": "imp fl oz/min",
-      "imppt/min": "imp pt/min",
-      "impqt/min": "imp qt/min",
-      "impgal/min": "imp gal/min",
-      "floz/h": "fl oz/h",
-      "mm3/h": "mm\xB3/h",
-      "cm3/h": "cm\xB3/h",
-      "dm3/h": "dm\xB3/h",
-      "m3/h": "m\xB3/h",
-      "in3/h": "in\xB3/h",
-      "ft3/h": "ft\xB3/h",
-      "yd3/h": "yd\xB3/h",
-      "drypt/h": "dry pt/h",
-      "dryqt/h": "dry qt/h",
-      "peck/h": "pk/h",
-      "impfloz/h": "imp fl oz/h",
-      "imppt/h": "imp pt/h",
-      "impqt/h": "imp qt/h",
-      "impgal/h": "imp gal/h",
-      "floz/d": "fl oz/d",
-      "mm3/d": "mm\xB3/d",
-      "cm3/d": "cm\xB3/d",
-      "dm3/d": "dm\xB3/d",
-      "m3/d": "m\xB3/d",
-      "in3/d": "in\xB3/d",
-      "ft3/d": "ft\xB3/d",
-      "yd3/d": "yd\xB3/d",
-      "drypt/d": "dry pt/d",
-      "dryqt/d": "dry qt/d",
-      "peck/d": "pk/d",
-      "impfloz/d": "imp fl oz/d",
-      "imppt/d": "imp pt/d",
-      "impqt/d": "imp qt/d",
-      "impgal/d": "imp gal/d",
-      "floz/wk": "fl oz/wk",
-      "mm3/wk": "mm\xB3/wk",
-      "cm3/wk": "cm\xB3/wk",
-      "dm3/wk": "dm\xB3/wk",
-      "m3/wk": "m\xB3/wk",
-      "in3/wk": "in\xB3/wk",
-      "ft3/wk": "ft\xB3/wk",
-      "yd3/wk": "yd\xB3/wk",
-      "drypt/wk": "dry pt/wk",
-      "dryqt/wk": "dry qt/wk",
-      "peck/wk": "pk/wk",
-      "impfloz/wk": "imp fl oz/wk",
-      "imppt/wk": "imp pt/wk",
-      "impqt/wk": "imp qt/wk",
-      "impgal/wk": "imp gal/wk",
-      "longton/s": "long ton/s",
-      "longton/min": "long ton/min",
-      "longton/h": "long ton/h",
-      "longton/d": "long ton/d",
-      "longton/wk": "long ton/wk",
-      "beat/min": "bpm",
-      deg: "\xB0",
-      "mpg-uk": "imp mpg",
-      "N-m": "N\xB7m",
-      "ft-lb": "ft\xB7lb",
-      "in-lb": "in\xB7lb"
-    }
-  },
-  imports: {
-    importId: "OPTIONAL on the ingest envelope: 1-64 of [A-Za-z0-9._-]. Mint one per import and send the same one on every batch of it (dry runs included); keepr lists the batches as one import.",
-    undo: "A person who manages the collection can undo an import from its Settings \u2192 Imports (web, session-only): the items it created are deleted and the ones it updated are restored, except any changed since. There is no API-key route for it."
-  },
-  source: {
-    createdAt: "OPTIONAL on a row's source, beside its externalId and system: when the record was created in that system. YYYY-MM-DD, or an ISO date-time with an offset; never in the future. Set when the item is created only: an upsert row that sends a different one still succeeds, and carries notes[] saying the date was not changed. It is shown as provenance; keepr's own createdAt is never set by a client."
-  },
-  dryRun: {
-    wouldCreate: "OPTIONAL on a dry-run envelope only: up to 10000 of { card, externalId, system?, createdAt? }, the rows earlier calls of the same dry run answered would-create (system defaults to the request's source.system). A $ref to one resolves as it will at commit, and a row repeating one is a duplicate (create) or would-update (upsert; checked on its own elements, not merged over the earlier row's, so it cannot say skipped). Send only the entries this call refers to or repeats. On a commit it is 400 would_create_not_dry_run \u2014 the earlier calls have written their rows \u2014 and an entry with no system, or naming a card the collection does not have, is 400 would_create_invalid."
-  },
-  tags: {
-    tags: "OPTIONAL on a row: the item's hand-applied tags, the whole list, as tag names, aliases, paths (Parent/Child) or 24-hex ids. Names resolve among the tags of this collection and the collection above it \u2014 GET /api/collections/{id}/schema lists them under tags. An item tag (a card's items used as tags) goes by its id only: GET /api/tags/search finds it by its item's title. keepr never creates a tag on a write: a name that is no tag here is unknown_tag, one that could be two is ambiguous_tag (with candidates), a private tag is private_tag_not_allowed. On an upsert the list replaces the stored one, except that a restricted tag is kept when the list leaves it out; [] takes off every tag you may take off. A RESTRICTED tag (restricted: true in the schema) decides who can see what: only a person signed in to keepr puts one on or takes one off, so a row that adds or removes one is session_required \u2014 ask the person to do it in keepr. A new item may also come back carrying a restricted tag the collection puts on new items of its card. Absent or null changes nothing. At most 50. Send tags or tagIds, not both.",
-    tagIds: "OPTIONAL on a row, instead of tags: the same whole list as 24-hex tag ids only.",
-    tagAutoIds: "NEVER sent: tags a rule applies are written by the rule; a row carrying the key is refused.",
-    warnings: `A row that succeeded may carry warnings[]: { code: "tag_dropped", tagIds } names tags it sent that were deleted since \u2014 left off, the rest written; { code: "formula_warning", element, column?, position?, entryId?, message } names a value a calculation of a repeating group could not work out (a division by zero, a result outside a choice column's choices) \u2014 stored blank, the rest written \u2014 only about a value the key may read.`,
-    blueprints: "A card blueprint (blueprintPreview / blueprintApply) may bring NEW collection tags in collection.tags ({ localId, name, color?, icon?, description?, aliases?, parentRef?: { ref }, rule? }), each optionally applied by a rule ({ cardRef, where?, match?, strict?, related? }; its filters name tags by name). A key needs write beside cards for it. Every rule arrives PAUSED: it tags nothing until it is resumed (leave that to the person, in keepr), and the apply answers what each would tag (rules[].preview). A blueprint tag is never restricted."
-  },
-  setups: {
-    cards: "Optional: a setup may create no cards and only arrange existing ones. A setup with nothing in it is setup_empty.",
-    layouts: 'collection.cardLayouts may name an existing card by { key }. tile and table: scope "collection" (the default) or "card" (only on a card this collection owns); form: the card tier only, on an owned card; page: either tier. A card tier the collection may not set is layout_tier.',
-    changes: "An entry that matches what is there CHANGES it rather than adding one: tile, table and form by their tier, a page layout, saved filter or quick add (pinned for everyone) by id or exact name. The preview marks each step change: added | changed | unchanged, with before and after; unchanged entries are skipped; a failed apply puts every change back.",
-    judged: "The preview runs layout bodies through the apply's validators when the card and everything its elements come from exist, and filter queries when the setup creates no cards, element sets or tags.",
-    rules: "collection.automations: rules of kind rule | threshold | expected-item | generate-items | card-action, as POST \u2026/automations takes them (no enabled), naming cards by { ref } (one the setup makes), { key }, { globalKey } or id. collection.notifications: collection-tier notification definitions, matched by key. An entry matches an existing rule by id or exact name (a notification by id or key) and changes it; managed rules (driven fields, automatic tags) are rule_managed. The preview carries each rule's rule preview and state on | paused. A rule that notifies, changes other records, creates records or runs on a clock, and every notification, arrives PAUSED with awaitingPerson: true, whoever applies; a change to what a running one does pauses it (willPause). Only a person turns one on (403 person_must_enable to a key). A key needs write.",
-    charts: "collection.charts and collection.dashboards entries take an optional id; one that matches a chart or dashboard for everyone (by id, else exact name) CHANGES it in place (its pin stays) rather than being chart_name_taken / dashboard_name_taken. A dashboard tile names a chart by chartRef (the setup's) or chartId (one for everyone in the collection). Steps carry change, id, before and after; a failed apply puts each back.",
-    relatedLists: "collection.relatedLists: [{ id?, cardRef, name, sourceCardRef, via?, filter?, hidden?, sort? }] \u2014 the named lists of linked items an item view shows. cardRef is a card the setup makes or one this collection owns; sourceCardRef the card whose items it lists (this collection's, a sub-collection's, or the card itself); via the lookup on it, by name or #id (absent: any lookup that points here); filter KQL as typed; sort { element, direction: asc | desc } the order it shows its items in, the element on the source card by name or #id (absent: the default order). An entry matches one of that card's own lists by id, else name, and changes it (it says the whole list); a setup never removes a list (hidden: true keeps it out of view). Steps of kind relatedList carry change, before and after; a key needs cards only."
-  },
-  writeContract: {
-    maxBatch: 200,
-    idempotency: "source.externalId",
-    ref: '{"$ref": "<externalId>"} accepted for card-lookup elements',
-    strictDefault: true,
-    ingestPath: "/api/collections/{id}/ingest",
-    serverAssigned: "an element marked driven or sequence is written by the server; a supplied value is refused in strict mode and dropped otherwise"
-  },
-  limits: {
-    maxRowsPerCall: 200,
-    maxIngestBytes: "5 MB per ingest call",
-    activeApiKeysPerUser: 25,
-    deletesPerKeyPerDay: 500,
-    relatedListsPerCard: 20,
-    repeatingGroup: {
-      defaultMaxEntries: 100,
-      maxEntriesCeiling: 500,
-      maxColumns: 200
-    },
-    itemBytes: 8388608,
-    kql: {
-      maxQueryLength: 2e3,
-      maxConditions: 50,
-      maxPathHops: 3,
-      maxSearchLength: 200,
-      maxSearchWords: 8
-    },
-    dateListEntries: 1e3
-  },
-  elementTypes: [
-    {
-      name: "text-small",
-      send: "a string",
-      note: "one line; at most 255 characters, or the element's own maxLength (too_long past it); an element's pattern refuses a value that does not fit it (pattern), and its case / trim settings change what is stored (capitals, small letters, spaces trimmed)"
-    },
-    {
-      name: "text-large",
-      send: "a string",
-      note: "multi-line; newlines are preserved; at most 20,000 characters, or 50,000 when the element's extendedLength is set, or the element's own maxLength"
-    },
-    {
-      name: "rich-text",
-      send: "a markdown string",
-      note: "as the web editor stores it; at most 100,000 characters, or 250,000 with extendedLength"
-    },
-    {
-      name: "choice",
-      send: "the choice's value",
-      note: "the value, never the label; anything else is invalid_choice. allowMultiple takes an array of values (stored once each, in the order of the choices list) or one string with values separated by ';'"
-    },
-    {
-      name: "number",
-      send: 'a number, or a numeric string (en-US grouping read: "1,234,567.5"; a fraction read: "3/4", "1 1/2", "1-1/2")',
-      note: 'a decimals setting ROUNDS the value; min/max and nonNegative are enforced; a percent element takes the number shown (12.5 for 12.5 %, never 0.125), or "12.5%" \u2014 a "%" on any other element is refused (type); thousands grouping is display only, and commas that do not group in threes ("1,23", a decimal comma "1,5") are refused (type); a fraction is stored as its number (1.5), and a malformed one ("1/0", "1//2") is refused (type); fractions: true is display only (1.5 reads "1 1/2")'
-    },
-    {
-      name: "decimal",
-      send: 'a number, or a numeric string (a fraction too: "1 1/2")',
-      note: "as number, with the element's declared precision"
-    },
-    {
-      name: "integer",
-      send: "a whole number",
-      note: "a fractional value is rounded half away from zero; text is read as for number"
-    },
-    {
-      name: "boolean",
-      send: "true or false",
-      note: "a real boolean; trueLabel/falseLabel are display only"
-    },
-    {
-      name: "date",
-      send: '"YYYY-MM-DD"',
-      note: 'locale dates (12/05/2024) and epoch numbers are REFUSED as ambiguous; a precision element also takes "YYYY-MM" or "YYYY" and floors to it; ONE date \u2014 a list is refused (type), and a list of dates belongs in a repeating group; only an element that already holds several (allowMultiple, legacy) takes an array of at most 1,000'
-    },
-    {
-      name: "date-time",
-      send: "an ISO-8601 timestamp",
-      note: "a bare YYYY-MM-DD becomes midnight UTC; ONE timestamp \u2014 a list is refused (type); only an element that already holds several (allowMultiple, legacy) takes an array of at most 1,000"
-    },
-    {
-      name: "time",
-      send: '"HH:mm" or "HH:mm:ss"',
-      note: "H:mm is zero-padded"
-    },
-    {
-      name: "url",
-      send: "a link: https://\u2026, http://\u2026, mailto:\u2026, tel:\u2026, sms:\u2026, geo:\u2026, facetime:\u2026, spotify:\u2026, zoommtg:\u2026, msteams:\u2026 or slack:\u2026",
-      note: "a bare host (example.com/x) is stored as https://example.com/x; any other scheme, or a space, is invalid_url; at most 2,048 characters"
-    },
-    {
-      name: "phone",
-      send: "a phone number",
-      note: "the national spelling of the element's country, or E.164; stored as E.164"
-    },
-    {
-      name: "email",
-      send: '"local@domain.tld"',
-      note: "at most 254 characters; the domain is lower-cased"
-    },
-    {
-      name: "location",
-      send: "an address string, or { lat, lng }",
-      note: "the element's accept setting may allow only one of the two"
-    },
-    {
-      name: "rating",
-      send: "a number from 0 to the element's max",
-      note: "outside that range is a range error; whole stars, or halves when allowHalf is set \u2014 anything between is a type error"
-    },
-    {
-      name: "card-lookup",
-      send: 'a 24-hex item id, or { "$ref": "<externalId>" }',
-      note: "an array when allowMultiple; the target must be the element's lookupCardId or a descendant of it"
-    },
-    {
-      name: "measurement",
-      send: '{ value, unit }, a number in the default unit, or a parseable string like "8 lb 7 oz" or "1 1/2 cup"',
-      note: 'the stored base is computed \u2014 never send it; a fraction is read in the string or the value ("3/4 in", { value: "1 1/2", unit: "cup" }) and stored as its number; fractions: true is display only; an element with measures takes a unit of any of them ("2 cup", "250 g", "3 each") and each value keeps its own, a bare number being the default unit; an element with ownUnits also takes its own units by id or by name ("2 smidgens", { value: 2, unit: "smidgen" }), counted, never converted'
-    },
-    {
-      name: "user",
-      send: "a 24-hex account id",
-      note: "the account must exist and be active"
-    },
-    {
-      name: "currency",
-      send: '{ amount, currency } with amount in MINOR units (1250 = 12.50), { value, currency } in major units, a number in the default currency, or a string like "$12.50" / "12.5 CAD"',
-      note: "the currency must be one of the element's currencies; more decimals than the currency has (1.234 USD) is refused, never rounded"
-    },
-    {
-      name: "color",
-      send: 'a color: "#rrggbb", "#rgb", "rgb(31, 111, 235)" or one of the 22 choice color names ("DodgerBlue")',
-      note: 'stored as a lower-case "#rrggbb"; a hex needs its #, and a translucent color, a percentage or any other name is invalid_color'
-    },
-    {
-      name: "file",
-      send: "nothing: an attachment of this item, set with keepr_attach_file (element \u2014 and for a repeating group's file column, element + entry_id + column) or the item form",
-      note: "stored as a 24-hex attachment id, or an array of up to 20 with allowMultiple; an import row, a bulk edit or an automation may only re-send the stored value unchanged (anything else, a blank included, is file_not_settable). A repeating group may hold a file column: each entry's value is the same shape, and its files go with the entry when it is removed"
-    },
-    {
-      name: "confirmations",
-      send: 'nothing: how many people said "me too" \u2014 a person confirms or takes it back with POST or DELETE /api/items/{id}/confirmations/{element} (endpoints itemConfirm, itemUnconfirm), once each',
-      note: "stored as a whole number, absent until the first confirmation and read as 0 when absent (filters, sorting, charts); a row may re-send the stored count unchanged and nothing else (confirmations_not_settable); who confirmed is never in an item \u2014 only a collection's managers can list them (itemConfirmers)"
-    },
-    {
-      name: "repeating-group",
-      send: `the WHOLE list of entries, in order: [{ "elements": { "<column>": <the column's value> } }, \u2026] \u2014 an entry read with its "id" and sent back with it keeps that id, and its columns you leave out keep their values; an entry without an "id" is added (keepr issues its id \u2014 never invent one); an entry you leave out is removed; [] or "" removes every entry. A group with section headings also takes { "section": "<title>" }. ONE entry changes without sending the others through its own door (endpoints itemEntryAdd, itemEntryUpdate, itemEntryRemove, itemEntryMove) or a bulk row's "entries": [{ "op": "add"|"update"|"remove"|"move", "group", "entryId", "elements"|"section", "position" }]`,
-      note: `each column takes what an element of its type takes (the collection schema gives columns, minEntries, maxEntries and sections); every refusal names the entry (position, from 1, and entryId) and the column. A calculated column (the schema marks it driven) is never sent: keepr works it out for every entry, as it works out an element that totals the group. Read an item first and send its list back changed: re-sending a list unchanged changes nothing, and an entry without an id that matches a stored one exactly is that entry (a re-run of an import keeps every id). A file column holds the item's attachment ids like a file element (set by a person or keepr_attach_file with element + entry_id + column; an import row or bulk edit may only re-send what the entry holds, file_not_settable otherwise) \u2014 an entry removed lets its files go after the write (a key needs delete for it; never while the collection's attachments are off), a moved entry keeps them, and an entry without an id is matched to a stored one without its file columns, so a re-run keeps the photos people attached. A lookup column takes an item id or, in batch ingest only, a {"$ref"}, resolved as a top-level one is (ref_unresolved, ref_wrong_card name the entry and column). A filter reads a group three ways: <group> has (<conditions on its columns>) \u2014 ONE entry answers every condition inside; two blocks may be answered by different entries \u2014 <group> is empty / is not empty, and <group>.count >= 2 (headings are not entries); any other operator on a group is unsupported_operator`
-    }
-  ],
-  emptyValue: 'null or "" means empty. Omitting the key means empty too, except on a CREATE, where an element the row omits starts at its default (defaultValue, defaultToToday or defaultToNow in the schema; a default that no longer fits the element is left out and the element starts empty). On upsert, an omitted key KEEPS its stored value while "" overwrites it; a default never applies to an update.',
-  errorCodes: {
-    shape: [
-      {
-        code: "attachment_in_use",
-        means: "409 on DELETE /api/items/{id}/attachments/{aid}: the attachment is the value of a file element (element names it), or of a file column of one entry of a repeating group (element names the group, with column and entryId) \u2014 clear or replace the value with an item write instead (an entry: its own door, or remove the entry); never met by a row"
-      },
-      {
-        code: "attachments_disabled",
-        means: "a new or changed file value while the collection's attachments are switched off (the stored value, unchanged, still saves) \u2014 or a row that removes a repeating group's entry holding a file then (its files would go with it)"
-      },
-      {
-        code: "confirmations_not_settable",
-        means: "a value for a confirmations element: keepr keeps that count from the people who confirmed \u2014 leave it out (the stored count re-sent unchanged is fine), and confirm with POST /api/items/{id}/confirmations/{element}"
-      },
-      {
-        code: "driven_element",
-        means: "the element is system-owned; its value is computed, never sent"
-      },
-      {
-        code: "file_already_used",
-        means: "the same file named twice under one element, or a file another element of the item already holds"
-      },
-      {
-        code: "file_not_found",
-        means: "an id under a file element that is not a file this write may use: unknown, deleted, someone else's, or on another item (one answer for every reason)"
-      },
-      {
-        code: "file_not_settable",
-        means: "a file element's value is set by a person (the item form) or keepr_attach_file, never by an import row, a bulk edit or an automation: only the stored value, unchanged, may ride along \u2014 a new value, another one, or a blank on a stored file is refused"
-      },
-      {
-        code: "file_too_large",
-        means: "the file is larger than its effective per-file cap: the element's maxSizeMb, lowered to the collection's per-file cap where that is smaller (limitMb carries the cap met; the schema read gives both)"
-      },
-      {
-        code: "file_wrong_kind",
-        means: 'the element takes photos only (accept: "image") and the file is not one keepr could read as a photo \u2014 a PDF never is'
-      },
-      {
-        code: "invalid_choice",
-        means: "not one of the element's choice values"
-      },
-      {
-        code: "invalid_color",
-        means: 'not a color keepr reads: a hex with its # ("#1f6feb", "#abc"), rgb(r, g, b) with whole numbers 0\u2013255, or one of the 22 choice color names; a translucent color is refused too'
-      },
-      {
-        code: "invalid_currency",
-        means: `not an ISO 4217 code keepr knows, a symbol that names several currencies ("kr"), or outside the element's currencies`
-      },
-      {
-        code: "invalid_email",
-        means: "not local@domain.tld, or over 254 characters"
-      },
-      {
-        code: "invalid_entry",
-        means: `an entry of a repeating group is not one: not an object, a key an entry does not take (an entry is { "id"?, "elements": { \u2026 } } or { "id"?, "section": "<title>" } \u2014 a column's value goes under "elements"), its id twice in the list, a section heading on a group without them or with columns beside it, or an entry made a heading (or a heading an entry); position and entryId name it`
-      },
-      {
-        code: "invalid_entry_op",
-        means: `an entry operation (KPR-677: add, update, remove or move ONE entry of a repeating group \u2014 the itemEntry* endpoints, a bulk row's "entries") is malformed: an unknown op or key, no entryId on update/remove/move, "elements" beside "section", an update with nothing to change, a position that is not a whole number from 1 or is past the end, the same group under "elements" and "entries", entries on a new row, or an entryId in a bulk patch (an entry id belongs to one item: over a selection only "add")`
-      },
-      {
-        code: "invalid_location",
-        means: "neither an address nor a coordinate pair, or the half the element's accept setting forbids"
-      },
-      {
-        code: "invalid_lookup",
-        means: "not a 24-hex id or a $ref, or an array on a single-valued element"
-      },
-      {
-        code: "invalid_phone",
-        means: "unparseable, or impossible in the numbering plan of the element's country"
-      },
-      {
-        code: "invalid_unit",
-        means: "not a unit of that measurement's measure (or of any of its measures), nor one of its own units, or outside the element's allowlist"
-      },
-      {
-        code: "invalid_url",
-        means: "not a link keepr stores: a scheme off its list (http, https, mailto, tel, sms, geo, facetime, spotify, zoommtg, msteams, slack), a space inside, or neither a link nor a host"
-      },
-      {
-        code: "pattern",
-        means: "a short text that does not fit the element's pattern (the collection schema gives it); the message is the element author's own sentence"
-      },
-      {
-        code: "range",
-        means: "outside a declared bound \u2014 a rating past max, a number past min/max, a date outside its bounds or on a disallowed weekday"
-      },
-      {
-        code: "repeating_group_not_settable",
-        means: `a value for a repeating group on a path that does not write entries (a rule, multi add, quick add) \u2014 leave it out, or send "" or null; items, bulk, ingest and a public form's submit write entries, and a rule's create-item may copy the trigger item's entries into a group of the new item with the whole value "{{trigger.<group>}}"`
-      },
-      {
-        code: "required",
-        means: "a required element was empty or missing"
-      },
-      {
-        code: "sequence_element",
-        means: "the element is numbered by the server (options.sequence); its value cannot be written \u2014 refused in strict mode, dropped otherwise"
-      },
-      {
-        code: "too_few_entries",
-        means: "a repeating group holds fewer entries than its minEntries (min and count carry both; section headings do not count)"
-      },
-      {
-        code: "too_long",
-        means: "longer than the element allows (limit carries it): the element's own maxLength, else 255 characters for a short text, 20,000 long (50,000 extended), 100,000 rich (250,000 extended), 2,048 for a url"
-      },
-      {
-        code: "too_many_dates",
-        means: "more than 1,000 distinct entries in a date or date-time list (limit carries it); a longer list stored before the cap, re-sent unchanged, still saves"
-      },
-      {
-        code: "too_many_entries",
-        means: "a repeating group's list is longer than its maxEntries (max and count carry both; section headings count); an entry operation's add that would make it so"
-      },
-      {
-        code: "too_many_files",
-        means: "more files than a file element holds (limit carries it: 20)"
-      },
-      {
-        code: "type",
-        means: "the value does not coerce to the element's data type"
-      },
-      {
-        code: "unknown_element",
-        means: "no element of that name on the card (strict mode only; non-strict drops the key)"
-      },
-      {
-        code: "unknown_entry",
-        means: `an entry's "id" is not one this item's group holds \u2014 keepr issues entry ids: leave "id" out to add a new entry, or read the item for the ids it holds`
-      },
-      {
-        code: "user_not_found",
-        means: "no existing, active account with that id"
-      }
-    ],
-    row: [
-      {
-        code: "account_already_linked",
-        means: "another item of this collection already links that account"
-      },
-      {
-        code: "account_link_needs_access",
-        means: "the row sets or changes the account link on a card a group built from records reads, changes a field such a group's rule reads on a linked record so that its person could join, or changes a field such a rule reads through this record (a looked-up record's name, a record a total counts), and the caller lacks, across the collection, the access that group gives \u2014 a manager makes the change"
-      },
-      {
-        code: "ambiguous_tag",
-        means: "a tags name could be more than one tag; candidates lists each one's tagId and path \u2014 send the path or the id"
-      },
-      {
-        code: "attestation_required",
-        means: "the record's card requires a signature on every change (record.attest in the schema) and the upsert row would change it without one: no X-Attestation header, an expired one, another person's, or one minted for another card or collection \u2014 nothing is written (as PUT answers 428). A person signed in to keepr signs (POST /api/auth/attest); an API key or an assistant cannot, so ask the person to make the change in keepr. A row that changes nothing is skipped, never refused"
-      },
-      {
-        code: "card_in_sub_collection",
-        means: "hint.code on a card_not_allowed row: the card belongs to a sub-collection (hint.collection_id, hint.name) \u2014 ingest the row there"
-      },
-      {
-        code: "card_mismatch",
-        means: "an upsert matched an item of a different card; card cannot change on upsert"
-      },
-      {
-        code: "card_not_allowed",
-        means: "the card exists but is not writable in this collection"
-      },
-      {
-        code: "card_unknown",
-        means: "no card definition with that key or id"
-      },
-      {
-        code: "duplicate",
-        means: "create mode, and that (system, externalId) pair already exists \u2014 switch to upsert"
-      },
-      {
-        code: "duplicate_value",
-        means: 'another item of the card already holds this value of a unique element (text and email compared ignoring case); itemId and title name it when you can read it \u2014 use mode "upsert" keyed on the element to re-run an import'
-      },
-      {
-        code: "element_read_only",
-        means: 'reason "grant": the element is shown to the caller but only some people may change it (an element rule of the collection) \u2014 the row changes it, so nothing is written for the row. Leave it out, or send the stored value unchanged (on a new record, its default); an element HIDDEN from the caller is never named this way: it answers unknown_element, as a name the card does not have'
-      },
-      {
-        code: "externalId_required",
-        means: "upsert mode with no source.externalId on the row"
-      },
-      {
-        code: "forbidden_card",
-        means: "the caller's grants do not cover that card"
-      },
-      {
-        code: "forbidden_item",
-        means: "an upsert matched an item the caller may not modify"
-      },
-      {
-        code: "formula_too_costly",
-        means: "the row's calculations over a repeating group \u2014 its calculated columns and the totals that read the group \u2014 would need more work than one save allows, so nothing is written for the row; element (and column) name the costliest when the caller can read it. Send fewer entries per item, or ask the card's manager to simplify the formula"
-      },
-      {
-        code: "insufficient_scope",
-        means: "the row removes a repeating group's entry whose file column holds files, and letting files go needs a key or connection with delete (`requiredScope`); nothing was written for it \u2014 send the entry again, or use a credential that has delete"
-      },
-      {
-        code: "internal",
-        means: "an unexpected server error on this row; the row was not written"
-      },
-      {
-        code: "invalid_tag_ids",
-        means: "tags is not a list of tag names, paths or ids, tagIds is not a list of tag ids, or the row sends both"
-      },
-      {
-        code: "item_locked",
-        means: "the record's card has locked it (record.lock in the schema): an upsert row that would change it \u2014 an element value, its tags \u2014 or an attachment added to or removed from it, is refused and nothing is written (as PUT refuses); a row that changes nothing is skipped, never refused. A manager's unlock reopens it, and the write that lands closes it again. A dry run refuses what its commit will: a row repeating a record an earlier row of the request creates, or one whose unlock an earlier row spends, is judged against that record as the commit will meet it"
-      },
-      {
-        code: "item_too_large",
-        means: "the row would leave the item holding more than limits.itemBytes (8 MB) of element values, so nothing is written for the row; limit, size and element (the largest element the caller can change) say how far. An item already past it may always be saved smaller or unchanged. Send fewer entries or shorter text per item"
-      },
-      {
-        code: "lookup_filtered_out",
-        means: "the element is a strict lookup and the record is outside its filter (the collection schema gives filter and strict); itemIds names the refused ids \u2014 choose a record the filter offers (list them with the filter in ?q=). A record the item already holds always saves"
-      },
-      {
-        code: "lookup_not_found",
-        means: "a plain 24-hex id is not a readable item of this collection"
-      },
-      {
-        code: "plan_limit",
-        means: `the row would take the collection's owner past a limit of their plan (meter: items, storage, rules, people, forms or submissions; limit is the limit that applies), so nothing is written for the row and the rows before it stand. used, plan and lifts are added only when the caller is the collection's owner; anyone else is told to ask the owner. Reading, editing, exporting and deleting are never refused for a plan; the same 409 answers every other door that adds (docs/SCHEMA.md "Plan limits")`
-      },
-      {
-        code: "private_tag_not_allowed",
-        means: "a tags entry is a private tag: only its owner sees it and it is never on an item, so a row carries collection tags only"
-      },
-      {
-        code: "ref_unresolved",
-        means: "a $ref matched no readable item, or its target row failed earlier in the request"
-      },
-      {
-        code: "ref_wrong_card",
-        means: "the reference resolves to an item whose card the element does not accept"
-      },
-      {
-        code: "restricted_tag",
-        means: "the row adds, or takes off, a restricted tag, and only managers of the collection it belongs to may; a restricted tag the list leaves out is kept, not refused"
-      },
-      {
-        code: "rule_owned_tag",
-        means: "a tag a strict rule applies, and only the rule \u2014 a row cannot add it by hand"
-      },
-      {
-        code: "session_required",
-        means: "only a person signed in to keepr may make this change, never an API key or an assistant: the row adds or takes off a restricted tag (those decide who can see what; a restricted tag the list leaves out is kept), or sets or changes the account link on a card a group built from records reads, changes a field such a group's rule reads on a linked record so that its person could join, or changes a field such a rule reads through this record (a looked-up record's name, a record a total counts); only a signed-in person may \u2014 an API key or assistant cannot (re-sending the stored values is fine)"
-      },
-      {
-        code: "source_invalid",
-        means: "the effective source is malformed \u2014 most often an externalId with no system in effect"
-      },
-      {
-        code: "stale",
-        means: "somebody changed the item's tags while the row was being written, twice; nothing was written for it \u2014 send the row again"
-      },
-      {
-        code: "too_many_tags",
-        means: "the row would give the item more than 50 tags"
-      },
-      {
-        code: "unknown_tag",
-        means: "a tags or tagIds entry is not a tag this item can carry: a name or path that names no tag of this collection or the collection above it that the caller can read, or an id that is not one (one answer for every reason \u2014 missing, deleted, private, another collection's). keepr never creates a tag on a write"
-      }
-    ]
-  },
-  rowStatuses: {
-    created: "a new item was written",
-    updated: "an existing item changed",
-    skipped: "the stored item already matched exactly \u2014 nothing was written",
-    failed: "the row was refused; errors[] says why",
-    "would-create": "dry run: this row would create an item",
-    "would-update": "dry run: this row would change an existing item"
-  },
-  features: {
-    repeatingGroups: true
-  }
-};
+// dist/src/contract.snapshot.files.json
+var contract_snapshot_files_default = { version: "cdcf12100a52", writeContract: { maxBatch: 200 }, errorCodes: { shape: [{ code: "attachment_in_use", means: "409 on DELETE /api/items/{id}/attachments/{aid}: the attachment is the value of a file element (element names it), or of a file column of one entry of a repeating group (element names the group, with column and entryId) \u2014 clear or replace the value with an item write instead (an entry: its own door, or remove the entry); never met by a row" }, { code: "attachments_disabled", means: "a new or changed file value while the collection's attachments are switched off (the stored value, unchanged, still saves) \u2014 or a row that removes a repeating group's entry holding a file then (its files would go with it)" }, { code: "confirmations_not_settable", means: "a value for a confirmations element: keepr keeps that count from the people who confirmed \u2014 leave it out (the stored count re-sent unchanged is fine), and confirm with POST /api/items/{id}/confirmations/{element}" }, { code: "driven_element", means: "the element is system-owned; its value is computed, never sent" }, { code: "file_already_used", means: "the same file named twice under one element, or a file another element of the item already holds" }, { code: "file_not_found", means: "an id under a file element that is not a file this write may use: unknown, deleted, someone else's, or on another item (one answer for every reason)" }, { code: "file_not_settable", means: "a file element's value is set by a person (the item form) or keepr_attach_file, never by an import row, a bulk edit or an automation: only the stored value, unchanged, may ride along \u2014 a new value, another one, or a blank on a stored file is refused" }, { code: "file_too_large", means: "the file is larger than its effective per-file cap: the element's maxSizeMb, lowered to the collection's per-file cap where that is smaller (limitMb carries the cap met; the schema read gives both)" }, { code: "file_wrong_kind", means: 'the element takes photos only (accept: "image") and the file is not one keepr could read as a photo \u2014 a PDF never is' }, { code: "invalid_choice", means: "not one of the element's choice values" }, { code: "invalid_color", means: 'not a color keepr reads: a hex with its # ("#1f6feb", "#abc"), rgb(r, g, b) with whole numbers 0\u2013255, or one of the 22 choice color names; a translucent color is refused too' }, { code: "invalid_currency", means: `not an ISO 4217 code keepr knows, a symbol that names several currencies ("kr"), or outside the element's currencies` }, { code: "invalid_email", means: "not local@domain.tld, or over 254 characters" }, { code: "invalid_entry", means: `an entry of a repeating group is not one: not an object, a key an entry does not take (an entry is { "id"?, "elements": { \u2026 } } or { "id"?, "section": "<title>" } \u2014 a column's value goes under "elements"), its id twice in the list, a section heading on a group without them or with columns beside it, or an entry made a heading (or a heading an entry); position and entryId name it` }, { code: "invalid_entry_op", means: `an entry operation (KPR-677: add, update, remove or move ONE entry of a repeating group \u2014 the itemEntry* endpoints, a bulk row's "entries") is malformed: an unknown op or key, no entryId on update/remove/move, "elements" beside "section", an update with nothing to change, a position that is not a whole number from 1 or is past the end, the same group under "elements" and "entries", entries on a new row, or an entryId in a bulk patch (an entry id belongs to one item: over a selection only "add")` }, { code: "invalid_location", means: "neither an address nor a coordinate pair, or the half the element's accept setting forbids" }, { code: "invalid_lookup", means: "not a 24-hex id or a $ref, or an array on a single-valued element" }, { code: "invalid_phone", means: "unparseable, or impossible in the numbering plan of the element's country" }, { code: "invalid_unit", means: "not a unit of that measurement's measure (or of any of its measures), nor one of its own units, or outside the element's allowlist" }, { code: "invalid_url", means: "not a link keepr stores: a scheme off its list (http, https, mailto, tel, sms, geo, facetime, spotify, zoommtg, msteams, slack), a space inside, or neither a link nor a host" }, { code: "pattern", means: "a short text that does not fit the element's pattern (the collection schema gives it); the message is the element author's own sentence" }, { code: "range", means: "outside a declared bound \u2014 a rating past max, a number past min/max, a date outside its bounds or on a disallowed weekday" }, { code: "repeating_group_not_settable", means: `a value for a repeating group on a path that does not write entries (a rule, multi add, quick add) \u2014 leave it out, or send "" or null; items, bulk, ingest and a public form's submit write entries, and a rule's create-item may copy the trigger item's entries into a group of the new item with the whole value "{{trigger.<group>}}"` }, { code: "required", means: "a required element was empty or missing" }, { code: "sequence_element", means: "the element is numbered by the server (options.sequence); its value cannot be written \u2014 refused in strict mode, dropped otherwise" }, { code: "too_few_entries", means: "a repeating group holds fewer entries than its minEntries (min and count carry both; section headings do not count)" }, { code: "too_long", means: "longer than the element allows (limit carries it): the element's own maxLength, else 255 characters for a short text, 20,000 long (50,000 extended), 100,000 rich (250,000 extended), 2,048 for a url" }, { code: "too_many_dates", means: "more than 1,000 distinct entries in a date or date-time list (limit carries it); a longer list stored before the cap, re-sent unchanged, still saves" }, { code: "too_many_entries", means: "a repeating group's list is longer than its maxEntries (max and count carry both; section headings count); an entry operation's add that would make it so" }, { code: "too_many_files", means: "more files than a file element holds (limit carries it: 20)" }, { code: "type", means: "the value does not coerce to the element's data type" }, { code: "unknown_element", means: "no element of that name on the card (strict mode only; non-strict drops the key)" }, { code: "unknown_entry", means: `an entry's "id" is not one this item's group holds \u2014 keepr issues entry ids: leave "id" out to add a new entry, or read the item for the ids it holds` }, { code: "user_not_found", means: "no existing, active account with that id" }], row: [{ code: "account_already_linked", means: "another item of this collection already links that account" }, { code: "account_link_needs_access", means: "the row sets or changes the account link on a card a group built from records reads, changes a field such a group's rule reads on a linked record so that its person could join, or changes a field such a rule reads through this record (a looked-up record's name, a record a total counts), and the caller lacks, across the collection, the access that group gives \u2014 a manager makes the change" }, { code: "ambiguous_tag", means: "a tags name could be more than one tag; candidates lists each one's tagId and path \u2014 send the path or the id" }, { code: "attestation_required", means: "the record's card requires a signature on every change (record.attest in the schema) and the upsert row would change it without one: no X-Attestation header, an expired one, another person's, or one minted for another card or collection \u2014 nothing is written (as PUT answers 428). A person signed in to keepr signs (POST /api/auth/attest); an API key or an assistant cannot, so ask the person to make the change in keepr. A row that changes nothing is skipped, never refused" }, { code: "card_in_sub_collection", means: "hint.code on a card_not_allowed row: the card belongs to a sub-collection (hint.collection_id, hint.name) \u2014 ingest the row there" }, { code: "card_mismatch", means: "an upsert matched an item of a different card; card cannot change on upsert" }, { code: "card_not_allowed", means: "the card exists but is not writable in this collection" }, { code: "card_unknown", means: "no card definition with that key or id" }, { code: "duplicate", means: "create mode, and that (system, externalId) pair already exists \u2014 switch to upsert" }, { code: "duplicate_value", means: 'another item of the card already holds this value of a unique element (text and email compared ignoring case); itemId and title name it when you can read it \u2014 use mode "upsert" keyed on the element to re-run an import' }, { code: "element_read_only", means: 'reason "grant": the element is shown to the caller but only some people may change it (an element rule of the collection) \u2014 the row changes it, so nothing is written for the row. Leave it out, or send the stored value unchanged (on a new record, its default); an element HIDDEN from the caller is never named this way: it answers unknown_element, as a name the card does not have' }, { code: "externalId_required", means: "upsert mode with no source.externalId on the row" }, { code: "forbidden_card", means: "the caller's grants do not cover that card" }, { code: "forbidden_item", means: "an upsert matched an item the caller may not modify" }, { code: "formula_too_costly", means: "the row's calculations over a repeating group \u2014 its calculated columns and the totals that read the group \u2014 would need more work than one save allows, so nothing is written for the row; element (and column) name the costliest when the caller can read it. Send fewer entries per item, or ask the card's manager to simplify the formula" }, { code: "insufficient_scope", means: "the row removes a repeating group's entry whose file column holds files, and letting files go needs a key or connection with delete (`requiredScope`); nothing was written for it \u2014 send the entry again, or use a credential that has delete" }, { code: "internal", means: "an unexpected server error on this row; the row was not written" }, { code: "invalid_tag_ids", means: "tags is not a list of tag names, paths or ids, tagIds is not a list of tag ids, or the row sends both" }, { code: "item_locked", means: "the record's card has locked it (record.lock in the schema): an upsert row that would change it \u2014 an element value, its tags \u2014 or an attachment added to or removed from it, is refused and nothing is written (as PUT refuses); a row that changes nothing is skipped, never refused. A manager's unlock reopens it, and the write that lands closes it again. A dry run refuses what its commit will: a row repeating a record an earlier row of the request creates, or one whose unlock an earlier row spends, is judged against that record as the commit will meet it" }, { code: "item_too_large", means: "the row would leave the item holding more than limits.itemBytes (8 MB) of element values, so nothing is written for the row; limit, size and element (the largest element the caller can change) say how far. An item already past it may always be saved smaller or unchanged. Send fewer entries or shorter text per item" }, { code: "lookup_filtered_out", means: "the element is a strict lookup and the record is outside its filter (the collection schema gives filter and strict); itemIds names the refused ids \u2014 choose a record the filter offers (list them with the filter in ?q=). A record the item already holds always saves" }, { code: "lookup_not_found", means: "a plain 24-hex id is not a readable item of this collection" }, { code: "plan_limit", means: `the row would take the collection's owner past a limit of their plan (meter: items, storage, rules, people, forms or submissions; limit is the limit that applies), so nothing is written for the row and the rows before it stand. used, plan and lifts are added only when the caller is the collection's owner; anyone else is told to ask the owner. Reading, editing, exporting and deleting are never refused for a plan; the same 409 answers every other door that adds (docs/SCHEMA.md "Plan limits")` }, { code: "private_tag_not_allowed", means: "a tags entry is a private tag: only its owner sees it and it is never on an item, so a row carries collection tags only" }, { code: "ref_unresolved", means: "a $ref matched no readable item, or its target row failed earlier in the request" }, { code: "ref_wrong_card", means: "the reference resolves to an item whose card the element does not accept" }, { code: "restricted_tag", means: "the row adds, or takes off, a restricted tag, and only managers of the collection it belongs to may; a restricted tag the list leaves out is kept, not refused" }, { code: "rule_owned_tag", means: "a tag a strict rule applies, and only the rule \u2014 a row cannot add it by hand" }, { code: "session_required", means: "only a person signed in to keepr may make this change, never an API key or an assistant: the row adds or takes off a restricted tag (those decide who can see what; a restricted tag the list leaves out is kept), or sets or changes the account link on a card a group built from records reads, changes a field such a group's rule reads on a linked record so that its person could join, or changes a field such a rule reads through this record (a looked-up record's name, a record a total counts); only a signed-in person may \u2014 an API key or assistant cannot (re-sending the stored values is fine)" }, { code: "source_invalid", means: "the effective source is malformed \u2014 most often an externalId with no system in effect" }, { code: "stale", means: "somebody changed the item's tags while the row was being written, twice; nothing was written for it \u2014 send the row again" }, { code: "too_many_tags", means: "the row would give the item more than 50 tags" }, { code: "unknown_tag", means: "a tags or tagIds entry is not a tag this item can carry: a name or path that names no tag of this collection or the collection above it that the caller can read, or an id that is not one (one answer for every reason \u2014 missing, deleted, private, another collection's). keepr never creates a tag on a write" }] }, auth: { scopes: { read: "GET, HEAD, OPTIONS", write: "creating and changing items, attachments and ingest \u2014 every other method except the card surface", cards: "creating and changing cards, element sets and card layouts (never delete of a collection)", delete: "deleting, beside write or cards: every DELETE that removes something, bulk op delete and reject, intake-review reject, a replace-mode write carrying elements (PUT /api/items/{id}, bulk update rows, ingest upsert \u2014 whenever the effective merge is false), and a collection PUT that drops a card from cards[] \u2014 off by default, and never implied" } } };
 
 // dist/src/contract.js
-var SNAPSHOT = contract_snapshot_default;
+var SNAPSHOT = contract_snapshot_files_default;
 var REFETCH_COOLDOWN_MS = 6e4;
 var FETCH_TIMEOUT_MS = 3e3;
 var ContractCache = class {
@@ -2944,7 +2061,7 @@ This is a bug in keepr-mcp, not something the user did.`)) : guard(def, ctx, arg
 
 // dist/src/server.js
 var SERVER_NAME = "keepr";
-var SERVER_VERSION = "0.40.0";
+var SERVER_VERSION = "0.41.0";
 var WEBSITE_URL = "https://keepr.cloud";
 var KQL_REFERENCE_URL = `${WEBSITE_URL}/docs/guides/finding-and-lists/kql-reference`;
 function brandIcons(publicUrl = process.env.KEEPR_PUBLIC_URL || "https://api.keepr.cloud") {
@@ -4469,12 +3586,12 @@ function matchByKeys(files, mode, source) {
     const key = candidates.find((k) => (lookup(k) ?? []).length) ?? null;
     const ids = key ? lookup(key) : null;
     if (!key || !ids) {
-      unmatched.push({ file, reason: `no item has ${source.label} ${candidates.map((k) => `"${k}"`).join(" or ")}` });
+      unmatched.push({ file, reason: `no item has ${source.label} ${candidates.map((k) => identifierQuoted(k)).join(" or ")}` });
       continue;
     }
     const distinct = [...new Set(ids)];
     if (distinct.length > 1) {
-      unmatched.push({ file, reason: `${distinct.length} items have ${source.label} "${key}" \u2014 name the item in a map instead` });
+      unmatched.push({ file, reason: `${distinct.length} items have ${source.label} ${identifierQuoted(key)} \u2014 name the item in a map instead` });
       continue;
     }
     pairs.push({ file, itemId: distinct[0], key });
@@ -4483,7 +3600,7 @@ function matchByKeys(files, mode, source) {
   const without = [...source.keys.entries()].filter(([, ids]) => !ids.some((id) => used.has(id))).map(([k]) => k);
   return { pairs, unmatched, itemsWithoutFile: without };
 }
-async function matchByMap(root, map, resolve2, checkedReal) {
+async function matchByMap(root, map, resolve2, checkedReal, keyHint = "give an item id, or an external_id from a keepr_ingest run in this session") {
   const pairs = [];
   const unmatched = [];
   const rootReal = checkedReal ?? await realpath2(root);
@@ -4500,7 +3617,7 @@ async function matchByMap(root, map, resolve2, checkedReal) {
       const rel = relative(root, path).split(sep).join("/");
       const shown = { path, rel, name: basename3(path) };
       if (!itemId) {
-        unmatched.push({ file: shown, reason: `no item for "${key}" \u2014 give an item id, or an external_id from a keepr_ingest run in this session` });
+        unmatched.push({ file: shown, reason: `no item for ${identifierQuoted(key)} \u2014 ${keyHint}` });
         continue;
       }
       if (rel.split("/").some((seg) => seg.startsWith("."))) {
@@ -4965,13 +4082,13 @@ function matchFingerprint(files) {
   return createHash2("sha256").update(rows.join("\n")).digest("hex");
 }
 function signatureOf(args) {
-  const pick = { folder: args.folder ?? null, run_id: args.run_id ?? null, map: args.map ?? null, collection: args.collection ?? null, match_element: args.match_element ?? null, match: args.match ?? null, element: args.element ?? null };
+  const pick = { folder: args.folder ?? null, run_id: args.run_id ?? null, map: args.map ?? null, collection: args.collection ?? null, match_element: args.match_element ?? null, source_system: args.source_system ?? null, match: args.match ?? null, element: args.element ?? null };
   return createHash2("sha256").update(JSON.stringify(pick)).digest("hex");
 }
 var attachFolderTool = {
   name: "keepr_attach_folder",
   title: "Attach a folder from this computer",
-  description: "Attaches a whole folder of files (photos, receipts, scans, videos, up to 100 MB each) from this computer's disk to the keepr items they belong to; nothing passes through the conversation. Files match items by subfolder or filename, against this session's keepr_ingest runs (the default), a `map`, or `collection` + `match_element`. It takes two calls: dry_run: true shows the match and returns a `confirm` token; the same arguments with dry_run: false and that token start the upload, followed with keepr_attach_status. A re-run skips files already there.",
+  description: "Attaches a whole folder of files (photos, receipts, scans, videos, up to 100 MB each) from this computer's disk to the keepr items they belong to; nothing passes through the conversation. Files match items by subfolder or filename, against this session's keepr_ingest runs (the default), a `map`, `collection` + `match_element`, or `collection` + `source_system` (an import's external ids). Two calls: dry_run: true shows the match and returns a `confirm` token; the same arguments with dry_run: false and that token upload, then keepr_attach_status. A re-run skips files already there.",
   writes: true,
   // Destructive ⚑ (the coordinator's call, KPR-256): by the narrow MCP sense
   // it only adds — a single file element that holds a file is left alone —
@@ -4989,6 +4106,7 @@ var attachFolderTool = {
     map: z.record(z.string(), z.union([z.string(), z.array(z.string())])).optional().describe('Explicit: {"<external_id or item_id>": ["file.jpg", "sub/other.jpg"]}, names relative to the folder. Beats filename matching.'),
     collection: z.string().optional().describe("With match_element: the collection whose items the files belong to (name or id)."),
     match_element: z.string().optional().describe(`Match the filename (or subfolder) to this element's value, e.g. "receiptNo", compared without case. For items not written in this session.`),
+    source_system: z.string().optional().describe("With `collection`: match the filename (or subfolder) to the external id of the items an import wrote under this source_system, read from keepr, so an import made in another process or session matches too. Compared exactly, case included."),
     match: z.enum(["auto", "folder", "stem", "exact"]).optional().describe("How a file names its item. auto (default): its subfolder (photos/molly-blake/front.jpg), else its filename, else its filename without a trailing counter (leah-park-2.jpg, R-1042.pdf). folder | stem | exact force one."),
     element: z.string().optional().describe("Put the files INTO this file element of each item (keepr_schema lists them) instead of the item's other attachments. A single file element is never replaced from here.")
   },
@@ -5033,7 +4151,7 @@ var attachFolderTool = {
     if (args.map && typeof args.map === "object") {
       const runId = typeof args.run_id === "string" ? args.run_id : null;
       const byExt = (k) => [k, k.normalize("NFC"), k.normalize("NFD")].map((v) => ctx.ledger.resolveExternalId(v, runId)?.itemId ?? null).find(Boolean) ?? null;
-      matched = await matchByMap(root, args.map, (k) => HEX242.test(k) ? k : byExt(k), root);
+      matched = await matchByMap(root, args.map, (k) => HEX242.test(k) ? k : byExt(k), root, ctx.filesOnly ? "give an item id (the keepr connector's import result lists each row's)" : void 0);
       sourceLabel = "the map";
     } else {
       let walk;
@@ -5143,58 +4261,98 @@ ${refused.slice(0, 20).map((f) => `  ${f.file.rel}: ${f.refused}`).join("\n")}`)
     ].join("\n"), { ok: true, dryRun: false, job_id: job.id, counts: { files: going.length, refused: refused.length, unmatched: matched.unmatched.length, bytes } });
   }
 };
+async function readKeys(ctx, collection, keyOf) {
+  const keys = /* @__PURE__ */ new Map();
+  let seen = 0;
+  let total = null;
+  for (let skip = 0; skip < ELEMENT_ITEMS_MAX; skip += LIST_PAGE) {
+    const res = await ctx.http.request({
+      path: "/api/items",
+      query: { collection_id: collection.id, limit: LIST_PAGE, skip },
+      maxWaitMs: PLAN_WAIT_MS
+    });
+    if (res.status === 429)
+      return { error: "keepr is busy for this key right now (its rate limit \u2014 an upload running in the background shares it). Nothing was sent; try the dry run again in a minute." };
+    total = res.totalCount ?? total;
+    if (!res.ok)
+      return { error: `keepr would not list the items of ${quoted(collection.name)} (HTTP ${res.status}).` };
+    const page = Array.isArray(res.body) ? res.body : [];
+    for (const it of page) {
+      const k = keyOf(it);
+      if (!k)
+        continue;
+      if (!keys.has(k))
+        keys.set(k, []);
+      keys.get(k).push(String(it._id));
+    }
+    seen += page.length;
+    if (page.length < LIST_PAGE || res.totalCount !== null && seen >= res.totalCount)
+      break;
+  }
+  return { keys, seen, total };
+}
 async function keySource(ctx, args) {
   const matchElement = typeof args.match_element === "string" ? args.match_element.trim() : "";
+  const sourceSystem = typeof args.source_system === "string" ? args.source_system.trim() : "";
+  if (matchElement && sourceSystem) {
+    return { error: "Give `match_element` or `source_system`, not both: one says the filenames carry an element's value, the other that they carry the external ids an import wrote." };
+  }
+  const orSession = ctx.filesOnly ? "a map of item ids" : "a map, or this session's import,";
+  if (sourceSystem) {
+    if (!args.collection)
+      return { error: "source_system needs `collection`: the collection whose items the import wrote." };
+    const resolved = ctx.resolveCollection(String(args.collection));
+    if (!resolved.ok)
+      return { error: resolved.message };
+    if (!resolved.row.writable)
+      return { error: `This key cannot write to ${quoted(resolved.row.name)}, so it cannot attach files there: ${resolved.row.blockedReason ?? "insufficient access"}.` };
+    const read = await readKeys(ctx, resolved.row, (it) => {
+      const src = it.source;
+      if (!src || src.system !== sourceSystem || typeof src.externalId !== "string" || !src.externalId)
+        return null;
+      return src.externalId.normalize("NFC");
+    });
+    if ("error" in read)
+      return read;
+    if (!read.keys.size)
+      return { error: `No item in ${quoted(resolved.row.name)} has an external id from source_system ${identifierQuoted(sourceSystem)}. It is the source_system the import was written with; ${ctx.filesOnly ? "the keepr connector's import result names it" : "the keepr_ingest result names it"}.` };
+    const cut = read.total !== null && read.total > read.seen;
+    return {
+      kind: "keys",
+      keys: read.keys,
+      caseless: false,
+      label: `external id (source_system ${identifierQuoted(sourceSystem)})`,
+      ...cut ? { note: `Only the first ${read.seen} of ${read.total} items of ${quoted(resolved.row.name)} were read for source_system ${identifierQuoted(sourceSystem)}; a file for a later item reads as unmatched \u2014 use ${orSession} for those.` } : {}
+    };
+  }
   if (matchElement) {
     const resolved = ctx.resolveCollection(String(args.collection ?? ""));
     if (!resolved.ok)
       return { error: args.collection ? resolved.message : "match_element needs `collection`: the collection whose items the files belong to." };
-    const keys2 = /* @__PURE__ */ new Map();
-    let seen = 0;
-    let total = null;
-    for (let skip = 0; skip < ELEMENT_ITEMS_MAX; skip += LIST_PAGE) {
-      const res = await ctx.http.request({
-        path: "/api/items",
-        query: { collection_id: resolved.row.id, limit: LIST_PAGE, skip },
-        maxWaitMs: PLAN_WAIT_MS
-      });
-      if (res.status === 429)
-        return { error: "keepr is busy for this key right now (its rate limit \u2014 an upload running in the background shares it). Nothing was sent; try the dry run again in a minute." };
-      total = res.totalCount ?? total;
-      if (!res.ok)
-        return { error: `keepr would not list the items of ${quoted(resolved.row.name)} (HTTP ${res.status}).` };
-      const page = Array.isArray(res.body) ? res.body : [];
-      for (const it of page) {
-        const v = it.elements?.[matchElement];
-        if (typeof v !== "string" && typeof v !== "number")
-          continue;
-        const k = foldKey(String(v));
-        if (!k)
-          continue;
-        if (!keys2.has(k))
-          keys2.set(k, []);
-        keys2.get(k).push(String(it._id));
-      }
-      seen += page.length;
-      if (page.length < LIST_PAGE || res.totalCount !== null && seen >= res.totalCount)
-        break;
-    }
-    if (!keys2.size)
+    const read = await readKeys(ctx, resolved.row, (it) => {
+      const v = it.elements?.[matchElement];
+      if (typeof v !== "string" && typeof v !== "number")
+        return null;
+      return foldKey(String(v)) || null;
+    });
+    if ("error" in read)
+      return read;
+    if (!read.keys.size)
       return { error: `No item in ${quoted(resolved.row.name)} has a value in "${matchElement}". ${ctx.filesOnly ? "Check the element's name on the card." : "Check the element's name with keepr_schema."}` };
-    const cut = total !== null && total > seen;
+    const cut = read.total !== null && read.total > read.seen;
     return {
       kind: "keys",
-      keys: keys2,
+      keys: read.keys,
       caseless: true,
       label: `"${matchElement}"`,
-      ...cut ? { note: `Only the first ${seen} of ${total} items of ${quoted(resolved.row.name)} were read for "${matchElement}"; a file for a later item reads as unmatched \u2014 use a map, or this session's import, for those.` } : {}
+      ...cut ? { note: `Only the first ${read.seen} of ${read.total} items of ${quoted(resolved.row.name)} were read for "${matchElement}"; a file for a later item reads as unmatched \u2014 use ${orSession} for those.` } : {}
     };
   }
   const runId = typeof args.run_id === "string" && args.run_id ? args.run_id : null;
   const runs = runId ? [ctx.ledger.byRunId(runId)].filter((r) => r !== null) : ctx.ledger.all();
   if (!runs.length) {
     return {
-      error: runId ? `No committed keepr_ingest run "${runId}" in this session (${ctx.ledger.size ? `known: ${ctx.ledger.knownRunIds().join(", ")}` : "none is remembered"}).` : ctx.filesOnly ? "Nothing to match the files against: this server does not see imports made through the keepr connector. Pass `collection` + `match_element` (an element whose value the filenames carry), or `map` (item ids per file)." : "Nothing to match the files against: no keepr_ingest run in this session. Pass `map` (item ids per file), or `collection` + `match_element`."
+      error: runId ? `No committed keepr_ingest run "${runId}" in this session (${ctx.ledger.size ? `known: ${ctx.ledger.knownRunIds().join(", ")}` : "none is remembered"}).` : ctx.filesOnly ? "Nothing to match the files against: this server does not see imports made through the keepr connector. Pass `collection` + `source_system` (the source_system the import was written with; files are named for each item's external id), `collection` + `match_element` (an element whose value the filenames carry), or `map` (item ids per file)." : "Nothing to match the files against: no keepr_ingest run in this session. Pass `collection` + `source_system` (an earlier import), `map` (item ids per file), or `collection` + `match_element`."
     };
   }
   const keys = /* @__PURE__ */ new Map();
@@ -5279,7 +4437,7 @@ var attachFolderFilesOnlyTool = {
   title: "Attach a folder from this computer",
   // What it does and when it fits — no lines aimed at the model's behaviour,
   // no tool this server does not list (the Claude directory's review, KPR-251).
-  description: "Attaches a whole folder of files (photos, receipts, scans, videos, up to 100 MB each) from this computer's disk to the keepr items they belong to; nothing passes through the conversation. keepr_attach_local_file fits one file or two. Files match items by subfolder or filename, against `collection` + `match_element` (an element whose value the filenames carry, such as a receipt number) or a `map` of item ids. Two calls: dry_run: true shows the match and returns a `confirm` token; the same arguments with dry_run: false and that token start the upload, followed with keepr_attach_status.",
+  description: "Attaches a folder of files (photos, receipts, scans, videos, up to 100 MB each) from this computer's disk to the keepr items they belong to; nothing passes through the conversation. keepr_attach_local_file fits one file or two. Files match items by subfolder or filename, against `collection` + `source_system` (an import's external ids), `collection` + `match_element` (an element's value, such as a receipt number) or a `map` of item ids. Two calls: dry_run: true shows the match and returns a `confirm` token; the same arguments with dry_run: false and that token upload, then keepr_attach_status.",
   // Destructive ⚑ (the coordinator's call, KPR-256): by the narrow MCP sense
   // it only adds — a single file element that holds a file is left alone —
   // but it copies files off the person's computer, the riskiest thing any
@@ -5294,6 +4452,7 @@ var attachFolderFilesOnlyTool = {
     dry_run: z.boolean().describe("REQUIRED. true shows the match, uploads nothing and returns a `confirm` token. false (with that token) starts the upload and returns a job id. Running a folder again skips files already on their items (same name and size)."),
     map: z.record(z.string(), z.union([z.string(), z.array(z.string())])).optional().describe('Explicit: {"<item_id>": ["file.jpg", "sub/other.jpg"]}, names relative to the folder. Beats filename matching.'),
     match_element: z.string().optional().describe(`Match the filename (or subfolder) to this element's value, e.g. "receiptNo", compared without case.`),
+    source_system: z.string().optional().describe('With `collection`: match the filename (or subfolder) to the external id of the items an import wrote under this source_system, e.g. a file R-1042.pdf to the item whose external id is "R-1042". Read from keepr, so an import made through the keepr connector matches. Compared exactly, case included.'),
     element: z.string().optional().describe("Put the files INTO this file element of each item, by its name, instead of the item's other attachments. A single file element that already holds a file is left alone.")
   }
 };

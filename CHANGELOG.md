@@ -3,6 +3,12 @@
 Each release lists the two versions it carries: the skill's (which is also the
 plugin's) and the server's.
 
+## 2.42.0 — 2026-10-25
+
+Skill 2.42.0, keepr-mcp 0.41.0.
+
+- Your assistant can attach a folder of files to items it just imported, even though the import and the folder run in different places: keepr's local file tools read the items from keepr and match each file, or its subfolder, to the external id of an item written under the import's source_system, so a folder of R-1042.pdf and R-1043.pdf lands on the right records without a map of ids. The connector's import result now names the collection and source_system to pass. A file that matches no item, or whose name differs only in case, is left unmatched rather than guessed, and a person who can only read a collection is told so before anything is read.
+
 ## 2.41.0 — 2026-10-24
 
 Skill 2.41.0, keepr-mcp 0.40.0. Also the first release of 2.40.0, 2.39.0 and 2.38.0, below.

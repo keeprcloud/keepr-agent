@@ -98,12 +98,13 @@ this session); nothing passes through the conversation:
 
 - `keepr_attach_local_file` puts files at a path onto one item.
 - `keepr_attach_folder` puts a whole folder onto the items its files belong
-  to. It cannot see an import made through the connector, so tell it how the
-  files match: `collection` + `match_element` (an element whose value the
-  filenames carry, such as a receipt number), or a `map` of item ids to files.
-  Dry-run it, show the person the match, then run it with the `confirm` the
-  dry run gave; it uploads in the background and `keepr_attach_status`
-  reports.
+  to. It cannot see an import made through the connector, but it reads keepr,
+  so tell it how the files match: `collection` + `source_system` (the one you
+  imported with; files named for each item's external id), `collection` +
+  `match_element` (an element whose value the filenames carry, such as a
+  receipt number), or a `map` of item ids to files. Dry-run it, show the
+  person the match, then run it with the `confirm` the dry run gave; it
+  uploads in the background and `keepr_attach_status` reports.
 
 A file or two that you hold yourself go through `keepr_attach_file`. Some
 older setups (the desktop extension) carry one server with every tool, where
@@ -209,7 +210,7 @@ Two rules hold in every chapter:
 
 ## This copy
 
-This is keepr skill **2.41.0**. Every fact that changes comes from keepr, so a
+This is keepr skill **2.42.0**. Every fact that changes comes from keepr, so a
 copy a release behind is still right about the way of working.
 
 ## Files

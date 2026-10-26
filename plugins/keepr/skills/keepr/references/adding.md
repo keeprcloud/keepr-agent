@@ -294,19 +294,23 @@ how large a file it takes):
 
 ```
 keepr_attach_local_file  { item_id: "<24-hex>", files: [{ path: "/Users/…/receipt.pdf" }] }
-keepr_attach_folder  { folder: "/Users/…/receipts", collection: "Expenses", match_element: "receipt", dry_run: true }   # show this to the person → confirm
+keepr_attach_folder  { folder: "/Users/…/receipts", collection: "Expenses", source_system: "receipts-2026", dry_run: true }   # files named for each item's external id; show this to the person → confirm
 keepr_attach_folder  { …the same arguments…, dry_run: false, confirm: "…" }       # → job id
 keepr_attach_status  { job_id: "att-…" }                                   # every minute or so, then once at the end
 ```
 
-The local file tools cannot see an import you made through the connector, so
-`keepr_attach_folder` needs to be told how the files match: `collection` +
-`match_element` (an element whose value the filenames carry, such as a
-receipt number or a name) or a `map` of item ids to files
-(`{"<item id>": ["IMG_4471.jpg"]}`; `keepr_ingest`'s result has each row's
-item id). Where one server carries every tool (the desktop extension),
-the folder tool also matches this session's `keepr_ingest` external ids by
-default; its description says so. The folder must be one keepr's file tools
+The local file tools run in another process from the connector, so they do not
+see the import you just made; they read keepr instead. `keepr_attach_folder`
+needs to be told how the files match: `collection` + `source_system` (the
+`source_system` you imported with: each file, or its subfolder, is named for
+the external id of its item), `collection` + `match_element` (an element whose
+value the filenames carry, such as a receipt number or a name) or a `map` of
+item ids to files (`{"<item id>": ["IMG_4471.jpg"]}`; `keepr_ingest`'s result
+has each row's item id). A committed `keepr_ingest` with external ids ends
+with a FILES line that names the `collection` and `source_system` to pass.
+Where one server carries every tool (the desktop extension), the folder tool
+also matches this session's `keepr_ingest` external ids by default; its
+description says so. The folder must be one keepr's file tools
 can read: a path on the computer they run on, one the person names or chose
 for this session. If it cannot read it, it says why — then ask the person for
 the files instead (below).
@@ -371,9 +375,10 @@ Rules the folder tool already follow, so you don't have to:
 2. Build rows whose `source.externalId` is the thing that also identifies the
    photos — the subject's slug, the file stem, the folder name.
 3. `keepr_ingest` with `dry_run: true`, fix, then `dry_run: false`.
-4. `keepr_attach_folder` with `dry_run: true` — matching on an element the
-   filenames carry (`match_element`), or a `map` of the item ids the ingest
-   returned; check the pairing
+4. `keepr_attach_folder` with `dry_run: true` — matching on the external ids
+   you just wrote (`collection` + the `source_system` you ingested with), an
+   element the filenames carry (`match_element`), or a `map` of the item ids
+   the ingest returned; check the pairing
    with the person, then run it.
 5. Report: items created, photos attached, and **anything unmatched**, by name.
 

@@ -72,4 +72,14 @@ at [keepr.cloud/docs/guides/assistants](https://keepr.cloud/docs/guides/assistan
 Report a problem in the repository's
 [issues](https://github.com/zbiewend/keepr-agent/issues).
 
+## Contact
+
+- **Help with keepr:** support@keepr.cloud
+- **A question about your data or privacy:** privacy@keepr.cloud
+- **A security problem:** security@keepr.cloud, also published at
+  [keepr.cloud/.well-known/security.txt](https://keepr.cloud/.well-known/security.txt).
+  Please write rather than open a public issue.
+
+Never put a key or a token in a message.
+
 MIT licensed: see `LICENSE`.
