@@ -71,7 +71,10 @@ way, and a link's address counts), links, emails, colors, a phone's digits
 numbered element's number (`WO-000417`), the Notes and the item's tags by
 name. What it does not: numbers, dates, amounts, measurements, yes/no, ratings,
 people, linked items' titles and file names — filter those by their element
-instead. It never finds anything the person cannot read.
+instead — nor a MASKED element (keepr_schema says `masked`: a door code, a
+combination), even though you read and write its value as usual: find that
+item by its other details, or by the element itself (`code = "4417"`). It
+never finds anything the person cannot read.
 
 It is exact: the count and the items come from the same search, never a
 sample. Quote a number you search for (`text ~ "1042"`): unquoted, keepr

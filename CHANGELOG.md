@@ -3,6 +3,12 @@
 Each release lists the two versions it carries: the skill's (which is also the
 plugin's) and the server's.
 
+## 2.44.0 — 2026-10-26
+
+Skill 2.44.0, keepr-mcp 0.43.0.
+
+- keepr_schema marks a masked element: one a card shows as dots until a person chooses Show or Copy, such as a door code or a padlock combination. Your assistant reads and writes the value as usual, and learns that a text search never finds it, so it searches by the record's other details instead.
+
 ## 2.43.0 — 2026-10-26
 
 Skill 2.43.0, keepr-mcp 0.42.0.
