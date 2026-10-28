@@ -3,6 +3,24 @@
 Each release lists the two versions it carries: the skill's (which is also the
 plugin's) and the server's.
 
+## 2.48.0 — 2026-10-28
+
+Skill 2.48.0, keepr-mcp 0.46.0. Also the first release of 2.47.0 and 2.46.0, below.
+
+- When your assistant proposes a brand-new card, it now also looks in Discover and names up to three ready-made packages that fit it well, so you hear about one even if the assistant did not search first. The proposal itself is unchanged, and nothing is added until you say yes.
+
+## 2.47.0 — 2026-10-28
+
+Skill 2.47.0, keepr-mcp 0.45.0.
+
+- Your assistant can move a team in from Jira or Azure DevOps: give it the CSV either product exports and it imports the history into a Software delivery collection. It maps each column to its element, keeps the source key so running the same file again changes nothing, and writes epics, sprints and items first and their links second so every link finds its row. It matches people by email and leaves anyone without a keepr account unassigned, naming them. A status it does not know is placed by its category, and a type the card lacks is reported, never dropped. It also says which of keepr's export headers each product's importer maps on its own.
+
+## 2.46.0 — 2026-10-28
+
+Skill 2.46.0, keepr-mcp 0.45.0.
+
+- Before you add a Discover package, your assistant can show you what adding it would do in your collection: the cards and element sets it brings, the filters, charts and layouts it adds or renames because yours already use the name, what it leaves out, and every rule, notification and form, each of which arrives paused or off until you turn it on. Nothing is added by the preview. It ends with the link that opens Add to collection with the same collection, add-ons and examples already chosen. A health package is always added by you, from that link. The assistant needs a connection that can change cards to preview.
+
 ## 2.45.0 — 2026-10-28
 
 Skill 2.45.0, keepr-mcp 0.44.0.

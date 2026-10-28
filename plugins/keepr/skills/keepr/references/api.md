@@ -375,6 +375,21 @@ stored `source` never changes, and `card` cannot change on upsert.
 `merge: false` (replace, blanking what a row omits) needs the `delete` scope;
 this skill never sends it.
 
+### Finding a person by email
+
+A person element takes an account's id, never a name or an address. To find the account
+behind an address you were given:
+
+```bash
+curl -s -H "Authorization: Bearer $KEEPR_API_KEY" \
+  "https://api.keepr.cloud/api/users/search?email=ana%40example.com"
+```
+
+An exact address (any case) answers the one active account (`_id`, name, `email`), or `[]`.
+There is no way to list or guess at people: no match means no account, and the element
+is left empty and the person told (`references/sdlc-import.md` shows the report). The
+connector's tools have no call for this.
+
 ### Me too — the person's own
 
 A **Me too** count is keepr's: never in a row. The person (or a key acting

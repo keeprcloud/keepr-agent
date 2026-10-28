@@ -47,16 +47,33 @@ that card (below), with no search.
    on what it lacks for this person ("Vehicle care: services, costs and
    reminders for each car. It has nowhere for tyre pressures."). Say which one
    you would pick.
+   `keepr_propose_card` for a new card also searches Discover on its own, and
+   when up to three packages are a strong match its answer lists them under
+   `DISCOVER:` (and as `discover`). That is a backstop for an assistant that
+   skipped this step, not a replacement for it: show those to the person
+   before they apply the proposal. The proposal itself is unchanged.
 4. **Build from scratch only when none fits, or the person asks you to.** Say
    in one sentence that Discover had nothing that fits, then propose the card
    as below.
-5. **Hand over the link.** An answer that finds or reads a package ends with
-   its install link. Give it to the person with three steps: open it;
+5. **Preview the one they pick**, when your connection can change cards:
+   `action: "preview"` with the package `key`, the `collection` it goes into
+   (by name or id) or a `new_collection` name, the `add_ons` they want (leave
+   it out for the ones the listing ticks), and `examples: true` only if they
+   want the example records (a new collection or examples needs a connection
+   that can also write records). It adds nothing. Tell them in a few lines what
+   it would add, what it would rename or leave out because the collection
+   already has one, and what arrives paused or off until they turn it on.
+   Its answer carries a token for keepr's install and the install link with
+   those choices filled in. A health package's preview says the person adds
+   it: an assistant never does.
+6. **Hand over the link.** An answer that finds, reads or previews a package
+   ends with its install link (a preview's opens with the collection, add-ons
+   and examples chosen). Give it to the person with three steps: open it;
    check the collection it goes into and the add-ons ticked; press **Add to
    collection**. Nothing is added until they press it, and its rules arrive
    paused. A health package always goes this way: it asks for the person's
    own consent.
-6. **Extend a good fit afterwards.** What a good fit lacks becomes a card
+7. **Extend a good fit afterwards.** What a good fit lacks becomes a card
    change once it is installed (`keepr_propose_card` with a `change`, on the
    card the package made), not a second card beside it. Read the collection's
    schema again first: the card keys are the ones keepr gave on install.
