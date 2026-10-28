@@ -15,6 +15,7 @@ or nothing**. The preview is what the person agrees to — so read it to them.
 | the person wants… | use |
 | --- | --- |
 | a new card, or a field added to one card | `keepr_propose_card` (`references/cards.md`) |
+| to start keeping a new kind of record — its cards, rules and dashboards together | Discover first: a ready-made package may already hold it (`references/cards.md`, "Discover first"); a setup when none fits |
 | a list, table, form or page laid out differently | a setup |
 | filters or quick adds for everyone | a setup |
 | a named list on each item of the items that link to it — an epic's "Open work items" | a setup (related lists) |

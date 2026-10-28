@@ -3,6 +3,12 @@
 Each release lists the two versions it carries: the skill's (which is also the
 plugin's) and the server's.
 
+## 2.45.0 — 2026-10-28
+
+Skill 2.45.0, keepr-mcp 0.44.0.
+
+- Your assistant checks Discover before it builds a card from scratch. Asked to keep a new kind of record, it searches keepr's catalog of ready-made cards, bundles and collections, reads what the best ones hold (every card and element with its help and choices, the add-ons, and what each rule does), and shows you at most three, each with what fits and what is missing. When one fits, it gives you the link that opens Add to collection with it ready; you check the collection and the add-ons and press Add. What a good fit lacks it adds as a card change afterwards.
+
 ## 2.44.0 — 2026-10-26
 
 Skill 2.44.0, keepr-mcp 0.43.0.

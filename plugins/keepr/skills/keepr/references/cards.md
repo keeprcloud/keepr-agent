@@ -19,9 +19,47 @@ on* — and so should you.
 | create it | `keepr_apply_card` with the proposal token and the collection name typed back |
 | propose a change | `keepr_propose_card` with a `change` argument |
 | apply the change | `keepr_apply_card` with the token, the collection name typed back, and — for a destructive change — the card name typed back too |
+| look for a ready-made card first | `keepr_discover` (`search`, then `read`) |
 
 A proposal token is good for 30 minutes and is used once. The apply step sends
 exactly the payload that was previewed; nothing is recomputed between the two.
+
+## Discover first
+
+When the person wants to start keeping **a new kind of record** — something
+no card of theirs holds yet — search **Discover** before you propose a card or
+a setup for it. Discover is keepr's catalog of ready-made cards, bundles and
+collections, each built for one kind of record with its elements, rules and
+dashboards already worked out. A package that fits gives the person all of it
+in one step; a card built from scratch is for when nothing fits.
+
+A field added to a card they already have is not a new kind of record: change
+that card (below), with no search.
+
+1. **Search** with `keepr_discover`, `action: "search"`, in the person's own
+   words for the kind of record ("vehicle maintenance", "recipes"), not in
+   card terms. `collections: true` also finds the published collections they
+   can follow (a reference list kept by its publisher), which they follow
+   rather than add.
+2. **Read** the likely ones with `action: "read"`: every card and element, the
+   add-ons, what each rule does. Judge the fit from that, not from the name.
+3. **Show at most three candidates**, each with one line on how it fits and one
+   on what it lacks for this person ("Vehicle care: services, costs and
+   reminders for each car. It has nowhere for tyre pressures."). Say which one
+   you would pick.
+4. **Build from scratch only when none fits, or the person asks you to.** Say
+   in one sentence that Discover had nothing that fits, then propose the card
+   as below.
+5. **Hand over the link.** An answer that finds or reads a package ends with
+   its install link. Give it to the person with three steps: open it;
+   check the collection it goes into and the add-ons ticked; press **Add to
+   collection**. Nothing is added until they press it, and its rules arrive
+   paused. A health package always goes this way: it asks for the person's
+   own consent.
+6. **Extend a good fit afterwards.** What a good fit lacks becomes a card
+   change once it is installed (`keepr_propose_card` with a `change`, on the
+   card the package made), not a second card beside it. Read the collection's
+   schema again first: the card keys are the ones keepr gave on install.
 
 ## Creating a card
 

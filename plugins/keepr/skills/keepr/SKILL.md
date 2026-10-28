@@ -1,6 +1,6 @@
 ---
 name: keepr
-description: Read, add and change records in keepr — the user's collections of structured items — through its API or its MCP tools. Use whenever keepr is named or the user's data lives there. Reading ("what's in my keepr collection", "find the items where…", "how many…", "how much did I spend…"), adding ("add this to keepr", "import this CSV into keepr", or pasted data plus a collection name), managing cards ("add an element to my Book card", "create a card in keepr"), and setting up a collection ("lay out my task tiles", "add a rule that stamps the date when it's done", "notify me when…", "what rules run here", "who changed this"). Covers API-key handling, a collection's schema, KQL queries, totals worked out by keepr, dry-run validation, idempotent re-runs, linking records, attaching files, and proposing card changes and setups against a server-made preview.
+description: Read, add and change records in keepr — the user's collections of structured items — through its API or its MCP tools. Use whenever keepr is named or the user's data lives there. Reading ("what's in my keepr collection", "find the items where…", "how many…", "how much did I spend…"), adding ("add this to keepr", "import this CSV into keepr", or pasted data plus a collection name), managing cards ("add an element to my Book card", "create a card in keepr", looking in Discover for a ready-made one first), and setting up a collection ("lay out my task tiles", "add a rule that stamps the date when it's done", "notify me when…", "what rules run here", "who changed this"). Covers API-key handling, a collection's schema, KQL queries, totals worked out by keepr, dry-run validation, idempotent re-runs, linking records, attaching files, and proposing card changes and setups against a server-made preview.
 ---
 
 # keepr
@@ -193,7 +193,7 @@ demand rather than up front.
 | know what is there — list, look up, count, find, summarise; what was said on an item (its comments); one kind of record across all the collections the person has (a combined list); take everything out of a collection as one file | `references/reading.md` |
 | how much, how many, the average — totals by month or by category | `references/charts.md` |
 | put records in — a sentence, a list, a spreadsheet, a document, files; change items already there, one or many; a comment on an item | `references/adding.md` |
-| make or change a card — add an element, rename a field, create a card | `references/cards.md` |
+| make or change a card — add an element, rename a field, create a card; start keeping a new kind of record (Discover first: a ready-made card may already hold it) | `references/cards.md` |
 | set up a collection — tile, table, form and page layouts, filters, quick adds, rules ("when X, do Y"), notifications; see or pause its rules; who changed what | `references/setup.md` |
 | filter with a query — the `q` syntax, dates and their weekday, hour or month, who added it, operators | `references/kql.md` |
 
@@ -210,7 +210,7 @@ Two rules hold in every chapter:
 
 ## This copy
 
-This is keepr skill **2.44.0**. Every fact that changes comes from keepr, so a
+This is keepr skill **2.45.0**. Every fact that changes comes from keepr, so a
 copy a release behind is still right about the way of working.
 
 ## Files
