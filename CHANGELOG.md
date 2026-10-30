@@ -3,6 +3,12 @@
 Each release lists the two versions it carries: the skill's (which is also the
 plugin's) and the server's.
 
+## 2.49.0 — 2026-10-29
+
+Skill 2.49.0, keepr-mcp 0.47.0.
+
+- Your assistant can now add a Discover package for you, once you say yes. It previews the package in your collection first and tells you what it would add and what arrives paused, then asks: this package, these add-ons, into this collection (or a new one), with or without the examples. Only after your yes does it add it, and only exactly what it showed you: adding is its own step, which your assistant's app asks you to allow each time, and your collection's name is typed back so it cannot land somewhere else. Rules, notifications and forms arrive paused or off until you turn them on, and the collection's History says your assistant added it. A health package is always yours to add, from the link it gives you.
+
 ## 2.48.0 — 2026-10-28
 
 Skill 2.48.0, keepr-mcp 0.46.0. Also the first release of 2.47.0 and 2.46.0, below.

@@ -59,20 +59,30 @@ that card (below), with no search.
    `action: "preview"` with the package `key`, the `collection` it goes into
    (by name or id) or a `new_collection` name, the `add_ons` they want (leave
    it out for the ones the listing ticks), and `examples: true` only if they
-   want the example records (a new collection or examples needs a connection
-   that can also write records). It adds nothing. Tell them in a few lines what
-   it would add, what it would rename or leave out because the collection
-   already has one, and what arrives paused or off until they turn it on.
-   Its answer carries a token for keepr's install and the install link with
+   want the example records. A new collection, the examples, or a package that
+   brings settings (filters, charts, tags, rules, notifications, forms) need a
+   connection that can also write records; a connection that only changes
+   cards hands over the link for those. It adds nothing. Tell them in a few
+   lines what it would add, what it would rename or leave out because the
+   collection already has one, and what arrives paused or off until they turn
+   it on. Its answer ends with a preview token and the install link with
    those choices filled in. A health package's preview says the person adds
    it: an assistant never does.
-6. **Hand over the link.** An answer that finds, reads or previews a package
-   ends with its install link (a preview's opens with the collection, add-ons
-   and examples chosen). Give it to the person with three steps: open it;
-   check the collection it goes into and the add-ons ticked; press **Add to
-   collection**. Nothing is added until they press it, and its rules arrive
-   paused. A health package always goes this way: it asks for the person's
-   own consent.
+6. **Add it once they say yes — or hand over the link.** Ask plainly: this
+   package, these add-ons, into this collection (or a new one named so), with
+   or without the examples? Only after a clear yes to all four, call
+   `keepr_add_package` with the preview's `preview_token` and
+   `confirm_collection_name`, the collection's name exactly as the preview
+   said it (your client asks the person before it runs, every time). Anything they change means a new preview first: the token is for
+   exactly the choices previewed, it lasts 30 minutes, and it is spent by the
+   first install. Then say what was added and what arrived paused or off —
+   rules, notifications and forms wait for them in keepr, and you may turn on
+   only a rule that changes nothing beyond its own record. If they would
+   rather add it themselves, or the package is a health package (it asks for
+   their own consent), give them the link with three steps: open it; check
+   the collection it goes into and the add-ons ticked; press **Add to
+   collection**. If the install's answer is lost, read the collection before
+   anything else: it may be there.
 7. **Extend a good fit afterwards.** What a good fit lacks becomes a card
    change once it is installed (`keepr_propose_card` with a `change`, on the
    card the package made), not a second card beside it. Read the collection's

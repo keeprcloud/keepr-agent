@@ -1614,6 +1614,9 @@ var ProposalStore = class {
   bulk(spec) {
     return this.add({ kind: "bulk", ...spec });
   }
+  install(spec) {
+    return this.add({ kind: "install", ...spec });
+  }
   add(spec) {
     this.sweep();
     if (this.open.size >= MAX_OPEN) {
@@ -2061,7 +2064,7 @@ This is a bug in keepr-mcp, not something the user did.`)) : guard(def, ctx, arg
 
 // dist/src/server.js
 var SERVER_NAME = "keepr";
-var SERVER_VERSION = "0.46.0";
+var SERVER_VERSION = "0.47.0";
 var WEBSITE_URL = "https://keepr.cloud";
 var KQL_REFERENCE_URL = `${WEBSITE_URL}/docs/guides/finding-and-lists/kql-reference`;
 function brandIcons(publicUrl = process.env.KEEPR_PUBLIC_URL || "https://api.keepr.cloud") {

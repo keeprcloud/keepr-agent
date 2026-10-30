@@ -193,7 +193,7 @@ demand rather than up front.
 | know what is there — list, look up, count, find, summarise; what was said on an item (its comments); one kind of record across all the collections the person has (a combined list); take everything out of a collection as one file | `references/reading.md` |
 | how much, how many, the average — totals by month or by category | `references/charts.md` |
 | put records in — a sentence, a list, a spreadsheet, a document, files; change items already there, one or many; a comment on an item | `references/adding.md` |
-| make or change a card — add an element, rename a field, create a card; start keeping a new kind of record (Discover first: a ready-made card may already hold it; preview adding it into their collection) | `references/cards.md` |
+| make or change a card — add an element, rename a field, create a card; start keeping a new kind of record (Discover first: a ready-made card may already hold it; preview adding it into their collection, and add it for them once they say yes) | `references/cards.md` |
 | set up a collection — tile, table, form and page layouts, filters, quick adds, rules ("when X, do Y"), notifications; see or pause its rules; who changed what | `references/setup.md` |
 | move in from Jira or Azure DevOps — import their exported CSV into a Software delivery collection, or send its work back out | `references/sdlc-import.md` |
 | filter with a query — the `q` syntax, dates and their weekday, hour or month, who added it, operators | `references/kql.md` |
@@ -211,7 +211,7 @@ Two rules hold in every chapter:
 
 ## This copy
 
-This is keepr skill **2.48.0**. Every fact that changes comes from keepr, so a
+This is keepr skill **2.49.0**. Every fact that changes comes from keepr, so a
 copy a release behind is still right about the way of working.
 
 ## Files
