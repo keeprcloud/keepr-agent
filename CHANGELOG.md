@@ -3,6 +3,24 @@
 Each release lists the two versions it carries: the skill's (which is also the
 plugin's) and the server's.
 
+## 2.52.0 — 2026-10-30
+
+Skill 2.52.0, keepr-mcp 0.50.0. Also the first release of 2.51.0 and 2.50.0, below.
+
+- Your assistant can turn one line of a list on an item, like a line of an invoice or a step of a job, into an item of its own on the card you choose. It first shows you what the new item would hold and what happens to the line: copy leaves the line as it is, move replaces the carried values with a link to the new item. Nothing is made until you say yes, and a line becomes an item only once.
+
+## 2.51.0 — 2026-10-30
+
+Skill 2.51.0, keepr-mcp 0.49.0.
+
+- Your assistant can move items you put on the wrong card to the right one, keeping each item as it is. It maps the new card's elements from the old one and first shows you everything the move would do: how many items move, which are skipped and why, values that will not carry over, what happens to data the new card has no place for, and which of the new card's rules would run. Nothing moves until you say yes, and then exactly what it showed you. A large move runs in the background, and your assistant can tell you how far it has got.
+
+## 2.50.0 — 2026-10-30
+
+Skill 2.50.0, keepr-mcp 0.48.0.
+
+- When your assistant searches keepr, each matching item shows its title as you see it and the few words around the match, best match first, and it can ask for the next page of matches.
+
 ## 2.49.0 — 2026-10-29
 
 Skill 2.49.0, keepr-mcp 0.47.0.

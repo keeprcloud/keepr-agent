@@ -228,6 +228,19 @@ not overwritten. To add the same entry to **many items**, give `ids` or `q`
 with the same `entries` (adds only — an entry id belongs to one item) and go
 through the dry run and its `confirm` token, as for any change to many.
 
+## Moving items to another card, or an entry to an item
+
+An item on the wrong card (a note that is really a log) moves to the right one
+with `keepr_change_card`, keeping its id: `fills` says how each element of the
+new card is filled from the old one. The same tool makes **one entry** of a
+repeating group a new item: `entry: { item, group, id }` in place of the items,
+and `promote` — `copy` keeps the entry's values, `move` puts the link to the new
+item in place of the columns the fills carry. An entry is promoted once.
+
+Either way it is a dry run first: show the person keepr's report (what moves or
+is made, what is left behind, which rules run), and only on their yes send the
+same arguments with `dry_run: false` and the `confirm` token.
+
 ## Saying "me too" for the person
 
 Some cards carry a **Me too** element (its label may read "I see this too" or

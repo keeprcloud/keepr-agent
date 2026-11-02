@@ -23,13 +23,14 @@ error — you would report "none" for a question that had an answer.
 | `keepr_get_items` with `item_id` and `comments: true` | an item's comments, oldest first; `comment_id` for one with its history |
 | `keepr_combined_lists` | the person's saved combined lists and the ones keepr suggests; with a list or a match, its sources and the elements to filter it by |
 | `keepr_get_items` with `combined_list` or `match` | the rows of one kind of record across every collection the person has, each saying which collection it is in |
-| `keepr_search` | free-text substring search across collections, cards, items and tags — tags by name and items used as tags by title; `types` narrows it (`tags` for tags alone) |
+| `keepr_search` | free-text search across collections, cards, items and tags — items ranked best match first, each with its title and the words around the match, and paged by `cursor` (`keepr_search` only: pass the `nextCursor` it gave, with the same `q`, to get the next page of items); tags by name and items used as tags by title; `types` narrows it (`tags` for tags alone) |
 | `keepr_chart` | a total, count, average, earliest/latest or share, by month or by category — worked out by keepr over every item; or a saved chart. `charts.md` |
 
 `q` is KQL — `references/kql.md` has the grammar and worked examples. It is
 the difference between paging a collection into context and asking the server
-the actual question. `search` is not a query: it is a case-insensitive
-substring match on names and text values, for "is there anything called…".
+the actual question. `search` is not a query: every word you give must appear
+(in any field or the notes; case and accents ignored; a "quoted phrase" exactly,
+in order), for "is there anything called…". Items come best match first.
 
 When a name in `q` could mean more than one element — two cards each with a
 `status` — keepr refuses the query and lists each element with its `#id`,
