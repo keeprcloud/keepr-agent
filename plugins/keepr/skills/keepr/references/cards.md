@@ -68,14 +68,42 @@ that card (below), with no search.
    it on. Its answer ends with a preview token and the install link with
    those choices filled in. A health package's preview says the person adds
    it: an assistant never does.
+
+   **A bundle that can use a card they already have.** Some bundles' cards
+   (a Staff member, a Resident) can use a card the collection already holds
+   instead of adding a second one. The preview's **CARDS YOU ALREADY HAVE**
+   says, for each, what it would use now — one of their cards, the bundle's
+   own card, or the card a package it needs brings — and the other cards that
+   could fill it, with what each would change. keepr's own choice never
+   changes a card of theirs. To use a different card that fits as it is, send
+   the `BINDING to send` the preview printed for it in `bindings`, and preview
+   again; `{ "use": "own" }` keeps the bundle's own card. **You never approve
+   a change to their card** (an element, a value, a conversion or a list added
+   to it): when the preview says `binding_needs_person`, or nothing fits
+   without a change, it gives no token — say what would change (WOULD CHANGE
+   YOUR CARDS) and hand over the link, where they choose the card and approve
+   each change themselves.
+
+   **A bundle that needs other packages.** The preview's **PACKAGES THIS
+   NEEDS** lists the packages it builds on (added first), and each one's
+   add-ons. The first preview of such a bundle is refused
+   `dependencies_unconfirmed`: nothing comes unseen. Tell them which packages
+   it would add and ask which add-ons of each they want (a *needed* one comes
+   anyway), then preview again with `dependencies`:
+   `[{ "package": "core-staff", "install": true, "add_ons": ["training"] }]`,
+   one entry per package listed. One already in the collection is skipped.
 6. **Add it once they say yes — or hand over the link.** Ask plainly: this
    package, these add-ons, into this collection (or a new one named so), with
-   or without the examples? Only after a clear yes to all four, call
+   or without the examples — and, when the preview lists them, these packages
+   it needs with these add-ons, using these cards of theirs? Only after a
+   clear yes to all of it, call
    `keepr_add_package` with the preview's `preview_token` and
    `confirm_collection_name`, the collection's name exactly as the preview
    said it (your client asks the person before it runs, every time). Anything they change means a new preview first: the token is for
    exactly the choices previewed, it lasts 30 minutes, and it is spent by the
-   first install. Then say what was added and what arrived paused or off —
+   first install; a card of theirs or a bundle in the collection changing in
+   between means a new preview too (`preview_stale`, `stale_card`). Then say
+   what was added and what arrived paused or off —
    rules, notifications and forms wait for them in keepr, and you may turn on
    only a rule that changes nothing beyond its own record. If they would
    rather add it themselves, or the package is a health package (it asks for

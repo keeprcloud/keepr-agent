@@ -3,6 +3,12 @@
 Each release lists the two versions it carries: the skill's (which is also the
 plugin's) and the server's.
 
+## 2.53.0 — 2026-11-03
+
+Skill 2.53.0, keepr-mcp 0.51.0.
+
+- Your assistant can add a Discover bundle that uses a card your collection already has, instead of adding a second one. Its preview says which of your cards each of the bundle's cards would use, what that would change on them, and which other packages the bundle needs, with their add-ons for you to pick. Anything that would change one of your cards, or a choice of which card to use, is yours: your assistant gives you the link, where you choose and approve it, and never approves it for you. A bundle that uses your card as it is, and the packages it needs with the add-ons you chose, are added after your yes, exactly as previewed.
+
 ## 2.52.0 — 2026-10-30
 
 Skill 2.52.0, keepr-mcp 0.50.0. Also the first release of 2.51.0 and 2.50.0, below.
