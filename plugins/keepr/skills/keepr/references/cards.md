@@ -62,7 +62,12 @@ that card (below), with no search.
    want the example records. A new collection, the examples, or a package that
    brings settings (filters, charts, tags, rules, notifications, forms) need a
    connection that can also write records; a connection that only changes
-   cards hands over the link for those. It adds nothing. Tell them in a few
+   cards hands over the link for those. It adds nothing. You always name the
+   target the person chose; keepr never picks one. A **new sub-collection**
+   (a collection inside one of theirs) is the person's to make, signed in to
+   keepr: keepr refuses it to an assistant (`sub_collection_session_only`),
+   so offer an existing collection or a new top-level one, or let them add
+   it in keepr themselves. Tell them in a few
    lines what it would add, what it would rename or leave out because the
    collection already has one, and what arrives paused or off until they turn
    it on. Its answer ends with a preview token and the install link with
@@ -409,6 +414,13 @@ to skip the preview: it is where the token comes from.
   and pass through — an icon looked up first, as above. **`key` is refused**:
   it is the card's stable handle, and saved filters and links break when it
   changes.
+- `guide` is the card's guide: a few paragraphs of markdown on how its records
+  are used and why, shown to people where they work. `guideLinks` is the
+  **whole** ordered list of keepr item ids the guide points at (a procedure, a
+  reference), each an item the person can read — keepr says when a list is too
+  long; `''` and `[]` clear
+  them. A card's guide is its own: a child card inherits none. A new card gets
+  its guide by a change once it exists.
 
 ### Reading the preview
 

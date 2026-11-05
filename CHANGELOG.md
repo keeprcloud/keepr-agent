@@ -3,6 +3,12 @@
 Each release lists the two versions it carries: the skill's (which is also the
 plugin's) and the server's.
 
+## 2.54.0 — 2026-11-04
+
+Skill 2.54.0, keepr-mcp 0.52.0.
+
+- Your assistant reads a card's guide and a collection's guide, the few paragraphs their authors wrote about how the records are used and why, when it reads a collection, along with the keepr items a card's guide links to. It can also set a card's guide and its links for you, after you see the preview.
+
 ## 2.53.0 — 2026-11-03
 
 Skill 2.53.0, keepr-mcp 0.51.0.
