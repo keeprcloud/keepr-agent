@@ -28,10 +28,11 @@ exactly the payload that was previewed; nothing is recomputed between the two.
 
 When the person wants to start keeping **a new kind of record** — something
 no card of theirs holds yet — search **Discover** before you propose a card or
-a setup for it. Discover is keepr's catalog of ready-made cards, bundles and
-collections, each built for one kind of record with its elements, rules and
-dashboards already worked out. A package that fits gives the person all of it
-in one step; a card built from scratch is for when nothing fits.
+a setup for it. Discover is keepr's catalog of ready-made bundles, each built
+for one kind of record with its cards, elements, rules and dashboards already
+worked out — one card, or every card a collection needs. A bundle that fits
+gives the person all of it in one step; a card built from scratch is for when
+nothing fits.
 
 A field added to a card they already have is not a new kind of record: change
 that card (below), with no search.
@@ -67,8 +68,12 @@ that card (below), with no search.
    (a collection inside one of theirs) is the person's to make, signed in to
    keepr: keepr refuses it to an assistant (`sub_collection_session_only`),
    so offer an existing collection or a new top-level one, or let them add
-   it in keepr themselves. Tell them in a few
-   lines what it would add, what it would rename or leave out because the
+   it in keepr themselves. A bundle that brings its collection's own
+   settings (the collection's name, colour, filter chips, whole tag list,
+   Overview and the records it starts with) applies them only to a new
+   collection: into one they already have, the preview says those are left
+   out and the rest is added, so ask which they want when it matters. Tell
+   them in a few lines what it would add, what it would rename or leave out because the
    collection already has one, and what arrives paused or off until they turn
    it on. Its answer ends with a preview token and the install link with
    those choices filled in. A health package's preview says the person adds

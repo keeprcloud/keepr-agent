@@ -2064,7 +2064,7 @@ This is a bug in keepr-mcp, not something the user did.`)) : guard(def, ctx, arg
 
 // dist/src/server.js
 var SERVER_NAME = "keepr";
-var SERVER_VERSION = "0.52.0";
+var SERVER_VERSION = "0.53.0";
 var WEBSITE_URL = "https://keepr.cloud";
 var KQL_REFERENCE_URL = `${WEBSITE_URL}/docs/guides/finding-and-lists/kql-reference`;
 function brandIcons(publicUrl = process.env.KEEPR_PUBLIC_URL || "https://api.keepr.cloud") {
@@ -2504,7 +2504,7 @@ ${notice}`);
     return `This ${this.credential} has ${list || "no known"} scope${cannot.length ? `: it ${cannot.join(" and ")}` : ""}.`;
   }
 };
-var DISCOVER_FIRST = "keepr_discover searches Discover, keepr's catalog of ready-made cards, bundles and collections: for a new kind of record, search it before proposing a card or setup.";
+var DISCOVER_FIRST = "keepr_discover searches Discover, keepr's catalog of ready-made bundles of cards: for a new kind of record, search it before proposing a card or setup.";
 var FILES_ONLY_PURPOSE = "keepr file tools \u2014 the part of keepr that reads files on this computer's disk. keepr_attach_local_file attaches files to an item by their path, and keepr_attach_folder a whole folder onto the items its files belong to (keepr_attach_status follows that upload); keepr_connect and keepr_disconnect sign this server in to keepr and out. Every other keepr tool \u2014 collections, schema, items, search, charts, imports, cards, upload links \u2014 is on the keepr connector: The connector finds items and their ids; this server only sends files from this computer to them. An import made through the connector is not seen here, so name items by item_id, or match a folder by `collection` + `match_element` or a `map` of item ids.";
 var WIDEN_CONNECTION = (what) => `The person can widen it in keepr: disconnect this assistant under Connected assistants on their account page, then connect again with ${what}.`;
 function isConfig(v) {

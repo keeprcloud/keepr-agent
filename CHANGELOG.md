@@ -3,6 +3,12 @@
 Each release lists the two versions it carries: the skill's (which is also the
 plugin's) and the server's.
 
+## 2.55.0 — 2026-11-05
+
+Skill 2.55.0, keepr-mcp 0.53.0.
+
+- Discover lists one kind of thing now, a bundle: from a single card to every card a collection needs. A bundle that brings its collection's own settings (the collection's name, colour, filter chips, whole tag list, Overview and the records it starts with) applies them only when you add it as a new collection; added to a collection you already have, your assistant's preview says those settings are left out and the rest is added.
+
 ## 2.54.0 — 2026-11-04
 
 Skill 2.54.0, keepr-mcp 0.52.0.
