@@ -3,6 +3,18 @@
 Each release lists the two versions it carries: the skill's (which is also the
 plugin's) and the server's.
 
+## 2.57.0 — 2026-11-06
+
+Skill 2.57.0, keepr-mcp 0.55.0. Also the first release of 2.56.0, below.
+
+- Your assistant reads what a Discover bundle holds by type (cards, lists, charts, rules, forms, examples) and how each arrives, previews it with a scenario and with only the things you want, tells you what it would leave out and why, and adds exactly what you said yes to.
+
+## 2.56.0 — 2026-11-06
+
+Skill 2.56.0, keepr-mcp 0.54.0.
+
+- When a Discover package has a short video of it, your assistant's search and read name the video's Showcase page, so it can offer you the video before you add the package.
+
 ## 2.55.0 — 2026-11-05
 
 Skill 2.55.0, keepr-mcp 0.53.0.

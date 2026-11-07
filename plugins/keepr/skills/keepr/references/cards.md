@@ -19,7 +19,7 @@ on* — and so should you.
 | create it | `keepr_apply_card` with the proposal token and the collection name typed back |
 | propose a change | `keepr_propose_card` with a `change` argument |
 | apply the change | `keepr_apply_card` with the token, the collection name typed back, and — for a destructive change — the card name typed back too |
-| look for a ready-made card first | `keepr_discover` (`search`, then `read`) |
+| look for a ready-made bundle first | `keepr_discover` (`search`, `read`, `preview`), then `keepr_add_package` |
 
 A proposal token is good for 30 minutes and is used once. The apply step sends
 exactly the payload that was previewed; nothing is recomputed between the two.
@@ -28,26 +28,48 @@ exactly the payload that was previewed; nothing is recomputed between the two.
 
 When the person wants to start keeping **a new kind of record** — something
 no card of theirs holds yet — search **Discover** before you propose a card or
-a setup for it. Discover is keepr's catalog of ready-made bundles, each built
-for one kind of record with its cards, elements, rules and dashboards already
-worked out — one card, or every card a collection needs. A bundle that fits
-gives the person all of it in one step; a card built from scratch is for when
-nothing fits.
+a setup for it. Discover is keepr's catalog of ready-made **bundles**. A bundle
+holds everything one kind of record needs, already worked out: its cards and
+element sets, and whatever else its author put in — saved lists, quick adds,
+layouts, charts, dashboards, rules, notifications, forms, tags, examples, and
+sometimes its collection's own settings. One card, or every card a collection
+needs. A bundle that fits gives the person all of it in one step; a card built
+from scratch is for when nothing fits.
 
 A field added to a card they already have is not a new kind of record: change
 that card (below), with no search.
 
+Three words the person reads, and you use too:
+
+- **Add-ons**: optional parts of a bundle (a Fuel log for Vehicle care). The
+  core always comes; each add-on comes when it is ticked.
+- **Scenarios**: presets for a situation ("Family cars", "A small fleet"). A
+  scenario ticks its own add-ons and examples. A scenario is not a second
+  bundle: one bundle, several ways to start. (keepr used to call them
+  *listings*; the tools still accept `listing` and say `scenario`.)
+- **What it holds, by type**: every thing a bundle would add, grouped — cards,
+  saved lists, charts, rules and the rest — each with a local id. The person
+  can take or leave a whole type, or any one thing in it.
+
 1. **Search** with `keepr_discover`, `action: "search"`, in the person's own
    words for the kind of record ("vehicle maintenance", "recipes"), not in
-   card terms. `collections: true` also finds the published collections they
-   can follow (a reference list kept by its publisher), which they follow
-   rather than add.
+   card terms. A row that matched one scenario says so ("Family cars, a
+   scenario of Vehicle care"). `collections: true` also finds the published
+   collections they can follow (a reference list kept by its publisher), which
+   they follow rather than add. `kind` still narrows by shape (one card, one
+   that brings collection settings, any other) but is going away: leave it out
+   unless they ask for that shape.
 2. **Read** the likely ones with `action: "read"`: every card and element, the
-   add-ons, what each rule does. Judge the fit from that, not from the name.
+   add-ons, the scenarios, what each rule does, and **WHAT IT HOLDS, BY TYPE**:
+   each type's count, how it arrives (made as it is; rules and notifications
+   paused; forms prepared and off; examples only when ticked; setup offered
+   afterwards) and each thing's local id, add-on and what it needs. Judge the
+   fit from that, not from the name. `scenario` reads it as one scenario ticks
+   it.
 3. **Show at most three candidates**, each with one line on how it fits and one
    on what it lacks for this person ("Vehicle care: services, costs and
    reminders for each car. It has nowhere for tyre pressures."). Say which one
-   you would pick.
+   you would pick, and which scenario fits them when it has scenarios.
    `keepr_propose_card` for a new card also searches Discover on its own, and
    when up to three packages are a strong match its answer lists them under
    `DISCOVER:` (and as `discover`). That is a backstop for an assistant that
@@ -57,27 +79,45 @@ that card (below), with no search.
    in one sentence that Discover had nothing that fits, then propose the card
    as below.
 5. **Preview the one they pick**, when your connection can change cards:
-   `action: "preview"` with the package `key`, the `collection` it goes into
-   (by name or id) or a `new_collection` name, the `add_ons` they want (leave
-   it out for the ones the listing ticks), and `examples: true` only if they
-   want the example records. A new collection, the examples, or a package that
-   brings settings (filters, charts, tags, rules, notifications, forms) need a
-   connection that can also write records; a connection that only changes
-   cards hands over the link for those. It adds nothing. You always name the
-   target the person chose; keepr never picks one. A **new sub-collection**
-   (a collection inside one of theirs) is the person's to make, signed in to
-   keepr: keepr refuses it to an assistant (`sub_collection_session_only`),
-   so offer an existing collection or a new top-level one, or let them add
-   it in keepr themselves. A bundle that brings its collection's own
+   `action: "preview"` with the bundle's `key`, the `collection` it goes into
+   (by name or id) or a `new_collection` name, the `scenario` they chose, the
+   `add_ons` they want (leave it out for the ones the scenario ticks), and
+   `examples: true` only if they want the example records. You always name the
+   target the person chose; keepr never picks one. It adds nothing.
+
+   **Taking only some of it.** When the person wants less than the whole
+   bundle ("not the reminders", "skip the dashboards", "only the Vehicle
+   card"), send `select` with the types and local ids `read` listed:
+   `{ "types": { "automation": false }, "things": { "fl3": false } }` (a
+   thing overrides its type; the examples are the thing `ex`). The preview's
+   **NOT ADDED** lists what the selection leaves out, and what waits because
+   it reaches something left out (a list over a field that looks up a card they skipped). Something
+   they keep may need something they left out — a filter needs its card, a
+   dashboard its charts. keepr then refuses the preview
+   (`selection_incomplete`) and lists each one: *"Due soon" needs "Vehicle"*.
+   **keepr never widens a selection, and neither do you**: ask the person,
+   for each line, whether to take the thing it needs too or to leave out the
+   one that needs it, and preview again with that `select`.
+
+   A new collection, the examples, or a bundle that brings settings (filters,
+   charts, tags, rules, notifications, forms) need a connection that can also
+   write records; a connection that only changes cards hands over the link for
+   those — or previews a selection of the cards alone. A **new
+   sub-collection** (a collection inside one of theirs: `new_collection` with
+   `parent`) is the person's to make, signed in to keepr: keepr refuses it to
+   an assistant (`sub_collection_session_only`), and the answer names the
+   parent and hands over the link. Offer the parent itself, another collection,
+   or a new top-level one instead. A bundle that brings its collection's own
    settings (the collection's name, colour, filter chips, whole tag list,
    Overview and the records it starts with) applies them only to a new
    collection: into one they already have, the preview says those are left
    out and the rest is added, so ask which they want when it matters. Tell
-   them in a few lines what it would add, what it would rename or leave out because the
-   collection already has one, and what arrives paused or off until they turn
-   it on. Its answer ends with a preview token and the install link with
-   those choices filled in. A health package's preview says the person adds
-   it: an assistant never does.
+   them in a few lines what it would add, what it leaves out, what it would
+   rename because the collection already has one, and what arrives paused or
+   off until they turn it on. Its answer ends with a preview token and the
+   install link with those choices filled in (the link carries the scenario,
+   add-ons and examples, not the selection: they untick those again there). A
+   health package's preview says the person adds it: an assistant never does.
 
    **A bundle that can use a card they already have.** Some bundles' cards
    (a Staff member, a Resident) can use a card the collection already holds
@@ -101,26 +141,30 @@ that card (below), with no search.
    it would add and ask which add-ons of each they want (a *needed* one comes
    anyway), then preview again with `dependencies`:
    `[{ "package": "core-staff", "install": true, "add_ons": ["training"] }]`,
-   one entry per package listed. One already in the collection is skipped.
+   one entry per package listed. One already in the collection is skipped. A
+   selection is the asked bundle's alone: a package it needs comes whole.
 6. **Add it once they say yes — or hand over the link.** Ask plainly: this
-   package, these add-ons, into this collection (or a new one named so), with
-   or without the examples — and, when the preview lists them, these packages
-   it needs with these add-ons, using these cards of theirs? Only after a
-   clear yes to all of it, call
+   bundle, this scenario, these add-ons, leaving out these things, into this
+   collection (or a new one named so), with or without the examples — and,
+   when the preview lists them, these packages it needs with these add-ons,
+   using these cards of theirs? Only after a clear yes to all of it, call
    `keepr_add_package` with the preview's `preview_token` and
    `confirm_collection_name`, the collection's name exactly as the preview
-   said it (your client asks the person before it runs, every time). Anything they change means a new preview first: the token is for
-   exactly the choices previewed, it lasts 30 minutes, and it is spent by the
-   first install; a card of theirs or a bundle in the collection changing in
-   between means a new preview too (`preview_stale`, `stale_card`). Then say
-   what was added and what arrived paused or off —
-   rules, notifications and forms wait for them in keepr, and you may turn on
-   only a rule that changes nothing beyond its own record. If they would
-   rather add it themselves, or the package is a health package (it asks for
-   their own consent), give them the link with three steps: open it; check
-   the collection it goes into and the add-ons ticked; press **Add to
-   collection**. If the install's answer is lost, read the collection before
-   anything else: it may be there.
+   said it (your client asks the person before it runs, every time). The
+   token carries exactly what was previewed — the scenario and the selection
+   with the rest — and `keepr_add_package` takes nothing that could change it.
+   Anything they change means a new preview first: the token is for exactly
+   the choices previewed, it lasts 30 minutes, and it is spent by the first
+   install; a card of theirs or a bundle in the collection changing in between
+   means a new preview too (`preview_stale`, `stale_card`). Then say what was
+   added, what was left out, and what arrived paused or off — rules,
+   notifications and forms wait for them in keepr, and you may turn on only a
+   rule that changes nothing beyond its own record. If they would rather add it
+   themselves, or the package is a health package (it asks for their own
+   consent), give them the link with three steps: open it; check the
+   collection it goes into, the scenario and the add-ons ticked, and untick
+   anything they leave out; press **Add to collection**. If the install's
+   answer is lost, read the collection before anything else: it may be there.
 7. **Extend a good fit afterwards.** What a good fit lacks becomes a card
    change once it is installed (`keepr_propose_card` with a `change`, on the
    card the package made), not a second card beside it. Read the collection's
