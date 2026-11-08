@@ -3,6 +3,12 @@
 Each release lists the two versions it carries: the skill's (which is also the
 plugin's) and the server's.
 
+## 2.60.0 — 2026-11-08
+
+Skill 2.60.0, keepr-mcp 0.58.0.
+
+- When keepr refuses a request, your assistant now explains what the refusal means in keepr's own words, and says exactly which permission a key is missing instead of guessing.
+
 ## 2.59.0 — 2026-11-07
 
 Skill 2.59.0, keepr-mcp 0.57.0. Also the first release of 2.58.0, below.

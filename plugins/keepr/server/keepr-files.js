@@ -1288,11 +1288,19 @@ var CONTRACT_FLOOR = [
 ];
 var REFETCH_COOLDOWN_MS = 6e4;
 var FETCH_TIMEOUT_MS = 3e3;
+var ANY_ROUTE_FAMILIES = ["access", "service"];
+var MEANS_MAX = 1e3;
 var ContractCache = class {
   http;
   body = SNAPSHOT;
   source = "snapshot";
   codeMeaning = /* @__PURE__ */ new Map();
+  /**
+   * A SEPARATE index from codeMeaning, keyed by carrier and code: a code can
+   * mean one thing as an import row's and another as a request's (`too_long`),
+   * and the P5 review's rule is one code, one meaning per place it is read.
+   */
+  requestMeaning = /* @__PURE__ */ new Map();
   elementTypes = /* @__PURE__ */ new Map();
   lastFetchAttempt = 0;
   /** The version we last went chasing. A NEW unknown version always earns a
@@ -1369,6 +1377,7 @@ var ContractCache = class {
   }
   reindex() {
     this.codeMeaning.clear();
+    this.requestMeaning.clear();
     this.elementTypes.clear();
     const codes = this.body.errorCodes ?? { shape: [], row: [] };
     for (const entry of [...codes.shape ?? [], ...codes.row ?? []]) {
@@ -1379,12 +1388,51 @@ var ContractCache = class {
       if (t2?.name)
         this.elementTypes.set(t2.name, t2);
     }
+    const refusals = this.body.refusals?.codes;
+    if (Array.isArray(refusals)) {
+      for (const r of refusals) {
+        if (!r || typeof r.code !== "string" || typeof r.carriedBy !== "string" || typeof r.means !== "string" || !r.code || !r.means)
+          continue;
+        this.requestMeaning.set(`${r.carriedBy}:${r.code}`, { means: cleanText(r.means, MEANS_MAX), family: typeof r.family === "string" ? r.family : null });
+      }
+    }
   }
   /** The deployment's own sentence for an error code. */
   meaningOf(code) {
     if (!code)
       return null;
     return this.codeMeaning.get(code) ?? null;
+  }
+  /**
+   * The deployment's sentence for a code a whole REQUEST was refused with, as
+   * it is met (`carriedBy`: `code`, `reason`, `problems` or `slot`); null when
+   * the contract serves none (the build-time snapshot, an older deployment).
+   * Never read through meaningOf, which explains an import row's code.
+   *
+   * `family` is the family of endpoint that answered, when the caller knows it
+   * (`charts`). A code that is also an import row's code is said only to a
+   * caller that names its family, or when every route can give it (see
+   * ANY_ROUTE_FAMILIES): without that, a refused item write that says
+   * `too_long` would be told about a chart.
+   */
+  requestMeaningOf(code, carriedBy, family) {
+    if (!code)
+      return null;
+    const hit = this.requestMeaning.get(`${carriedBy}:${code}`);
+    if (!hit)
+      return null;
+    if (this.codeMeaning.has(code) && !(hit.family && (hit.family === family || ANY_ROUTE_FAMILIES.includes(hit.family))))
+      return null;
+    return hit.means;
+  }
+  /**
+   * An entry of problems[] in a blueprint or a setup preview: carried as
+   * `problems` when the code is only met there, else as the request's own
+   * `code` (invalid_options, span_too_narrow: "in a blueprint it is also an
+   * entry of problems[]").
+   */
+  problemMeaningOf(code) {
+    return this.requestMeaningOf(code, "problems") ?? this.requestMeaningOf(code, "code");
   }
   /** What to send for a data type, in the deployment's words. */
   formOf(dataType) {
@@ -1525,156 +1573,6 @@ var ContractCache = class {
       return null;
     const list = [...new Set(unknown)].join(", ");
     return this.source === "live" ? `This deployment uses error codes this build does not document: ${list}. The live contract was used to explain them, so the result above is correct \u2014 but keepr-mcp is behind the deployment.` : `Unrecognised error codes (${list}) and the live contract could not be fetched, so these are explained from a build-time snapshot that may be out of date.`;
-  }
-};
-
-// dist/src/breaker.js
-var WINDOW_MS = 5 * 6e4;
-var LIMIT = 3;
-var RefusalBreaker = class {
-  now;
-  seen = /* @__PURE__ */ new Map();
-  constructor(now = Date.now) {
-    this.now = now;
-  }
-  /** Record a refusal. Returns how many identical ones have been seen. */
-  record(signature, status) {
-    const t2 = this.now();
-    const prev = this.seen.get(signature);
-    if (!prev || t2 - prev.firstAt > WINDOW_MS || prev.status !== status) {
-      this.seen.set(signature, { count: 1, firstAt: t2, status });
-      return 1;
-    }
-    prev.count += 1;
-    return prev.count;
-  }
-  /** True when this exact call has already been refused identically LIMIT times. */
-  isTripped(signature) {
-    const prev = this.seen.get(signature);
-    if (!prev)
-      return false;
-    if (this.now() - prev.firstAt > WINDOW_MS) {
-      this.seen.delete(signature);
-      return false;
-    }
-    return prev.count >= LIMIT;
-  }
-  /** A success means the condition changed; forget the history for this call. */
-  clear(signature) {
-    this.seen.delete(signature);
-  }
-  trippedMessage(signature) {
-    const prev = this.seen.get(signature);
-    const status = prev ? prev.status : 0;
-    return `This exact call has already been refused ${LIMIT} times with HTTP ${status}. Retrying cannot change it \u2014 something outside this conversation has to change first. Tell the user what is blocking, and stop calling this tool.`;
-  }
-};
-
-// dist/src/ledger.js
-var MAX_RUNS = 50;
-var RunLedger = class {
-  runs = [];
-  record(rec) {
-    this.runs.unshift(rec);
-    if (this.runs.length > MAX_RUNS)
-      this.runs.length = MAX_RUNS;
-  }
-  byRunId(runId) {
-    return this.runs.find((r) => r.runId === runId) ?? null;
-  }
-  /** Most recent first, so a bare externalId resolves to the newest import. */
-  resolveExternalId(externalId, runId) {
-    const pool = runId ? this.runs.filter((r) => r.runId === runId) : this.runs;
-    for (const run2 of pool) {
-      const itemId = run2.itemsByExternalId[externalId];
-      if (itemId)
-        return { itemId, run: run2 };
-    }
-    return null;
-  }
-  /** Every remembered run, most recent first. */
-  all() {
-    return [...this.runs];
-  }
-  get size() {
-    return this.runs.length;
-  }
-  knownRunIds() {
-    return this.runs.map((r) => r.runId);
-  }
-};
-
-// dist/src/proposals.js
-import { randomBytes as randomBytes3 } from "node:crypto";
-var TTL_MS2 = 30 * 6e4;
-var MAX_OPEN = 20;
-var MAX_TOMBSTONES = 100;
-var ProposalStore = class {
-  open = /* @__PURE__ */ new Map();
-  /** Tokens that expired, so a late apply hears "expired", not "unknown" (the review's F15). */
-  gone = /* @__PURE__ */ new Map();
-  create(collectionId, collectionName, blueprint) {
-    return this.add({ kind: "create", collectionId, collectionName, blueprint });
-  }
-  change(spec) {
-    return this.add({ kind: "change", ...spec });
-  }
-  setup(spec) {
-    return this.add({ kind: "setup", ...spec });
-  }
-  bulk(spec) {
-    return this.add({ kind: "bulk", ...spec });
-  }
-  install(spec) {
-    return this.add({ kind: "install", ...spec });
-  }
-  add(spec) {
-    this.sweep();
-    if (this.open.size >= MAX_OPEN) {
-      const oldest = [...this.open.values()].sort((a, b) => a.createdAt - b.createdAt)[0];
-      if (oldest) {
-        this.open.delete(oldest.token);
-        this.gone.set(oldest.token, oldest.kind);
-      }
-    }
-    const proposal = {
-      ...spec,
-      token: `prop_${randomBytes3(9).toString("hex")}`,
-      createdAt: Date.now()
-    };
-    this.open.set(proposal.token, proposal);
-    return proposal;
-  }
-  /**
-   * Spend a token. `kinds` names the proposals the caller applies: a token of
-   * another kind is answered `wrong_kind` and NOT spent, so the model can
-   * take it to the right tool (a setup token sent to keepr_apply_card).
-   */
-  take(token, kinds) {
-    this.sweep();
-    const found = this.open.get(token);
-    if (!found) {
-      const kind = this.gone.get(token);
-      return kind ? { ok: false, reason: "expired", kind } : { ok: false, reason: "unknown" };
-    }
-    if (kinds && !kinds.includes(found.kind))
-      return { ok: false, reason: "wrong_kind", kind: found.kind };
-    this.open.delete(token);
-    return { ok: true, proposal: found };
-  }
-  sweep() {
-    const now = Date.now();
-    for (const [token, p] of this.open) {
-      if (now - p.createdAt <= TTL_MS2)
-        continue;
-      this.open.delete(token);
-      this.gone.set(token, p.kind);
-      if (this.gone.size > MAX_TOMBSTONES)
-        this.gone.delete(this.gone.keys().next().value);
-    }
-  }
-  get size() {
-    return this.open.size;
   }
 };
 
@@ -1923,17 +1821,20 @@ function ok(text, structured) {
 function fail(text, structured) {
   return { content: [{ type: "text", text }], ...structured ? { structuredContent: structured } : {}, isError: true };
 }
-function failFromResponse(res, what, kql, notes = []) {
+function failFromResponse(res, what, kql, notes = [], contract) {
   const code = errorCode(res.body);
   const message = errorMessage(res.body, `HTTP ${res.status}`);
   const element = res.ok ? null : elementRefusalOf(res.body);
   const hint = element ? void 0 : STATUS_HINTS[res.status];
+  const means = !res.ok && contract ? requestRefusalMeaning(res.body, contract) : null;
   const proxyNote = res.nonJson ? "\n\nThe response body was not JSON, so this may not be keepr answering at all \u2014 an intercepting proxy is the usual cause." : "";
   const lines = [
     `FAILED \u2014 ${what}.`,
     "",
     `keepr answered HTTP ${res.status}${code ? ` (${code})` : ""}: ${message}`
   ];
+  if (means)
+    lines.push("", `keepr means: ${means}`);
   if (hint)
     lines.push("", hint);
   if (notes.length)
@@ -1946,9 +1847,170 @@ function failFromResponse(res, what, kql, notes = []) {
     code,
     message,
     requestId: res.requestId,
+    ...means ? { means } : {},
     ...element ? { elementRefusal: elementRefusalData(element) } : {}
   });
 }
+function requestRefusalMeaning(body, contract) {
+  const code = errorCode(body);
+  if (code === "session_required") {
+    const reason = body.reason;
+    const byReason = typeof reason === "string" ? contract.requestMeaningOf(reason, "reason") : null;
+    if (byReason)
+      return byReason;
+  }
+  return contract.requestMeaningOf(code, "code");
+}
+
+// dist/src/breaker.js
+var WINDOW_MS = 5 * 6e4;
+var LIMIT = 3;
+var RefusalBreaker = class {
+  now;
+  seen = /* @__PURE__ */ new Map();
+  constructor(now = Date.now) {
+    this.now = now;
+  }
+  /** Record a refusal. Returns how many identical ones have been seen. */
+  record(signature, status) {
+    const t2 = this.now();
+    const prev = this.seen.get(signature);
+    if (!prev || t2 - prev.firstAt > WINDOW_MS || prev.status !== status) {
+      this.seen.set(signature, { count: 1, firstAt: t2, status });
+      return 1;
+    }
+    prev.count += 1;
+    return prev.count;
+  }
+  /** True when this exact call has already been refused identically LIMIT times. */
+  isTripped(signature) {
+    const prev = this.seen.get(signature);
+    if (!prev)
+      return false;
+    if (this.now() - prev.firstAt > WINDOW_MS) {
+      this.seen.delete(signature);
+      return false;
+    }
+    return prev.count >= LIMIT;
+  }
+  /** A success means the condition changed; forget the history for this call. */
+  clear(signature) {
+    this.seen.delete(signature);
+  }
+  trippedMessage(signature) {
+    const prev = this.seen.get(signature);
+    const status = prev ? prev.status : 0;
+    return `This exact call has already been refused ${LIMIT} times with HTTP ${status}. Retrying cannot change it \u2014 something outside this conversation has to change first. Tell the user what is blocking, and stop calling this tool.`;
+  }
+};
+
+// dist/src/ledger.js
+var MAX_RUNS = 50;
+var RunLedger = class {
+  runs = [];
+  record(rec) {
+    this.runs.unshift(rec);
+    if (this.runs.length > MAX_RUNS)
+      this.runs.length = MAX_RUNS;
+  }
+  byRunId(runId) {
+    return this.runs.find((r) => r.runId === runId) ?? null;
+  }
+  /** Most recent first, so a bare externalId resolves to the newest import. */
+  resolveExternalId(externalId, runId) {
+    const pool = runId ? this.runs.filter((r) => r.runId === runId) : this.runs;
+    for (const run2 of pool) {
+      const itemId = run2.itemsByExternalId[externalId];
+      if (itemId)
+        return { itemId, run: run2 };
+    }
+    return null;
+  }
+  /** Every remembered run, most recent first. */
+  all() {
+    return [...this.runs];
+  }
+  get size() {
+    return this.runs.length;
+  }
+  knownRunIds() {
+    return this.runs.map((r) => r.runId);
+  }
+};
+
+// dist/src/proposals.js
+import { randomBytes as randomBytes3 } from "node:crypto";
+var TTL_MS2 = 30 * 6e4;
+var MAX_OPEN = 20;
+var MAX_TOMBSTONES = 100;
+var ProposalStore = class {
+  open = /* @__PURE__ */ new Map();
+  /** Tokens that expired, so a late apply hears "expired", not "unknown" (the review's F15). */
+  gone = /* @__PURE__ */ new Map();
+  create(collectionId, collectionName, blueprint) {
+    return this.add({ kind: "create", collectionId, collectionName, blueprint });
+  }
+  change(spec) {
+    return this.add({ kind: "change", ...spec });
+  }
+  setup(spec) {
+    return this.add({ kind: "setup", ...spec });
+  }
+  bulk(spec) {
+    return this.add({ kind: "bulk", ...spec });
+  }
+  install(spec) {
+    return this.add({ kind: "install", ...spec });
+  }
+  add(spec) {
+    this.sweep();
+    if (this.open.size >= MAX_OPEN) {
+      const oldest = [...this.open.values()].sort((a, b) => a.createdAt - b.createdAt)[0];
+      if (oldest) {
+        this.open.delete(oldest.token);
+        this.gone.set(oldest.token, oldest.kind);
+      }
+    }
+    const proposal = {
+      ...spec,
+      token: `prop_${randomBytes3(9).toString("hex")}`,
+      createdAt: Date.now()
+    };
+    this.open.set(proposal.token, proposal);
+    return proposal;
+  }
+  /**
+   * Spend a token. `kinds` names the proposals the caller applies: a token of
+   * another kind is answered `wrong_kind` and NOT spent, so the model can
+   * take it to the right tool (a setup token sent to keepr_apply_card).
+   */
+  take(token, kinds) {
+    this.sweep();
+    const found = this.open.get(token);
+    if (!found) {
+      const kind = this.gone.get(token);
+      return kind ? { ok: false, reason: "expired", kind } : { ok: false, reason: "unknown" };
+    }
+    if (kinds && !kinds.includes(found.kind))
+      return { ok: false, reason: "wrong_kind", kind: found.kind };
+    this.open.delete(token);
+    return { ok: true, proposal: found };
+  }
+  sweep() {
+    const now = Date.now();
+    for (const [token, p] of this.open) {
+      if (now - p.createdAt <= TTL_MS2)
+        continue;
+      this.open.delete(token);
+      this.gone.set(token, p.kind);
+      if (this.gone.size > MAX_TOMBSTONES)
+        this.gone.delete(this.gone.keys().next().value);
+    }
+  }
+  get size() {
+    return this.open.size;
+  }
+};
 
 // dist/src/resultSize.js
 var RESULT_LIMIT = 15e4;
@@ -2075,7 +2137,7 @@ This is a bug in keepr-mcp, not something the user did.`)) : guard(def, ctx, arg
 
 // dist/src/server.js
 var SERVER_NAME = "keepr";
-var SERVER_VERSION = "0.57.0";
+var SERVER_VERSION = "0.58.0";
 var WEBSITE_URL = "https://keepr.cloud";
 var KQL_REFERENCE_URL = `${WEBSITE_URL}/docs/guides/finding-and-lists/kql-reference`;
 function brandIcons(publicUrl = process.env.KEEPR_PUBLIC_URL || "https://api.keepr.cloud") {
@@ -2455,6 +2517,27 @@ var KeeprContext = class {
     if (scope === "delete")
       return this.deleteRefusal();
     return scope === "cards" ? this.cardsRefusal() : this.readOnlyRefusal();
+  }
+  /**
+   * The scope a 403 was refused for, or null when it was not a scope refusal.
+   * The body's `requiredScope` says it when the server does (write, cards or
+   * delete: what the call needed, which is not always what the tool guessed);
+   * an unnamed refusal is the site's `scope` when the latch already says the key
+   * lacks it. A `read` named is not said as a write refusal (refusalFor would
+   * call a key with no read "read-only"), so it falls to the site's scope.
+   * Call it after noteWriteAttempt, which is what teaches the latch.
+   */
+  scopeRefusedBy(res, scope) {
+    if (res.status !== 403)
+      return null;
+    const named = this.looksLikeScopeRefusal(res) ? requiredScopeOf(res.body) : null;
+    if (named && named !== "read")
+      return named;
+    return this.hasScope(scope) === false ? scope : null;
+  }
+  /** failFromResponse with this deployment's contract, so a refusal's code is explained in its words (KPR-1617). */
+  failFromResponse(res, what, kql, notes = []) {
+    return failFromResponse(res, what, kql, notes, this.contract);
   }
   /** The update notice, the first time it is asked for; null after, and null when current. */
   takeUpdateNotice() {
@@ -3129,7 +3212,7 @@ var attachFileTool = {
       return fail("No files given.");
     const item = await ctx.http.request({ path: `/api/items/${itemId}` });
     if (!item.ok)
-      return failFromResponse(item, `reading item ${itemId}`);
+      return ctx.failFromResponse(item, `reading item ${itemId}`);
     const collectionId = String(item.body?.collection_id ?? "");
     const collection = ctx.knownCollections().find((c) => c.id === collectionId);
     if (collection?.allowAttachments === false) {
@@ -3153,7 +3236,7 @@ var attachFileTool = {
     if (elementName) {
       const schema = await ctx.http.request({ path: `/api/collections/${collectionId}/schema` });
       if (!schema.ok)
-        return failFromResponse(schema, "reading the elements of this item's collection");
+        return ctx.failFromResponse(schema, "reading the elements of this item's collection");
       const card = (schema.body?.cards ?? []).find((c) => c.id === String(item.body?.card_id ?? ""));
       if (entryId) {
         const groups = (card?.elements ?? []).filter((e) => e.dataType === "repeating-group");
@@ -3267,8 +3350,9 @@ var attachFileTool = {
       }
       ctx.noteWriteAttempt(res);
       if (!res.ok) {
-        if (res.status === 403 && ctx.keyScope === "read")
-          return fail(ctx.readOnlyRefusal());
+        const refusedScope = ctx.scopeRefusedBy(res, "write");
+        if (refusedScope)
+          return fail(ctx.refusalFor(refusedScope));
         const code = errorCode(res.body);
         const meaning = code ? ctx.contract.meaningOf(code) : null;
         const said = `${code ? `${code}: ` : ""}${errorMessage(res.body, "")}${meaning ? ` (${meaning})` : ""}`.trim();
@@ -3301,7 +3385,8 @@ var attachFileTool = {
       else {
         const code = errorCode(put.body);
         const meaning = code ? ctx.contract.meaningOf(code) : null;
-        bindError = `${code ? `${code}: ` : ""}${errorMessage(put.body, `HTTP ${put.status}`)}${meaning ? ` (${meaning})` : ""}` + (put.status === 403 && replacing ? ` ${ctx.deleteRefusal()}` : "");
+        const scopeRefused = ctx.scopeRefusedBy(put, replacing ? "delete" : "write");
+        bindError = `${code ? `${code}: ` : ""}${errorMessage(put.body, `HTTP ${put.status}`)}${meaning ? ` (${meaning})` : ""}` + (scopeRefused ? ` ${ctx.refusalFor(scopeRefused)}` : "");
       }
     }
     const title = item.body?.displayValue ? sayName(item.body.displayValue) : itemId;
@@ -4007,7 +4092,8 @@ async function sendReserved(ctx, job, f, item, now) {
     const code = errorCode(res.body);
     const meaning = code ? ctx.contract.meaningOf(code) : null;
     const said = `${code ? `${code}: ` : ""}${errorMessage(res.body, "")}${meaning ? ` (${meaning})` : ""}`.trim();
-    const why = res.status === 413 ? "over the attachment storage cap \u2014 the person has to free space first." : res.status === 415 ? "keepr refuses that type of file." : res.status === 403 && ctx.keyScope === "read" ? ctx.readOnlyRefusal() : said || `HTTP ${res.status}`;
+    const scopeRefused = ctx.scopeRefusedBy(res, "write");
+    const why = res.status === 413 ? "over the attachment storage cap \u2014 the person has to free space first." : res.status === 415 ? "keepr refuses that type of file." : scopeRefused ? ctx.refusalFor(scopeRefused) : said || `HTTP ${res.status}`;
     return settle(f, "failed", why);
   }
   f.attachmentId = String(res.body?._id ?? "");
