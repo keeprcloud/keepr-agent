@@ -29,7 +29,7 @@ error — you would report "none" for a question that had an answer.
 `q` is KQL — `references/kql.md` has the grammar and worked examples. It is
 the difference between paging a collection into context and asking the server
 the actual question. `search` is not a query: every word you give must appear
-(in any field or the notes; case and accents ignored; a "quoted phrase" exactly,
+(in any field; case and accents ignored; a "quoted phrase" exactly,
 in order), for "is there anything called…". Items come best match first.
 
 When a name in `q` could mean more than one element — two cards each with a

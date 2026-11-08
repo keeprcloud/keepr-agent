@@ -3,6 +3,18 @@
 Each release lists the two versions it carries: the skill's (which is also the
 plugin's) and the server's.
 
+## 2.59.0 — 2026-11-07
+
+Skill 2.59.0, keepr-mcp 0.57.0. Also the first release of 2.58.0, below.
+
+- Your assistant no longer tells you that your item notes are searched or filterable as a field; it describes search and filters the way keepr now works.
+
+## 2.58.0 — 2026-11-07
+
+Skill 2.58.0, keepr-mcp 0.56.0.
+
+- Your assistant's connection to keepr is simpler and stricter about the keepr it talks to: new cards are always proposed and created as one checked blueprint, and an out-of-date keepr is refused with a clear message instead of being worked around. Nothing changes for the keepr you use today.
+
 ## 2.57.0 — 2026-11-06
 
 Skill 2.57.0, keepr-mcp 0.55.0. Also the first release of 2.56.0, below.

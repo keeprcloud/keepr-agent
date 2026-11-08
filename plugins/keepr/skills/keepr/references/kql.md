@@ -33,7 +33,6 @@ slug the schema prints — `read-on`, not "Read on") or its id (below):
 | `card` | the card, by **key** (`card = book`) or 24-hex id. Matches the card **and its descendants** |
 | `id` | the item id |
 | `tags` | the item's tags: by **name**, alias, **path** (`"Health/Digestive"`) or id — `tags = urgent`, `tags in (urgent, "Genre/Sci-fi")`. Matches the tag **and every tag beneath it**, applied by hand or by a rule, and your own private tags. An **item used as a tag** goes by its id only (`tags = <24-hex>`; the search finds it). A name that is no tag matches nothing; one that names two tags is refused (a 400 listing each tag's path) — write the path or the id. `tags is empty` ignores your private tags. `=`, `!=`, `in`, `not in`, `is empty` only — `~` and `<` `>` are refused (a 400 that says so). Anything keepr stores (a saved filter) keeps ids: keepr rewrites the names when it saves. An access setting (who can see what) may name only *restricted* tags |
-| `notes` | the card-level Notes field |
 | `text` | the **search**: `text ~ "prius prime"` — every word somewhere in the item's text (see "Searching" below). Only `~`, `!~` and `contains` |
 | `created`, `updated` | the item's timestamps |
 | `created.by` | who added the item: a 24-hex account id or `me` (see "Who added an item" below) |
@@ -68,8 +67,8 @@ part number. `text !~ "…"` is its opposite. It joins any other condition:
 What it reads: the item's text, rich text (formatting does not get in the
 way, and a link's address counts), links, emails, colors, a phone's digits
 (`555-0123` finds +12025550123), a choice's value or label, an address, a
-numbered element's number (`WO-000417`), the Notes and the item's tags by
-name. What it does not: numbers, dates, amounts, measurements, yes/no, ratings,
+numbered element's number (`WO-000417`), the item's tags by
+name (an element called Notes is searched like any text element). What it does not: numbers, dates, amounts, measurements, yes/no, ratings,
 people, linked items' titles and file names — filter those by their element
 instead — nor a MASKED element (keepr_schema says `masked`: a door code, a
 combination), even though you read and write its value as usual: find that
@@ -173,7 +172,7 @@ in keepr.
 | --- | --- |
 | `=`, `!=` | equal / not equal. Text is case-insensitive and anchored (the whole value) |
 | `>`, `>=`, `<`, `<=` | numeric, date or lexicographic range |
-| `~`, `!~` | contains / does not contain, case-insensitive substring (text; also `notes`) |
+| `~`, `!~` | contains / does not contain, case-insensitive substring (text) |
 | `in (a, b, c)`, `not in (…)` | one of / none of |
 | `is empty`, `is not empty` | missing, `null`, `""` or `[]` — and the inverse |
 
