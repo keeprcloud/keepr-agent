@@ -3,6 +3,12 @@
 Each release lists the two versions it carries: the skill's (which is also the
 plugin's) and the server's.
 
+## 2.61.0 — 2026-11-09
+
+Skill 2.61.0, keepr-mcp 0.59.0.
+
+- The numbers in your assistant's chart tables are now written by the same code keepr's own lists and charts use, so a figure like 1.005 rounds the way it does on screen.
+
 ## 2.60.0 — 2026-11-08
 
 Skill 2.60.0, keepr-mcp 0.58.0.
