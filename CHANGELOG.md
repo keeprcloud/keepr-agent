@@ -3,6 +3,12 @@
 Each release lists the two versions it carries: the skill's (which is also the
 plugin's) and the server's.
 
+## 2.62.0 — 2026-11-09
+
+Skill 2.62.0, keepr-mcp 0.60.0.
+
+- A card change or a collection setup you agreed to no longer has to be proposed again because your assistant's connection restarted: keepr itself now holds the proposal you saw, applies exactly that once, and refuses anything different.
+
 ## 2.61.0 — 2026-11-09
 
 Skill 2.61.0, keepr-mcp 0.59.0.

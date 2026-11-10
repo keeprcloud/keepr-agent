@@ -205,13 +205,15 @@ upsert. Do them in that order, and finish one before starting the next.
 Two rules hold in every chapter:
 
 - **Nothing is written without the user seeing what will be written first.** A
-  dry run before an ingest; a server-made diff before a card change.
+  dry run before an ingest; a server-made diff before a card change or a
+  setup. keepr itself holds that promise: its preview's token is good for
+  exactly what was shown, once, so the apply sends the same spec again.
 - **Never invent.** Not a value, not a total, not an element name, not the
   contents of a page you did not fetch.
 
 ## This copy
 
-This is keepr skill **2.61.0**. Every fact that changes comes from keepr, so a
+This is keepr skill **2.62.0**. Every fact that changes comes from keepr, so a
 copy a release behind is still right about the way of working.
 
 ## Files

@@ -16,13 +16,18 @@ on* — and so should you.
 | --- | --- |
 | read the card | `keepr_schema` with `card` |
 | propose a new card | `keepr_propose_card` |
-| create it | `keepr_apply_card` with the proposal token and the collection name typed back |
+| create it | `keepr_apply_card` with the proposal token, the collection name typed back, and the same `collection` and `cards` (with any `filters`, `layouts`, `tags`) you proposed |
 | propose a change | `keepr_propose_card` with a `change` argument |
-| apply the change | `keepr_apply_card` with the token, the collection name typed back, and — for a destructive change — the card name typed back too |
+| apply the change | `keepr_apply_card` with the token, the collection name typed back, the same `collection` and `change` you proposed, and — for a destructive change — the card name typed back too |
 | look for a ready-made bundle first | `keepr_discover` (`search`, `read`, `preview`), then `keepr_add_package` |
 
-A proposal token is good for 30 minutes and is used once. The apply step sends
-exactly the payload that was previewed; nothing is recomputed between the two.
+The proposal token is keepr's own: keepr made it with the preview, and keepr
+uses it up on the apply. It is good for 30 minutes, once, for this person and
+this connection, and only for the exact change that was previewed. Nothing is
+kept on your side, so the apply sends **the same spec again** — unchanged — and
+keepr refuses anything that differs, or a card that changed in between. When
+keepr refuses the token, nothing was changed: propose again and show the user
+the fresh preview.
 
 ## Discover first
 
@@ -156,7 +161,7 @@ Three words the person reads, and you use too:
    Anything they change means a new preview first: the token is for exactly
    the choices previewed, it lasts 30 minutes, and it is spent by the first
    install; a card of theirs or a bundle in the collection changing in between
-   means a new preview too (`preview_stale`, `stale_card`). Then say what was
+   means a new preview too, and keepr's refusal says so. Then say what was
    added, what was left out, and what arrived paused or off — rules,
    notifications and forms wait for them in keepr, and you may turn on only a
    rule that changes nothing beyond its own record. If they would rather add it
@@ -434,7 +439,7 @@ to skip the preview: it is where the token comes from.
 3. keepr_propose_card with change
      the server's diff, item counts, side effects — and a token. Nothing written.
 4. show the diff to the user, in their words, destructive parts first
-5. keepr_apply_card with the token                    once they say yes
+5. keepr_apply_card with the token AND the same change  once they say yes
      confirm_card_name too  when step 3 said DESTRUCTIVE
 ```
 

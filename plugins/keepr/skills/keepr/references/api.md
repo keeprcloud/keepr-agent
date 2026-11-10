@@ -545,9 +545,9 @@ changed.
 blueprints"). `POST /api/collections/{id}/blueprints/preview` with
 `{ "blueprint": { "cards": [...], "collection": { "savedFilters": [...],
 "cardLayouts": [...] } } }` checks it and writes nothing (200 `{ wouldApply,
-problems[{path, code, message}], steps, summary }`); `…/blueprints/apply` with the
-same body creates it all or nothing (201 with each card's `localId`, `id`,
-`key`). Cards are named by reference, never by id: `{ "ref": "<localId>" }` for
+problems[{path, code, message}], steps, summary, previewToken? }`); `…/blueprints/apply` with the
+same body plus that `previewToken` creates it all or nothing (201 with each card's `localId`, `id`,
+`key`) — the token works as a card change's does (§6a). Cards are named by reference, never by id: `{ "ref": "<localId>" }` for
 one in the blueprint (itself too), `{ "key": "work-item" }` for one the
 collection has, `{ "globalKey": "person" }` for a global card — as `parentRef`,
 an element's `options.lookupCardId`, a rollup's `options.drivenFrom.sourceCardId`,
@@ -588,7 +588,7 @@ it, which breaks saved filters and links — don't).
 
 **`POST /api/card-definitions/{id}/change-preview`** takes the **same payload**,
 runs every gate PATCH runs, **writes nothing**, and returns what the PATCH
-would do, classified:
+would do, classified — and, when it would apply, keepr's `previewToken`:
 
 ```bash
 curl -s -X POST -H "Authorization: Bearer $KEEPR_API_KEY" \
@@ -612,7 +612,8 @@ curl -s -X POST -H "Authorization: Bearer $KEEPR_API_KEY" \
   "cardFields":  [ { "field": "name", "from": "Book", "to": "Books" } ],
   "sideEffects": [ { "code": "automation_retired", "message": "…" } ],
   "destructive": true,
-  "summary": "DESTRUCTIVE — removes shelf (12 items hold a value); …" }
+  "summary": "DESTRUCTIVE — removes shelf (12 items hold a value); …",
+  "previewToken": "kpct1.…", "previewTokenExpiresAt": "…" }   // only when wouldApply
 ```
 
 `removed` and `retyped` are the destructive kinds; `itemsWithValues` is the
@@ -625,14 +626,23 @@ rounded to the currency's decimals); `conversion: "none"` means the stored value
 reinterpreted, not converted.
 
 Then, and only after the user has seen that, the PATCH with the identical
-payload:
+payload, plus the preview's token — and, for a destructive change, the card's
+name as the preview said it:
 
 ```bash
 curl -s -X PATCH -H "Authorization: Bearer $KEEPR_API_KEY" \
   -H 'Content-Type: application/json' \
   https://api.keepr.cloud/api/card-definitions/<cardId> \
-  -d '{ "elements": [ …the same full list… ] }'
+  -d '{ "elements": [ …the same full list… ], "previewToken": "kpct1.…", "confirmCardName": "Book" }'
 ```
+
+The guarantee is keepr's: the token is bound to this key, the card as the
+preview read it and the exact payload, lasts 30 minutes, and is used once.
+Nothing needs keeping on your side; build the payload again from the same spec.
+A token that no longer fits — used, expired, a payload or a card that changed —
+is refused with nothing changed, and so is a destructive change without the
+name: preview again. A blueprint apply (§6) takes its preview's token the same
+way, beside `blueprint`.
 
 Answers `{ "status", "payload": <the saved card>, "conversion"?, "conversions"?, "conversionWarning"? }`.
 A refusal is the preview's `refusal`: keepr's code and its sentence. A change

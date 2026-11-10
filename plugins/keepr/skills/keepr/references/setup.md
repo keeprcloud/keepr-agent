@@ -31,7 +31,7 @@ or nothing**. The preview is what the person agrees to — so read it to them.
 | read the collection's cards and its rules | `keepr_schema` |
 | read each card's layouts (what a layout entry would replace) | `keepr_schema` with `include_layouts: true` |
 | propose a setup | `keepr_propose_setup` |
-| apply it | `keepr_apply_setup` with the token and the collection name typed back |
+| apply it | `keepr_apply_setup` with the token, the collection name typed back, and the same `collection` and `setup` you proposed |
 | list rules, a rule's runs | `keepr_automations` (`list`, `runs`) |
 | pause one, or turn one on | `keepr_set_automation_state` (`pause`, `turn_on`) |
 | who changed what | `keepr_history` |
@@ -39,7 +39,9 @@ or nothing**. The preview is what the person agrees to — so read it to them.
 The apply sends exactly the setup that was previewed, and **checks the plan has
 not moved**: if something was added or renamed in the collection since the
 preview (so an "adds" would now be a "changes"), nothing is applied and you
-propose again. A tool token lasts 30 minutes and is used once.
+propose again. A tool token is keepr's own: it lasts 30 minutes, is used once,
+and holds the setup and the plan exactly as previewed, so the apply sends the
+same setup again and keepr refuses one that differs.
 
 ## The setup document
 
