@@ -61,7 +61,10 @@ Three words the person reads, and you use too:
    card terms. A row that matched one scenario says so ("Family cars, a
    scenario of Vehicle care"). `collections: true` also finds the published
    collections they can follow (a reference list kept by its publisher), which
-   they follow rather than add. `kind` still narrows by shape (one card, one
+   they follow rather than add. A published collection whose cards extend a
+   base card is a **catalog** of that base card's records: its row says so
+   ("A catalog of Product models · 207 records"), and `base` (a base card's key,
+   "product-model") lists only the catalogs of that base card. `kind` still narrows by shape (one card, one
    that brings collection settings, any other) but is going away: leave it out
    unless they ask for that shape.
 2. **Read** the likely ones with `action: "read"`: every card and element, the

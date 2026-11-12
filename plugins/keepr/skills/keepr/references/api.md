@@ -88,7 +88,8 @@ better thing to hand a model composing rows.
 Nothing is cached server-side — ask right before you write. An element marked
 `driven` or `sequence` is written by keepr; never send one. What each element
 takes is its type plus its options; the contract's `elementTypes` (§ 7) says,
-for every type, what to send.
+for every type, what to send, and its `elementOptions` what each option on an
+element means.
 
 **`tags`** is the collection's tag vocabulary: its own tags, then the ones of
 the collection above it (marked `inheritedFrom`), as far as this key may see

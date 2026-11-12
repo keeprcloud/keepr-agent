@@ -107,6 +107,18 @@ To link to something already in keepr whose id you don't know, either import it
 with the same `system` + `externalId` first (an `upsert` of an identical row is
 a free no-op) or look the id up and send it plain.
 
+A lookup to a **base card** (a global card such as Product model, whose cards
+in catalogs and in the person's own collections extend it) names a kind of
+record, not one collection's card: its records can live in a catalog the
+person follows, in their own collection or in one linked to it. To find one,
+read that card's records across the person's collections — `keepr_get_items`
+with `match: { card: "<the base card's id>" }` and a `search` (`reading.md`,
+"combined list"; with the API, `api.md`, "Combined lists") — and send the id of
+the record they mean. Each row says which collection it is in; tell the person.
+keepr decides whether a record of another collection may be linked there: when
+it refuses the id, say so, and offer one from the person's own collection or
+to keep the model there.
+
 ## Files
 
 A file element is never filled by a row. Upload the file onto the item and put

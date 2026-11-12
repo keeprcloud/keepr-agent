@@ -352,7 +352,8 @@ var KeeprHttp = class {
         totalCount: parseIntOrNull(res.headers.get("x-total-count")),
         rateLimit: rate,
         requestId: res.headers.get("x-request-id"),
-        nonJson
+        nonJson,
+        etag: res.headers.get("etag")
       };
     }
     throw new KeeprTransportError(`Cannot reach ${this.baseUrl}.`, url, lastError);
@@ -1276,7 +1277,7 @@ async function within(promise, ms) {
 }
 
 // dist/src/contract.snapshot.files.json
-var contract_snapshot_files_default = { version: "c9332dc5c980", writeContract: { maxBatch: 200 }, errorCodes: { shape: [{ code: "attachment_in_use", means: "409 on DELETE /api/items/{id}/attachments/{aid}: the attachment is the value of a file element (element names it), or of a file column of one entry of a repeating group (element names the group, with column and entryId) \u2014 clear or replace the value with an item write instead (an entry: its own door, or remove the entry); never met by a row" }, { code: "attachments_disabled", means: "a new or changed file value while the collection's attachments are switched off (the stored value, unchanged, still saves) \u2014 or a row that removes a repeating group's entry holding a file then (its files would go with it)" }, { code: "confirmations_not_settable", means: "a value for a confirmations element: keepr keeps that count from the people who confirmed \u2014 leave it out (the stored count re-sent unchanged is fine), and confirm with POST /api/items/{id}/confirmations/{element}" }, { code: "driven_element", means: "the element is system-owned; its value is computed, never sent" }, { code: "file_already_used", means: "the same file named twice under one element, or a file another element of the item already holds" }, { code: "file_not_found", means: "an id under a file element that is not a file this write may use: unknown, deleted, someone else's, or on another item (one answer for every reason)" }, { code: "file_not_settable", means: "a file element's value is set by a person (the item form) or keepr_attach_file, never by an import row, a bulk edit or an automation: only the stored value, unchanged, may ride along \u2014 a new value, another one, or a blank on a stored file is refused" }, { code: "file_too_large", means: "the file is larger than its effective per-file cap: the element's maxSizeMb, lowered to the collection's per-file cap where that is smaller (limitMb carries the cap met; the schema read gives both)" }, { code: "file_wrong_kind", means: 'the element takes photos only (accept: "image") and the file is not one keepr could read as a photo \u2014 a PDF never is' }, { code: "invalid_choice", means: "not one of the element's choice values" }, { code: "invalid_color", means: 'not a color keepr reads: a hex with its # ("#1f6feb", "#abc"), rgb(r, g, b) with whole numbers 0\u2013255, or one of the 22 choice color names; a translucent color is refused too' }, { code: "invalid_currency", means: `not an ISO 4217 code keepr knows, a symbol that names several currencies ("kr"), or outside the element's currencies` }, { code: "invalid_email", means: "not local@domain.tld, or over 254 characters" }, { code: "invalid_entry", means: `an entry of a repeating group is not one: not an object, a key an entry does not take (an entry is { "id"?, "elements": { \u2026 } } or { "id"?, "section": "<title>" } \u2014 a column's value goes under "elements"), its id twice in the list, a section heading on a group without them or with columns beside it, or an entry made a heading (or a heading an entry); position and entryId name it` }, { code: "invalid_entry_op", means: `an entry operation (KPR-677: add, update, remove or move ONE entry of a repeating group \u2014 the itemEntry* endpoints, a bulk row's "entries") is malformed: an unknown op or key, no entryId on update/remove/move, "elements" beside "section", an update with nothing to change, a position that is not a whole number from 1 or is past the end, the same group under "elements" and "entries", entries on a new row, or an entryId in a bulk patch (an entry id belongs to one item: over a selection only "add")` }, { code: "invalid_location", means: "neither an address nor a coordinate pair, or the half the element's accept setting forbids" }, { code: "invalid_lookup", means: "not a 24-hex id or a $ref, or an array on a single-valued element" }, { code: "invalid_phone", means: "unparseable, or impossible in the numbering plan of the element's country" }, { code: "invalid_unit", means: "not a unit of that measurement's measure (or of any of its measures), nor one of its own units, or outside the element's allowlist" }, { code: "invalid_url", means: "not a link keepr stores: a scheme off its list (http, https, mailto, tel, sms, geo, facetime, spotify, zoommtg, msteams, slack), a space inside, or neither a link nor a host" }, { code: "pattern", means: "a short text that does not fit the element's pattern (the collection schema gives it); the message is the element author's own sentence" }, { code: "range", means: "outside a declared bound \u2014 a rating past max, a number past min/max, a date outside its bounds or on a disallowed weekday" }, { code: "repeating_group_not_settable", means: `a value for a repeating group on a path that does not write entries (a rule, multi add, quick add) \u2014 leave it out, or send "" or null; items, bulk, ingest and a public form's submit write entries, and a rule's create-item may copy the trigger item's entries into a group of the new item with the whole value "{{trigger.<group>}}"` }, { code: "required", means: "a required element was empty or missing" }, { code: "sequence_element", means: "the element is numbered by the server (options.sequence); its value cannot be written \u2014 refused in strict mode, dropped otherwise" }, { code: "too_few_entries", means: "a repeating group holds fewer entries than its minEntries (min and count carry both; section headings do not count)" }, { code: "too_long", means: "longer than the element allows (limit carries it): the element's own maxLength, else 255 characters for a short text, 20,000 long (50,000 extended), 100,000 rich (250,000 extended), 2,048 for a url" }, { code: "too_many_dates", means: "more than 1,000 distinct entries in a date or date-time list (limit carries it); a longer list stored before the cap, re-sent unchanged, still saves" }, { code: "too_many_entries", means: "a repeating group's list is longer than its maxEntries (max and count carry both; section headings count); an entry operation's add that would make it so" }, { code: "too_many_files", means: "more files than a file element holds (limit carries it: 20)" }, { code: "type", means: "the value does not coerce to the element's data type" }, { code: "unknown_element", means: "no element of that name on the card (strict mode only; non-strict drops the key)" }, { code: "unknown_entry", means: `an entry's "id" is not one this item's group holds \u2014 keepr issues entry ids: leave "id" out to add a new entry, or read the item for the ids it holds` }, { code: "user_not_found", means: "no existing, active account with that id" }], row: [{ code: "account_already_linked", means: "another item of this collection already links that account" }, { code: "account_link_needs_access", means: "the row sets or changes the account link on a card a group built from records reads, changes a field such a group's rule reads on a linked record so that its person could join, or changes a field such a rule reads through this record (a looked-up record's name, a record a total counts), and the caller lacks, across the collection, the access that group gives \u2014 a manager makes the change" }, { code: "ambiguous_tag", means: "a tags name could be more than one tag; candidates lists each one's tagId and path \u2014 send the path or the id" }, { code: "attestation_required", means: "the record's card requires a signature on every change (record.attest in the schema) and the upsert row would change it without one: no X-Attestation header, an expired one, another person's, or one minted for another card or collection \u2014 nothing is written (as PUT answers 428). A person signed in to keepr signs (POST /api/auth/attest); an API key or an assistant cannot, so ask the person to make the change in keepr. A row that changes nothing is skipped, never refused" }, { code: "card_in_sub_collection", means: "hint.code on a card_not_allowed row: the card belongs to a sub-collection (hint.collection_id, hint.name) \u2014 ingest the row there" }, { code: "card_mismatch", means: "an upsert matched an item of a different card; card cannot change on upsert" }, { code: "card_not_allowed", means: "the card exists but is not writable in this collection" }, { code: "card_unknown", means: "no card definition with that key or id" }, { code: "duplicate", means: "create mode, and that (system, externalId) pair already exists \u2014 switch to upsert" }, { code: "duplicate_value", means: 'another item of the card already holds this value of a unique element (text and email compared ignoring case); itemId and title name it when you can read it \u2014 use mode "upsert" keyed on the element to re-run an import' }, { code: "element_read_only", means: 'reason "grant": the element is shown to the caller but only some people may change it (an element rule of the collection) \u2014 the row changes it, so nothing is written for the row. Leave it out, or send the stored value unchanged (on a new record, its default); an element HIDDEN from the caller is never named this way: it answers unknown_element, as a name the card does not have' }, { code: "externalId_required", means: "upsert mode with no source.externalId on the row" }, { code: "forbidden_card", means: "the caller's grants do not cover that card" }, { code: "forbidden_item", means: "an upsert matched an item the caller may not modify" }, { code: "formula_too_costly", means: "the row's calculations over a repeating group \u2014 its calculated columns and the totals that read the group \u2014 would need more work than one save allows, so nothing is written for the row; element (and column) name the costliest when the caller can read it. Send fewer entries per item, or ask the card's manager to simplify the formula" }, { code: "insufficient_scope", means: "the row removes a repeating group's entry whose file column holds files, and letting files go needs a key or connection with delete (`requiredScope`); nothing was written for it \u2014 send the entry again, or use a credential that has delete" }, { code: "internal", means: "an unexpected server error on this row; the row was not written" }, { code: "invalid_tag_ids", means: "tags is not a list of tag names, paths or ids, tagIds is not a list of tag ids, or the row sends both" }, { code: "item_locked", means: "the record's card has locked it (record.lock in the schema): an upsert row that would change it \u2014 an element value, its tags \u2014 or an attachment added to or removed from it, is refused and nothing is written (as PUT refuses); a row that changes nothing is skipped, never refused. A manager's unlock reopens it, and the write that lands closes it again. A dry run refuses what its commit will: a row repeating a record an earlier row of the request creates, or one whose unlock an earlier row spends, is judged against that record as the commit will meet it" }, { code: "item_too_large", means: "the row would leave the item holding more than limits.itemBytes (8 MB) of element values, so nothing is written for the row; limit, size and element (the largest element the caller can change) say how far. An item already past it may always be saved smaller or unchanged. Send fewer entries or shorter text per item" }, { code: "lookup_filtered_out", means: "the element is a strict lookup and the record is outside its filter (the collection schema gives filter and strict); itemIds names the refused ids \u2014 choose a record the filter offers (list them with the filter in ?q=). A record the item already holds always saves" }, { code: "lookup_not_found", means: "a plain 24-hex id is not a readable item of this collection" }, { code: "plan_limit", means: `the row would take the collection's owner past a limit of their plan (meter: items, storage, rules, people, forms or submissions; limit is the limit that applies), so nothing is written for the row and the rows before it stand. used, plan and lifts are added only when the caller is the collection's owner; anyone else is told to ask the owner. Reading, editing, exporting and deleting are never refused for a plan; the same 409 answers every other door that adds (docs/SCHEMA.md "Plan limits")` }, { code: "private_tag_not_allowed", means: "a tags entry is a private tag: only its owner sees it and it is never on an item, so a row carries collection tags only" }, { code: "ref_unresolved", means: "a $ref matched no readable item, or its target row failed earlier in the request" }, { code: "ref_wrong_card", means: "the reference resolves to an item whose card the element does not accept" }, { code: "restricted_tag", means: "the row adds, or takes off, a restricted tag, and only managers of the collection it belongs to may; a restricted tag the list leaves out is kept, not refused" }, { code: "rule_owned_tag", means: "a tag a strict rule applies, and only the rule \u2014 a row cannot add it by hand" }, { code: "session_required", means: "only a person signed in to keepr may make this change, never an API key or an assistant: the row adds or takes off a restricted tag (those decide who can see what; a restricted tag the list leaves out is kept), or sets or changes the account link on a card a group built from records reads, changes a field such a group's rule reads on a linked record so that its person could join, or changes a field such a rule reads through this record (a looked-up record's name, a record a total counts); only a signed-in person may \u2014 an API key or assistant cannot (re-sending the stored values is fine)" }, { code: "source_invalid", means: "the effective source is malformed \u2014 most often an externalId with no system in effect" }, { code: "stale", means: "somebody changed the item's tags while the row was being written, twice; nothing was written for it \u2014 send the row again" }, { code: "too_many_tags", means: "the row would give the item more than 50 tags" }, { code: "unknown_tag", means: "a tags or tagIds entry is not a tag this item can carry: a name or path that names no tag of this collection or the collection above it that the caller can read, or an id that is not one (one answer for every reason \u2014 missing, deleted, private, another collection's). keepr never creates a tag on a write" }] }, auth: { scopes: { read: "GET, HEAD, OPTIONS", write: "creating and changing items, attachments and ingest \u2014 every other method except the card surface", cards: "creating and changing cards, element sets and card layouts (never delete of a collection)", delete: "deleting, beside write or cards: every DELETE that removes something, bulk op delete and reject, intake-review reject, a replace-mode write carrying elements (PUT /api/items/{id}, bulk update rows, ingest upsert \u2014 whenever the effective merge is false), and a collection PUT that drops a card from cards[] \u2014 off by default, and never implied" } } };
+var contract_snapshot_files_default = { version: "12c1a0043696", writeContract: { maxBatch: 200 }, errorCodes: { shape: [{ code: "attachment_in_use", means: "409 on DELETE /api/items/{id}/attachments/{aid}: the attachment is the value of a file element (element names it), or of a file column of one entry of a repeating group (element names the group, with column and entryId) \u2014 clear or replace the value with an item write instead (an entry: its own door, or remove the entry); never met by a row" }, { code: "attachments_disabled", means: "a new or changed file value while the collection's attachments are switched off (the stored value, unchanged, still saves) \u2014 or a row that removes a repeating group's entry holding a file then (its files would go with it)" }, { code: "confirmations_not_settable", means: "a value for a confirmations element: keepr keeps that count from the people who confirmed \u2014 leave it out (the stored count re-sent unchanged is fine), and confirm with POST /api/items/{id}/confirmations/{element}" }, { code: "driven_element", means: "the element is system-owned; its value is computed, never sent" }, { code: "file_already_used", means: "the same file named twice under one element, or a file another element of the item already holds" }, { code: "file_not_found", means: "an id under a file element that is not a file this write may use: unknown, deleted, someone else's, or on another item (one answer for every reason)" }, { code: "file_not_settable", means: "a file element's value is set by a person (the item form) or keepr_attach_file, never by an import row, a bulk edit or an automation: only the stored value, unchanged, may ride along \u2014 a new value, another one, or a blank on a stored file is refused" }, { code: "file_too_large", means: "the file is larger than its effective per-file cap: the element's maxSizeMb, lowered to the collection's per-file cap where that is smaller (limitMb carries the cap met; the schema read gives both)" }, { code: "file_wrong_kind", means: 'the element takes photos only (accept: "image") and the file is not one keepr could read as a photo \u2014 a PDF never is' }, { code: "invalid_choice", means: "not one of the element's choice values" }, { code: "invalid_color", means: 'not a color keepr reads: a hex with its # ("#1f6feb", "#abc"), rgb(r, g, b) with whole numbers 0\u2013255, or one of the 22 choice color names; a translucent color is refused too' }, { code: "invalid_currency", means: `not an ISO 4217 code keepr knows, a symbol that names several currencies ("kr"), or outside the element's currencies` }, { code: "invalid_email", means: "not local@domain.tld, or over 254 characters" }, { code: "invalid_entry", means: `an entry of a repeating group is not one: not an object, a key an entry does not take (an entry is { "id"?, "elements": { \u2026 } } or { "id"?, "section": "<title>" } \u2014 a column's value goes under "elements"), its id twice in the list, a section heading on a group without them or with columns beside it, or an entry made a heading (or a heading an entry); position and entryId name it` }, { code: "invalid_entry_op", means: `an entry operation (KPR-677: add, update, remove or move ONE entry of a repeating group \u2014 the itemEntry* endpoints, a bulk row's "entries") is malformed: an unknown op or key, no entryId on update/remove/move, "elements" beside "section", an update with nothing to change, a position that is not a whole number from 1 or is past the end, the same group under "elements" and "entries", entries on a new row, or an entryId in a bulk patch (an entry id belongs to one item: over a selection only "add")` }, { code: "invalid_location", means: "neither an address nor a coordinate pair, or the half the element's accept setting forbids" }, { code: "invalid_lookup", means: "not a 24-hex id or a $ref, or an array on a single-valued element" }, { code: "invalid_phone", means: "unparseable, or impossible in the numbering plan of the element's country" }, { code: "invalid_unit", means: "not a unit of that measurement's measure (or of any of its measures), nor one of its own units, or outside the element's allowlist" }, { code: "invalid_url", means: "not a link keepr stores: a scheme off its list (http, https, mailto, tel, sms, geo, facetime, spotify, zoommtg, msteams, slack), a space inside, or neither a link nor a host" }, { code: "pattern", means: "a short text that does not fit the element's pattern (the collection schema gives it); the message is the element author's own sentence" }, { code: "range", means: "outside a declared bound \u2014 a rating past max, a number past min/max, a date outside its bounds or on a disallowed weekday" }, { code: "repeating_group_not_settable", means: `a value for a repeating group on a path that does not write entries (a rule, multi add, quick add) \u2014 leave it out, or send "" or null; items, bulk, ingest and a public form's submit write entries, and a rule's create-item may copy the trigger item's entries into a group of the new item with the whole value "{{trigger.<group>}}"` }, { code: "required", means: "a required element was empty or missing" }, { code: "sequence_element", means: "the element is numbered by the server (options.sequence); its value cannot be written \u2014 refused in strict mode, dropped otherwise" }, { code: "too_few_entries", means: "a repeating group holds fewer entries than its minEntries (min and count carry both; section headings do not count)" }, { code: "too_long", means: "longer than the element allows (limit carries it): the element's own maxLength, else 255 characters for a short text, 20,000 long (50,000 extended), 100,000 rich (250,000 extended), 2,048 for a url" }, { code: "too_many_dates", means: "more than 1,000 distinct entries in a date or date-time list (limit carries it); a longer list stored before the cap, re-sent unchanged, still saves" }, { code: "too_many_entries", means: "a repeating group's list is longer than its maxEntries (max and count carry both; section headings count); an entry operation's add that would make it so" }, { code: "too_many_files", means: "more files than a file element holds (limit carries it: 20)" }, { code: "type", means: "the value does not coerce to the element's data type" }, { code: "unknown_element", means: "no element of that name on the card (strict mode only; non-strict drops the key)" }, { code: "unknown_entry", means: `an entry's "id" is not one this item's group holds \u2014 keepr issues entry ids: leave "id" out to add a new entry, or read the item for the ids it holds` }, { code: "user_not_found", means: "no existing, active account with that id" }], row: [{ code: "account_already_linked", means: "another item of this collection already links that account" }, { code: "account_link_needs_access", means: "the row sets or changes the account link on a card a group built from records reads, changes a field such a group's rule reads on a linked record so that its person could join, or changes a field such a rule reads through this record (a looked-up record's name, a record a total counts), and the caller lacks, across the collection, the access that group gives \u2014 a manager makes the change" }, { code: "ambiguous_tag", means: "a tags name could be more than one tag; candidates lists each one's tagId and path \u2014 send the path or the id" }, { code: "attestation_required", means: "the record's card requires a signature on every change (record.attest in the schema) and the upsert row would change it without one: no X-Attestation header, an expired one, another person's, or one minted for another card or collection \u2014 nothing is written (as PUT answers 428). A person signed in to keepr signs (POST /api/auth/attest); an API key or an assistant cannot, so ask the person to make the change in keepr. A row that changes nothing is skipped, never refused" }, { code: "card_in_sub_collection", means: "hint.code on a card_not_allowed row: the card belongs to a sub-collection (hint.collection_id, hint.name) \u2014 ingest the row there" }, { code: "card_mismatch", means: "an upsert matched an item of a different card; card cannot change on upsert" }, { code: "card_not_allowed", means: "the card exists but is not writable in this collection" }, { code: "card_unknown", means: "no card definition with that key or id" }, { code: "duplicate", means: "create mode, and that (system, externalId) pair already exists \u2014 switch to upsert" }, { code: "duplicate_value", means: 'another item of the card already holds this value of a unique element (text and email compared ignoring case); itemId and title name it when you can read it \u2014 use mode "upsert" keyed on the element to re-run an import' }, { code: "element_read_only", means: 'reason "grant": the element is shown to the caller but only some people may change it (an element rule of the collection) \u2014 the row changes it, so nothing is written for the row. Leave it out, or send the stored value unchanged (on a new record, its default); an element HIDDEN from the caller is never named this way: it answers unknown_element, as a name the card does not have' }, { code: "externalId_required", means: "upsert mode with no source.externalId on the row" }, { code: "forbidden_card", means: "the caller's grants do not cover that card" }, { code: "forbidden_item", means: "an upsert matched an item the caller may not modify" }, { code: "formula_too_costly", means: "the row's calculations over a repeating group \u2014 its calculated columns and the totals that read the group \u2014 would need more work than one save allows, so nothing is written for the row; element (and column) name the costliest when the caller can read it. Send fewer entries per item, or ask the card's manager to simplify the formula" }, { code: "insufficient_scope", means: "the row removes a repeating group's entry whose file column holds files, and letting files go needs a key or connection with delete (`requiredScope`); nothing was written for it \u2014 send the entry again, or use a credential that has delete" }, { code: "internal", means: "an unexpected server error on this row; the row was not written" }, { code: "invalid_tag_ids", means: "tags is not a list of tag names, paths or ids, tagIds is not a list of tag ids, or the row sends both" }, { code: "item_locked", means: "the record's card has locked it (record.lock in the schema): an upsert row that would change it \u2014 an element value, its tags \u2014 or an attachment added to or removed from it, is refused and nothing is written (as PUT refuses); a row that changes nothing is skipped, never refused. A manager's unlock reopens it, and the write that lands closes it again. A dry run refuses what its commit will: a row repeating a record an earlier row of the request creates, or one whose unlock an earlier row spends, is judged against that record as the commit will meet it" }, { code: "item_too_large", means: "the row would leave the item holding more than limits.itemBytes (8 MB) of element values, so nothing is written for the row; limit, size and element (the largest element the caller can change) say how far. An item already past it may always be saved smaller or unchanged. Send fewer entries or shorter text per item" }, { code: "lookup_filtered_out", means: "the element is a strict lookup and the record is outside its filter (the collection schema gives filter and strict); itemIds names the refused ids \u2014 choose a record the filter offers (list them with the filter in ?q=). A record the item already holds always saves" }, { code: "lookup_not_found", means: "a plain 24-hex id is not a readable item of this collection" }, { code: "plan_limit", means: `the row would take the collection's owner past a limit of their plan (meter: items, storage, rules, people, forms or submissions; limit is the limit that applies), so nothing is written for the row and the rows before it stand. used, plan and lifts are added only when the caller is the collection's owner; anyone else is told to ask the owner. Reading, editing, exporting and deleting are never refused for a plan; the same 409 answers every other door that adds (docs/SCHEMA.md "Plan limits")` }, { code: "private_tag_not_allowed", means: "a tags entry is a private tag: only its owner sees it and it is never on an item, so a row carries collection tags only" }, { code: "ref_unresolved", means: "a $ref matched no readable item, or its target row failed earlier in the request" }, { code: "ref_wrong_card", means: "the reference resolves to an item whose card the element does not accept" }, { code: "restricted_tag", means: "the row adds, or takes off, a restricted tag, and only managers of the collection it belongs to may; a restricted tag the list leaves out is kept, not refused" }, { code: "rule_owned_tag", means: "a tag a strict rule applies, and only the rule \u2014 a row cannot add it by hand" }, { code: "session_required", means: "only a person signed in to keepr may make this change, never an API key or an assistant: the row adds or takes off a restricted tag (those decide who can see what; a restricted tag the list leaves out is kept), or sets or changes the account link on a card a group built from records reads, changes a field such a group's rule reads on a linked record so that its person could join, or changes a field such a rule reads through this record (a looked-up record's name, a record a total counts); only a signed-in person may \u2014 an API key or assistant cannot (re-sending the stored values is fine)" }, { code: "source_invalid", means: "the effective source is malformed \u2014 most often an externalId with no system in effect" }, { code: "stale", means: "somebody changed the item's tags while the row was being written, twice; nothing was written for it \u2014 send the row again" }, { code: "too_many_tags", means: "the row would give the item more than 50 tags" }, { code: "unknown_tag", means: "a tags or tagIds entry is not a tag this item can carry: a name or path that names no tag of this collection or the collection above it that the caller can read, or an id that is not one (one answer for every reason \u2014 missing, deleted, private, another collection's). keepr never creates a tag on a write" }] }, auth: { scopes: { read: "GET, HEAD, OPTIONS", write: "creating and changing items, attachments and ingest \u2014 every other method except the card surface", cards: "creating and changing cards, element sets and card layouts (never delete of a collection)", delete: "deleting, beside write or cards: every DELETE that removes something, bulk op delete and reject, intake-review reject, a replace-mode write carrying elements (PUT /api/items/{id}, bulk update rows, ingest upsert \u2014 whenever the effective merge is false), and a collection PUT that drops a card from cards[] \u2014 off by default, and never implied" } } };
 
 // dist/src/contract.js
 var SNAPSHOT = contract_snapshot_files_default;
@@ -1951,6 +1952,57 @@ var RunLedger = class {
   }
 };
 
+// dist/src/schemaCache.js
+var SCHEMA_TTL_MS = 3e4;
+var MAX_ENTRIES = 64;
+var SchemaCache = class {
+  /** The clock; a test sets it. */
+  now = () => Date.now();
+  entries = /* @__PURE__ */ new Map();
+  generation = 0;
+  get size() {
+    return this.entries.size;
+  }
+  /** Forget everything: a write went through, or the credential changed. */
+  clear() {
+    this.entries.clear();
+    this.generation++;
+  }
+  async get(http, collectionId, opts = {}) {
+    const generation = this.generation;
+    const held = opts.fresh ? void 0 : this.entries.get(collectionId);
+    if (held && this.now() - held.at < SCHEMA_TTL_MS)
+      return this.answer(held);
+    const res = await http.request({
+      path: `/api/collections/${collectionId}/schema`,
+      ...opts.maxWaitMs !== void 0 ? { maxWaitMs: opts.maxWaitMs } : {},
+      ...held?.etag ? { headers: { "If-None-Match": held.etag } } : {}
+    });
+    const current = generation === this.generation;
+    if (res.status === 304 && held) {
+      if (current)
+        held.at = this.now();
+      return this.answer(held);
+    }
+    if (res.ok) {
+      if (current) {
+        this.entries.delete(collectionId);
+        this.entries.set(collectionId, { body: structuredClone(res.body), etag: res.etag ?? null, at: this.now(), requestId: res.requestId });
+        while (this.entries.size > MAX_ENTRIES)
+          this.entries.delete(this.entries.keys().next().value);
+      }
+      return res;
+    }
+    if (current)
+      this.entries.delete(collectionId);
+    return res;
+  }
+  /** The held body as a 200, copied so a caller that edits what it read edits nothing shared. */
+  answer(e) {
+    return { ok: true, status: 200, body: structuredClone(e.body), totalCount: null, rateLimit: null, requestId: e.requestId, nonJson: false, etag: e.etag };
+  }
+};
+
 // dist/src/proposals.js
 import { randomBytes as randomBytes3 } from "node:crypto";
 var TTL_MS2 = 30 * 6e4;
@@ -2150,7 +2202,7 @@ This is a bug in keepr-mcp, not something the user did.`)) : guard(def, ctx, arg
 
 // dist/src/server.js
 var SERVER_NAME = "keepr";
-var SERVER_VERSION = "0.60.0";
+var SERVER_VERSION = "0.61.0";
 var WEBSITE_URL = "https://keepr.cloud";
 var KQL_REFERENCE_URL = `${WEBSITE_URL}/docs/guides/finding-and-lists/kql-reference`;
 function brandIcons(publicUrl = process.env.KEEPR_PUBLIC_URL || "https://api.keepr.cloud") {
@@ -2165,6 +2217,7 @@ var READ_ONLY = { readOnlyHint: true, destructiveHint: false, idempotentHint: tr
 
 // dist/src/context.js
 var COLLECTION_NAME_MAX = 200;
+var ROSTER_RELOAD_THROTTLE_MS = 15e3;
 var SCOPE_NAMES = ["read", "write", "cards", "delete"];
 function collectionKind(c) {
   if (typeof c.kind === "string" && c.kind)
@@ -2198,8 +2251,11 @@ var KeeprContext = class {
   ledger = new RunLedger();
   /** Replaced by restart(): a card proposal belongs to the account that previewed it. */
   proposals = new ProposalStore();
+  /** Replaced by restart() (KPR-1619): a schema is what THIS credential may read, and the next account's must not be answered from it. */
+  schemas = new SchemaCache();
   collections = [];
   collectionsLoaded = false;
+  rosterLoadedAt = 0;
   /**
    * What is known about each scope: true (held), false (refused), or absent
    * (not yet known). Filled whole from /api/user-info at startup when the
@@ -2277,11 +2333,13 @@ var KeeprContext = class {
     this.keyCollectionIds = null;
     this.collections = [];
     this.collectionsLoaded = false;
+    this.rosterLoadedAt = 0;
     this.cardsScopeSeen = false;
     this.deleteScopeSeen = false;
     this.breaker = new RefusalBreaker();
     this.proposals = new ProposalStore();
     this.ledger = new RunLedger();
+    this.schemas = new SchemaCache();
     await this.start();
   }
   /**
@@ -2396,6 +2454,7 @@ var KeeprContext = class {
       return row;
     });
     this.collectionsLoaded = true;
+    this.rosterLoadedAt = Date.now();
   }
   knownCollections() {
     return this.collections;
@@ -2409,10 +2468,28 @@ var KeeprContext = class {
    * — never a guess, because guessing writes the user's data into the wrong
    * workspace and nothing downstream can detect that.
    */
-  resolveCollection(ref) {
+  async resolveCollection(ref) {
+    let r = this.matchCollection(ref);
+    if (!r.ok && r.miss && await this.reloadIfStale())
+      r = this.matchCollection(ref);
+    return r.ok ? r : { ok: false, message: r.message };
+  }
+  /**
+   * Re-read the roster unless it was read within ROSTER_RELOAD_THROTTLE_MS.
+   * The throttle keeps a model that retries a wrong name from hitting
+   * /api/collections on every call. True when it reloaded.
+   */
+  async reloadIfStale(now = Date.now()) {
+    if (this.rosterLoadedAt !== 0 && now - this.rosterLoadedAt < ROSTER_RELOAD_THROTTLE_MS)
+      return false;
+    await this.loadCollections();
+    return true;
+  }
+  matchCollection(ref) {
+    const fail2 = (message, miss = false) => ({ ok: false, message, miss });
     const needle = cleanText(ref, 1e3);
     if (!needle)
-      return { ok: false, message: "No collection given." };
+      return fail2("No collection given.");
     const byId = this.collections.find((c) => c.id === needle);
     if (byId)
       return { ok: true, row: byId };
@@ -2420,17 +2497,17 @@ var KeeprContext = class {
     if (exact.length === 1)
       return { ok: true, row: exact[0] };
     if (exact.length > 1)
-      return { ok: false, message: this.ambiguous(needle, exact) };
+      return fail2(this.ambiguous(needle, exact));
     const partial = this.collections.filter((c) => c.name.toLowerCase().includes(needle.toLowerCase()));
     if (partial.length === 1)
       return { ok: true, row: partial[0] };
     if (partial.length > 1)
-      return { ok: false, message: this.ambiguous(needle, partial) };
+      return fail2(this.ambiguous(needle, partial));
     if (/^[0-9a-fA-F]{24}$/.test(needle)) {
-      return { ok: false, message: `No collection with id ${needle} is reachable by this key. A hidden collection answers 404, so this may be outside the key's allowlist. Do not look for somewhere else to put the data \u2014 ask the user.` };
+      return fail2(`No collection with id ${needle} is reachable by this key. A hidden collection answers 404, so this may be outside the key's allowlist. Do not look for somewhere else to put the data \u2014 ask the user. If it was just created or shared, call keepr_collections with refresh: true and try again.`, true);
     }
     const names = this.collections.map((c) => quoted(c.name, COLLECTION_NAME_MAX)).join(", ") || "(none)";
-    return { ok: false, message: `No collection matches ${quoted(needle)}. This key can reach: ${names}.` };
+    return fail2(`No collection matches ${quoted(needle)}. This key can reach: ${names}. If it was just created or shared, call keepr_collections with refresh: true and try again.`, true);
   }
   ambiguous(needle, rows) {
     const list = rows.map((c) => `${quoted(c.name, COLLECTION_NAME_MAX)} (${c.id})`).join(", ");
@@ -2440,6 +2517,15 @@ var KeeprContext = class {
   get keyScope() {
     const w = this.scopeFacts.get("write");
     return w === true ? "write" : w === false ? "read" : "unknown";
+  }
+  /**
+   * A collection's schema, held up to 30 s per credential and revalidated by
+   * ETag past that (src/schemaCache.ts). The answer has the shape of
+   * ctx.http.request, so a call site swaps one line. `fresh` bypasses the
+   * hold: keepr_schema, whose job is to show the schema as it is now.
+   */
+  schemaFor(collectionId, opts = {}) {
+    return this.schemas.get(this.http, collectionId, opts);
   }
   /**
    * Does this key hold a scope? true / false / null for "not known yet".
@@ -2471,6 +2557,7 @@ var KeeprContext = class {
    * names in `requiredScope` when it does, else the one that was needed.
    */
   noteWriteAttempt(res, needed = "write") {
+    this.schemas.clear();
     if (res.ok) {
       this.scopeFacts.set(needed, true);
       return;
@@ -2539,11 +2626,20 @@ var KeeprContext = class {
    * lacks it. A `read` named is not said as a write refusal (refusalFor would
    * call a key with no read "read-only"), so it falls to the site's scope.
    * Call it after noteWriteAttempt, which is what teaches the latch.
+   *
+   * A 403 whose body names another code (`email_unverified`, say) was refused
+   * for that reason, whatever the latch has learned from an earlier call: it
+   * is not a scope refusal (KPR-2167, where one file's write refusal was said
+   * for the next file too). A body with no code still falls to the latch,
+   * because a server older than the codes says nothing else.
    */
   scopeRefusedBy(res, scope) {
     if (res.status !== 403)
       return null;
-    const named = this.looksLikeScopeRefusal(res) ? requiredScopeOf(res.body) : null;
+    const scopeRefusal = this.looksLikeScopeRefusal(res);
+    if (!scopeRefusal && errorCode(res.body))
+      return null;
+    const named = scopeRefusal ? requiredScopeOf(res.body) : null;
     if (named && named !== "read")
       return named;
     return this.hasScope(scope) === false ? scope : null;
@@ -3247,7 +3343,7 @@ var attachFileTool = {
     let target = null;
     let current = [];
     if (elementName) {
-      const schema = await ctx.http.request({ path: `/api/collections/${collectionId}/schema` });
+      const schema = await ctx.schemaFor(collectionId);
       if (!schema.ok)
         return ctx.failFromResponse(schema, "reading the elements of this item's collection");
       const card = (schema.body?.cards ?? []).find((c) => c.id === String(item.body?.card_id ?? ""));
@@ -3817,7 +3913,7 @@ async function planUploads(ctx, pairs, element) {
   const schemas = /* @__PURE__ */ new Map();
   for (const it of items.values()) {
     if (!schemas.has(it.collectionId)) {
-      const res = await ctx.http.request({ path: `/api/collections/${it.collectionId}/schema`, maxWaitMs: PLAN_WAIT_MS });
+      const res = await ctx.schemaFor(it.collectionId, { maxWaitMs: PLAN_WAIT_MS });
       if (res.status === 429)
         return { error: BUSY };
       if (!res.ok)
@@ -4416,7 +4512,7 @@ async function keySource(ctx, args) {
   if (sourceSystem) {
     if (!args.collection)
       return { error: "source_system needs `collection`: the collection whose items the import wrote." };
-    const resolved = ctx.resolveCollection(String(args.collection));
+    const resolved = await ctx.resolveCollection(String(args.collection));
     if (!resolved.ok)
       return { error: resolved.message };
     if (!resolved.row.writable)
@@ -4441,7 +4537,7 @@ async function keySource(ctx, args) {
     };
   }
   if (matchElement) {
-    const resolved = ctx.resolveCollection(String(args.collection ?? ""));
+    const resolved = await ctx.resolveCollection(String(args.collection ?? ""));
     if (!resolved.ok)
       return { error: args.collection ? resolved.message : "match_element needs `collection`: the collection whose items the files belong to." };
     const read = await readKeys(ctx, resolved.row, (it) => {

@@ -3,6 +3,12 @@
 Each release lists the two versions it carries: the skill's (which is also the
 plugin's) and the server's.
 
+## 2.63.0 — 2026-11-12
+
+Skill 2.63.0, keepr-mcp 0.61.0.
+
+- Your assistant now hears every rule keepr holds an element to before it writes a row (a value that must be unique, a pattern, a length, a default, the currencies or units it takes, half stars, a span's end and more), each said in keepr's own words, so fewer imports are refused on the first try.
+
 ## 2.62.0 — 2026-11-09
 
 Skill 2.62.0, keepr-mcp 0.60.0.
