@@ -230,16 +230,92 @@ through the dry run and its `confirm` token, as for any change to many.
 
 ## Moving items to another card, or an entry to an item
 
-An item on the wrong card (a note that is really a log) moves to the right one
-with `keepr_change_card`, keeping its id: `fills` says how each element of the
-new card is filled from the old one. The same tool makes **one entry** of a
-repeating group a new item: `entry: { item, group, id }` in place of the items,
-and `promote` — `copy` keeps the entry's values, `move` puts the link to the new
-item in place of the columns the fills carry. An entry is promoted once.
+An item on the wrong card (a progress note that is really a property log, a
+maintenance task that is really a repair) is moved with `keepr_change_card`,
+keeping its id, its links, tags, attachments and history. `fills` says how each
+element of the new card is filled from the old one. This is **not** a card
+change in the sense of `references/cards.md`: that changes a card's definition
+(the tool for moving items is `keepr_change_card` and nothing else does it).
+Read both cards with `keepr_schema` first; never guess an element name, and map
+only between elements the schema shows you.
 
-Either way it is a dry run first: show the person keepr's report (what moves or
-is made, what is left behind, which rules run), and only on their yes send the
-same arguments with `dry_run: false` and the `confirm` token.
+The same tool makes **one entry** of a repeating group a new item: `entry: {
+item, group, id }` in place of the items, and `promote` — `copy` keeps the
+entry's values, `move` puts the link to the new item in place of the columns the
+fills carry. An entry is promoted once.
+
+**Every move is a dry run first, and the person's yes comes between the two
+calls.**
+
+1. **Ask which items and which card** if the person has not said. Select by
+   `ids`, by a `q` filter, or — only for a manager — `all` for every item of the
+   card. Say so when the person is not a manager: keepr refuses a whole card
+   from anyone else in its own words, and you do not work around it by listing
+   ids.
+2. **Run `dry_run: true`.** Nothing changes. Show the person keepr's report as
+   keepr gave it: how many items would move, which would not and why (locked,
+   not theirs to change, already changed), for each element how many values
+   move, where they go and how many would not convert, which required elements
+   of the new card nothing fills yet, the rules of the new card that would run
+   (say which of them notify or email), and the saved filters, charts, forms and
+   the like that name the old card and would stop applying. Never summarise a
+   warning away.
+3. **Ask about what has no home.** Each element of the old card that holds data
+   and is not mapped needs the person's choice: add it as text to a comment on
+   the item (one comment per item, kept for them), or lose it (kept in History
+   only, so a revert can bring it back). Never choose **lose** for them. A file
+   is not asked about: its files stay on the item as attachments.
+4. **Repeat the data-loss warning.** When the new card takes no comments, or an
+   element may only be seen by some people, a value cannot go to a comment and
+   keepr warns that it will be kept in History only. The move is never blocked
+   for that. The person can turn comments on for the card deliberately, on its
+   page in keepr (the report names it); you do not do it for them, and the move
+   does not do it either. Say which the person prefers: go ahead with the
+   warning, or turn comments on first and run the dry run again.
+5. **Only on their yes**, send the same arguments with `dry_run: false` and the
+   `confirm` token. The token is keepr's, for exactly the reported change, once:
+   a request that differs, a token already used, or one that has expired is
+   refused and nothing moved, so run the dry run again and show the new report.
+   Send the move once; if the answer is lost, say it may have been applied and
+   look before sending anything again.
+
+Other things the person decides, and you report in keepr's words:
+
+- **A move that loses values** needs a connection or key that can delete as
+  well as write. When keepr refuses for that, say what is missing; do not offer
+  another way round it.
+- **A lookup elsewhere that accepts only the old card** blocks the move. keepr
+  names each lookup; the person changes those first, and you run the dry run
+  again.
+- **A card that asks for a signature on every change** cannot be moved by an
+  assistant. The person does it in keepr.
+- **A large change, or a whole card, runs in the background.** keepr answers
+  with a task; follow it with `keepr_change_card_status` and say how many moved,
+  failed and were skipped.
+- **Undoing is the person's.** An item's History entry has **Revert…**, and a
+  background change has **Undo card change** under the collection's Imports; a
+  revert puts the item back on its old card with every value, and removes the
+  comment the move wrote. You have no tool for it: say where it is.
+
+<!-- example -->
+```
+keepr_change_card {
+  collection: "Care home", card: "Progress note", target: "Incident",
+  ids: ["<24-hex>", "<24-hex>"],
+  fills: {
+    "title":         { "kind": "element", "element": "title" },
+    "what-happened": { "kind": "element", "element": "note" },
+    "severity":      { "kind": "element", "element": "severity",
+                       "mapping": { "choices": { "minor": "low", "serious": "high" } } }
+  },
+  unmapped: { "mood": "comment" },
+  dry_run: true
+}
+```
+<!-- /example -->
+
+The dry run answers with the report and its token; after the person's yes, the
+same call again with `dry_run: false` and `confirm: "<the token>"`.
 
 ## Saying "me too" for the person
 

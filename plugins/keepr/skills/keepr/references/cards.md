@@ -10,6 +10,11 @@ the collection. Without it keepr refuses, naming what is missing; keepr's
 tools print the fix — *create or edit a key with Can change cards turned
 on* — and so should you.
 
+**Moving items from one card to another is not this chapter.** A card change
+edits what a card *is*. An item that sits on the wrong card is moved with
+`keepr_change_card`, described in `references/adding.md` ("Moving items to
+another card"): a dry run, the person's yes, then the move with keepr's token.
+
 ## Commands and tools
 
 | | MCP tool |

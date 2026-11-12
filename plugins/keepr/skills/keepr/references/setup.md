@@ -255,6 +255,21 @@ A rule says **when** (its trigger) and **what** (its actions):
                  "title": "No work started this week" } ] }
 ```
 
+A notify action may carry buttons (`ctas`) that open a new record, each
+`{ "type": "create-item", "label": "...", "card_id": "<card id>", "prefill": { "<element>": "value or {{template}}" } }`.
+`type` (only `create-item`), `label` and `card_id` are required; `prefill`
+names elements of that card. A missing `card_id` is refused as required, one
+keepr cannot find as not found:
+
+```jsonc
+{ "name": "Dose due", "trigger": { "type": "item-event", "card_id": { "key": "dose-plan" }, "events": ["updated"],
+               "condition": { "kql": "status = due" } },
+  "actions": [ { "type": "notify", "channels": ["inApp"], "audience": { "type": "role", "minRole": "manage" },
+                 "title": "Dose due",
+                 "ctas": [ { "type": "create-item", "label": "Log a dose", "card_id": "<dose card id>",
+                             "prefill": { "title": "Dose for {{trigger.title}}" } } ] } ] }
+```
+
 Kinds: `rule` (the default), `threshold` (a value crossing a bound),
 `expected-item` (a record that should have been **added** by a time: it
 notifies when no record of its card, matching its condition, was created in

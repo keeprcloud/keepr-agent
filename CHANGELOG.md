@@ -3,6 +3,30 @@
 Each release lists the two versions it carries: the skill's (which is also the
 plugin's) and the server's.
 
+## 2.67.0 — 2026-11-12
+
+Skill 2.67.0, keepr-mcp 0.64.0. Also the first release of 2.66.0, 2.65.0 and 2.64.0, below.
+
+- Your assistant now knows that a strict lookup which follows another field of the record, such as a service record's plans that follow its vehicle, refuses a plan of another vehicle, and that changing the vehicle means changing the plans with it.
+
+## 2.66.0 — 2026-11-12
+
+Skill 2.66.0, keepr-mcp 0.63.0.
+
+- Your assistant now sees when a card's lookup follows another field of the record, such as a service record's plans that offer only the chosen vehicle's plans, and reads it in plain words. It also stops calling every field's access a setting keepr never explained: a field you can only read through this connection now says so, and why a change to it is refused.
+
+## 2.65.0 — 2026-11-12
+
+Skill 2.65.0, keepr-mcp 0.62.0.
+
+- Your assistant now knows a notification rule can carry buttons that open a new record, and keepr tells you whether a button's card was left out or could not be found.
+
+## 2.64.0 — 2026-11-12
+
+Skill 2.64.0, keepr-mcp 0.61.0.
+
+- Your assistant now knows how to move items that are on the wrong card: it shows you keepr's full report first, asks what to do with data that has no home, and moves them only after your yes.
+
 ## 2.63.0 — 2026-11-12
 
 Skill 2.63.0, keepr-mcp 0.61.0.
