@@ -360,11 +360,17 @@ the card is accepted. A value the item already holds always
 saves, even if it has since left the filter.
 
 A dry run writes nothing, so an import split over several calls cannot find
-what an earlier call only validated. So each later call is told which rows the
-earlier ones would create (`wouldCreate`, dry runs only) — just the ones that
-call names or repeats — so a `$ref` across batches dry-runs as it will commit.
-Calling the API yourself, send the same:
-`"wouldCreate": [{ "card": "shelf", "externalId": "shelf-scifi" }]`.
+what an earlier call only validated. keepr keeps the rows each dry-run call
+answered would-create on that call's run, so each later call **names the earlier
+ones** by the `runId` they answered with (`priorRuns`, dry runs only; every earlier
+runId, up to the cap the contract's `dryRun.priorRuns` states, under the same `importId`) and a `$ref` across batches
+dry-runs as it will commit.
+Calling the API yourself, send the same: `"priorRuns": ["<runId of call 1>", "<runId of call 2>"]`.
+A call whose `runId` came back null (keepr could not write its ledger row) cannot be
+named: run the dry run again rather than going on. On a commit `priorRuns` is
+refused (`would_create_not_dry_run`): the earlier calls have written their rows.
+`wouldCreate` (`{ "card": "shelf", "externalId": "shelf-scifi" }` entries) still
+works for a client that carries the rows itself.
 
 ### Upsert merges
 

@@ -3,6 +3,18 @@
 Each release lists the two versions it carries: the skill's (which is also the
 plugin's) and the server's.
 
+## 2.69.0 — 2026-11-13
+
+Skill 2.69.0, keepr-mcp 0.64.0. Also the first release of 2.68.0, below.
+
+- Importing a keepr Excel export back no longer moves its times. A spreadsheet date has no time zone, so your assistant now reads a date-time cell as the wall clock of the collection's own time zone (or the one you name with --zone) and keeps the exact moment, and it reads the Created in source column back too.
+
+## 2.68.0 — 2026-11-12
+
+Skill 2.68.0, keepr-mcp 0.64.0.
+
+- Your assistant can now filter a record of record to the current version only, or list every correction, with id.superseded and id.corrects.
+
 ## 2.67.0 — 2026-11-12
 
 Skill 2.67.0, keepr-mcp 0.64.0. Also the first release of 2.66.0, 2.65.0 and 2.64.0, below.

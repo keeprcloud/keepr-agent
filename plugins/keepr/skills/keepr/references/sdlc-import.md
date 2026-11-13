@@ -202,7 +202,7 @@ ingest (adding.md), all with `source.system` as above and the product's key as
    elements and nothing else (an upsert merges: what is stored stays).
 
 Each stage: dry run, read it, show the person, commit. A dry run writes nothing, so a
-stage 2 dry run needs stage 1 committed (or its rows named in `wouldCreate`, api.md).
+stage 2 dry run needs stage 1 committed (or its rows named by `priorRuns`/`wouldCreate`, api.md).
 A link to a key that is not in the file is not sent: it is named in the report.
 
 ## Re-running

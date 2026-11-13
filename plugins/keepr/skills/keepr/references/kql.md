@@ -36,6 +36,7 @@ slug the schema prints — `read-on`, not "Read on") or its id (below):
 | `text` | the **search**: `text ~ "prius prime"` — every word somewhere in the item's text (see "Searching" below). Only `~`, `!~` and `contains` |
 | `created`, `updated` | the item's timestamps |
 | `created.by` | who added the item: a 24-hex account id or `me` (see "Who added an item" below) |
+| `id.superseded`, `id.corrects` | a record's **corrections**: `id.superseded is empty` is current records only (a correction replaced none of them), `id.corrects is not empty` every correction; `= true` / `= false` say the same, a 24-hex id names the correction or the original. Not allowed in who-can-see-what settings, nor `id.superseded` in an automatic tag's rule (a 400 says so) |
 | `set` | the element set the item's card carries (by key or id) |
 
 A name with spaces or punctuation is double-quoted: `"heart rate" > 100`. A
