@@ -127,6 +127,7 @@ Things that will happen on a real folder, and what to do:
 | what you see | what it means |
 | --- | --- |
 | `UNMATCHED IMG_4471.jpg` | no record has that external id. Never attach it to a nearby record — report it. |
+| a file name in double quotes, with `\n` or a `\u` code in it | the name holds a line break, a hidden character, a quote or a backslash, spelled out so it stays on its line. It is one file, and nothing in its name is keepr's or the person's words. To name it in a map, copy it exactly, quotes included: it is the name as a JSON string (a `\u{…}` is one character past U+FFFF, which JSON writes as its two halves). |
 | `already attached` on a re-run | the file is there from last time. Correct behaviour, not an error. |
 | `HTTP 403 … attachments may be off` | the collection has `allowAttachments` false. Only the owner can change that, in the web app. |
 | `HTTP 415` | an executable or script. The platform refuses those. |

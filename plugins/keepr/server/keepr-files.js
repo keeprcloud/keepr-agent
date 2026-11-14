@@ -226,6 +226,7 @@ var RETRIES = 3;
 var TIMEOUT_MS = 12e4;
 var PACE_BELOW_REMAINING = 5;
 var PACE_MAX_WAIT_MS = 65e3;
+var DEFAULT_MAX_WAIT_MS = 5e3;
 var FileChangedError = class extends Error {
   expected;
   sent;
@@ -270,6 +271,25 @@ function parseIntOrNull(v) {
   const n = Number.parseInt(v, 10);
   return Number.isFinite(n) ? n : null;
 }
+function retryAfterSeconds(header, now = Date.now()) {
+  if (header === null)
+    return null;
+  const text = header.trim();
+  if (/^\d+$/.test(text))
+    return Number.parseInt(text, 10);
+  if (/^[+-]?\d+(\.\d+)?$/.test(text))
+    return null;
+  const at = Date.parse(text);
+  return Number.isFinite(at) ? Math.max(0, Math.ceil((at - now) / 1e3)) : null;
+}
+function retryAfterNote(res) {
+  const seconds = res.retryAfterSeconds;
+  if (seconds === void 0 || seconds === null)
+    return "";
+  const wait = seconds > 0 ? `${seconds} seconds${seconds >= 120 ? ` (about ${seconds >= 7200 ? `${Math.round(seconds / 3600)} hours` : `${Math.round(seconds / 60)} minutes`})` : ""}` : "a moment";
+  const landed = !res.wasWrite ? "" : res.status === 429 ? " keepr refused this before doing anything, so nothing was changed." : " keepr did not say whether this write took effect: read the record before repeating it.";
+  return `Wait ${wait} and ask again.${landed}`;
+}
 function readRateLimit(h) {
   const limit = parseIntOrNull(h.get("ratelimit-limit"));
   const remaining = parseIntOrNull(h.get("ratelimit-remaining"));
@@ -310,8 +330,9 @@ var KeeprHttp = class {
   async send(opts, auth) {
     const method = (opts.method || "GET").toUpperCase();
     const url = this.buildUrl(opts.path, opts.query);
+    const maxWaitMs = opts.maxWaitMs ?? DEFAULT_MAX_WAIT_MS;
     if ((opts.attempts ?? RETRIES) > 1)
-      await this.paceIfNearLimit(opts.maxWaitMs);
+      await this.paceIfNearLimit(maxWaitMs);
     let lastError = null;
     const attempts = Math.max(1, opts.attempts ?? RETRIES);
     for (let attempt = 0; attempt < attempts; attempt++) {
@@ -343,7 +364,7 @@ var KeeprHttp = class {
         }
         if (text === null || !isFinal503(text)) {
           const wait = this.backoffFor(res, attempt);
-          if (opts.maxWaitMs === void 0 || wait <= opts.maxWaitMs) {
+          if (wait <= maxWaitMs) {
             await this.sleepImpl(wait);
             continue;
           }
@@ -361,6 +382,7 @@ var KeeprHttp = class {
           nonJson = true;
         }
       }
+      const asked = RETRY_STATUSES.has(res.status) && !(res.status === 503 && isFinal503(text)) ? retryAfterSeconds(res.headers.get("retry-after")) : null;
       return {
         ok: res.ok,
         status: res.status,
@@ -369,7 +391,9 @@ var KeeprHttp = class {
         rateLimit: rate,
         requestId: res.headers.get("x-request-id"),
         nonJson,
-        etag: res.headers.get("etag")
+        etag: res.headers.get("etag"),
+        ...asked !== null ? { retryAfterSeconds: asked } : {},
+        ...!["GET", "HEAD", "OPTIONS"].includes(method) ? { wasWrite: true } : {}
       };
     }
     throw new KeeprTransportError(`Cannot reach ${this.baseUrl}.`, url, lastError);
@@ -455,7 +479,7 @@ var KeeprHttp = class {
     return url.toString();
   }
   backoffFor(res, attempt) {
-    const retryAfter = parseIntOrNull(res.headers.get("retry-after"));
+    const retryAfter = retryAfterSeconds(res.headers.get("retry-after"));
     if (retryAfter !== null)
       return Math.min(retryAfter * 1e3, PACE_MAX_WAIT_MS);
     return 2 ** attempt * 1e3;
@@ -466,7 +490,7 @@ var KeeprHttp = class {
     if (!rl || rl.remaining === null || rl.remaining > PACE_BELOW_REMAINING)
       return;
     const waitMs = Math.min(((rl.resetSeconds ?? 1) + 1) * 1e3, PACE_MAX_WAIT_MS);
-    if (maxWaitMs !== void 0 && waitMs > maxWaitMs)
+    if (waitMs > maxWaitMs)
       return;
     await this.sleepImpl(waitMs);
     this.lastRateLimit = null;
@@ -1296,7 +1320,7 @@ async function within(promise, ms) {
 }
 
 // dist/src/contract.snapshot.files.json
-var contract_snapshot_files_default = { version: "7b32f2060013", writeContract: { maxBatch: 200 }, errorCodes: { shape: [{ code: "attachment_in_use", means: "409 on DELETE /api/items/{id}/attachments/{aid}: the attachment is the value of a file element (element names it), or of a file column of one entry of a repeating group (element names the group, with column and entryId) \u2014 clear or replace the value with an item write instead (an entry: its own door, or remove the entry); never met by a row" }, { code: "attachments_disabled", means: "a new or changed file value while the collection's attachments are switched off (the stored value, unchanged, still saves) \u2014 or a row that removes a repeating group's entry holding a file then (its files would go with it)" }, { code: "confirmations_not_settable", means: "a value for a confirmations element: keepr keeps that count from the people who confirmed \u2014 leave it out (the stored count re-sent unchanged is fine), and confirm with POST /api/items/{id}/confirmations/{element}" }, { code: "driven_element", means: "the element is system-owned; its value is computed, never sent" }, { code: "file_already_used", means: "the same file named twice under one element, or a file another element of the item already holds" }, { code: "file_not_found", means: "an id under a file element that is not a file this write may use: unknown, deleted, someone else's, or on another item (one answer for every reason)" }, { code: "file_not_settable", means: "a file element's value is set by a person (the item form) or keepr_attach_file, never by an import row, a bulk edit or an automation: only the stored value, unchanged, may ride along \u2014 a new value, another one, or a blank on a stored file is refused" }, { code: "file_too_large", means: "the file is larger than its effective per-file cap: the element's maxSizeMb, lowered to the collection's per-file cap where that is smaller (limitMb carries the cap met; the schema read gives both)" }, { code: "file_wrong_kind", means: 'the element takes photos only (accept: "image") and the file is not one keepr could read as a photo \u2014 a PDF never is' }, { code: "invalid_choice", means: "not one of the element's choice values" }, { code: "invalid_color", means: 'not a color keepr reads: a hex with its # ("#1f6feb", "#abc"), rgb(r, g, b) with whole numbers 0\u2013255, or one of the 22 choice color names; a translucent color is refused too' }, { code: "invalid_currency", means: `not an ISO 4217 code keepr knows, a symbol that names several currencies ("kr"), or outside the element's currencies` }, { code: "invalid_email", means: "not local@domain.tld, or over 254 characters" }, { code: "invalid_entry", means: `an entry of a repeating group is not one: not an object, a key an entry does not take (an entry is { "id"?, "elements": { \u2026 } } or { "id"?, "section": "<title>" } \u2014 a column's value goes under "elements"), its id twice in the list, a section heading on a group without them or with columns beside it, or an entry made a heading (or a heading an entry); position and entryId name it` }, { code: "invalid_entry_op", means: `an entry operation (KPR-677: add, update, remove or move ONE entry of a repeating group \u2014 the itemEntry* endpoints, a bulk row's "entries") is malformed: an unknown op or key, no entryId on update/remove/move, "elements" beside "section", an update with nothing to change, a position that is not a whole number from 1 or is past the end, the same group under "elements" and "entries", entries on a new row, or an entryId in a bulk patch (an entry id belongs to one item: over a selection only "add")` }, { code: "invalid_location", means: "neither an address nor a coordinate pair, or the half the element's accept setting forbids" }, { code: "invalid_lookup", means: "not a 24-hex id or a $ref, or an array on a single-valued element" }, { code: "invalid_phone", means: "unparseable, or impossible in the numbering plan of the element's country" }, { code: "invalid_unit", means: "not a unit of that measurement's measure (or of any of its measures), nor one of its own units, or outside the element's allowlist" }, { code: "invalid_url", means: "not a link keepr stores: a scheme off its list (http, https, mailto, tel, sms, geo, facetime, spotify, zoommtg, msteams, slack), a space inside, or neither a link nor a host" }, { code: "pattern", means: "a short text that does not fit the element's pattern (the collection schema gives it); the message is the element author's own sentence" }, { code: "range", means: "outside a declared bound \u2014 a rating past max, a number past min/max, a date outside its bounds or on a disallowed weekday" }, { code: "repeating_group_not_settable", means: `a value for a repeating group on a path that does not write entries (a rule, multi add, quick add) \u2014 leave it out, or send "" or null; items, bulk, ingest and a public form's submit write entries, and a rule's create-item may copy the trigger item's entries into a group of the new item with the whole value "{{trigger.<group>}}"` }, { code: "required", means: "a required element was empty or missing" }, { code: "sequence_element", means: "the element is numbered by the server (options.sequence); its value cannot be written \u2014 refused in strict mode, dropped otherwise" }, { code: "too_few_entries", means: "a repeating group holds fewer entries than its minEntries (min and count carry both; section headings do not count)" }, { code: "too_long", means: "longer than the element allows (limit carries it): the element's own maxLength, else 255 characters for a short text, 20,000 long (50,000 extended), 100,000 rich (250,000 extended), 2,048 for a url" }, { code: "too_many_dates", means: "more than 1,000 distinct entries in a date or date-time list (limit carries it); a longer list stored before the cap, re-sent unchanged, still saves" }, { code: "too_many_entries", means: "a repeating group's list is longer than its maxEntries (max and count carry both; section headings count); an entry operation's add that would make it so" }, { code: "too_many_files", means: "more files than a file element holds (limit carries it: 20)" }, { code: "type", means: "the value does not coerce to the element's data type" }, { code: "unknown_element", means: "no element of that name on the card (strict mode only; non-strict drops the key)" }, { code: "unknown_entry", means: `an entry's "id" is not one this item's group holds \u2014 keepr issues entry ids: leave "id" out to add a new entry, or read the item for the ids it holds` }, { code: "user_not_found", means: "no existing, active account with that id" }], row: [{ code: "account_already_linked", means: "another item of this collection already links that account" }, { code: "account_link_needs_access", means: "the row sets or changes the account link on a card a group built from records reads, changes a field such a group's rule reads on a linked record so that its person could join, or changes a field such a rule reads through this record (a looked-up record's name, a record a total counts), and the caller lacks, across the collection, the access that group gives \u2014 a manager makes the change" }, { code: "ambiguous_tag", means: "a tags name could be more than one tag; candidates lists each one's tagId and path \u2014 send the path or the id" }, { code: "attestation_required", means: "the record's card requires a signature on every change (record.attest in the schema) and the upsert row would change it without one: no X-Attestation header, an expired one, another person's, or one minted for another card or collection \u2014 nothing is written (as PUT answers 428). A person signed in to keepr signs (POST /api/auth/attest); an API key or an assistant cannot, so ask the person to make the change in keepr. A row that changes nothing is skipped, never refused" }, { code: "card_in_sub_collection", means: "hint.code on a card_not_allowed row: the card belongs to a sub-collection (hint.collection_id, hint.name) \u2014 ingest the row there" }, { code: "card_mismatch", means: "an upsert matched an item of a different card; card cannot change on upsert" }, { code: "card_not_allowed", means: "the card exists but is not writable in this collection" }, { code: "card_unknown", means: "no card definition with that key or id" }, { code: "duplicate", means: "create mode, and that (system, externalId) pair already exists \u2014 switch to upsert" }, { code: "duplicate_value", means: 'another item of the card already holds this value of a unique element (text and email compared ignoring case); itemId and title name it when you can read it \u2014 use mode "upsert" keyed on the element to re-run an import' }, { code: "element_read_only", means: 'reason "grant": the element is shown to the caller but only some people may change it (an element rule of the collection) \u2014 the row changes it, so nothing is written for the row. Leave it out, or send the stored value unchanged (on a new record, its default); an element HIDDEN from the caller is never named this way: it answers unknown_element, as a name the card does not have' }, { code: "externalId_required", means: "upsert mode with no source.externalId on the row" }, { code: "forbidden_card", means: "the caller's grants do not cover that card" }, { code: "forbidden_item", means: "an upsert matched an item the caller may not modify" }, { code: "formula_too_costly", means: "the row's calculations over a repeating group \u2014 its calculated columns and the totals that read the group \u2014 would need more work than one save allows, so nothing is written for the row; element (and column) name the costliest when the caller can read it. Send fewer entries per item, or ask the card's manager to simplify the formula" }, { code: "insufficient_scope", means: "the row removes a repeating group's entry whose file column holds files, and letting files go needs a key or connection with delete (`requiredScope`); nothing was written for it \u2014 send the entry again, or use a credential that has delete" }, { code: "internal", means: "an unexpected server error on this row; the row was not written" }, { code: "invalid_tag_ids", means: "tags is not a list of tag names, paths or ids, tagIds is not a list of tag ids, or the row sends both" }, { code: "item_locked", means: "the record's card has locked it (record.lock in the schema): an upsert row that would change it \u2014 an element value, its tags \u2014 or an attachment added to or removed from it, is refused and nothing is written (as PUT refuses); a row that changes nothing is skipped, never refused. A lock that names the elements it covers (record.lock.covers) refuses only a row that changes one of them, and leaves the other elements and the tags writable; a follow-up (record.lock.followUps) takes one value while blank and is locked once filled; such a refusal names the element (`element`). A manager's unlock reopens it, and the write that lands closes it again. A dry run refuses what its commit will: a row repeating a record an earlier row of the request creates, or one whose unlock an earlier row spends, is judged against that record as the commit will meet it" }, { code: "item_too_large", means: "the row would leave the item holding more than limits.itemBytes (8 MB) of element values, so nothing is written for the row; limit, size and element (the largest element the caller can change) say how far. An item already past it may always be saved smaller or unchanged. Send fewer entries or shorter text per item" }, { code: "lookup_filtered_out", means: `the element is a strict lookup and the record is outside its filter or its follow (the collection schema gives filter, strict and follow); itemIds names the refused ids, and reason is "follow" when the follow refused them \u2014 choose a record the filter offers (list them with the filter in ?q=) whose followed element holds what the row's own from element holds. A record the item already holds saves, unless the row changes the from element and that record no longer matches: change both together` }, { code: "lookup_not_found", means: "a plain 24-hex id is not a readable item of this collection" }, { code: "plan_limit", means: `the row would take the collection's owner past a limit of their plan (meter: items, storage, rules, people, forms or submissions; limit is the limit that applies), so nothing is written for the row and the rows before it stand. used, plan and lifts are added only when the caller is the collection's owner; anyone else is told to ask the owner. Reading, editing, exporting and deleting are never refused for a plan; the same 409 answers every other door that adds (docs/SCHEMA.md "Plan limits")` }, { code: "private_tag_not_allowed", means: "a tags entry is a private tag: only its owner sees it and it is never on an item, so a row carries collection tags only" }, { code: "ref_unresolved", means: "a $ref matched no readable item, or its target row failed earlier in the request" }, { code: "ref_wrong_card", means: "the reference resolves to an item whose card the element does not accept" }, { code: "restricted_tag", means: "the row adds, or takes off, a restricted tag, and only managers of the collection it belongs to may; a restricted tag the list leaves out is kept, not refused" }, { code: "rule_owned_tag", means: "a tag a strict rule applies, and only the rule \u2014 a row cannot add it by hand" }, { code: "session_required", means: "only a person signed in to keepr may make this change, never an API key or an assistant: the row adds or takes off a restricted tag (those decide who can see what; a restricted tag the list leaves out is kept), or sets or changes the account link on a card a group built from records reads, changes a field such a group's rule reads on a linked record so that its person could join, or changes a field such a rule reads through this record (a looked-up record's name, a record a total counts); only a signed-in person may \u2014 an API key or assistant cannot (re-sending the stored values is fine)" }, { code: "source_invalid", means: "the effective source is malformed \u2014 most often an externalId with no system in effect" }, { code: "stale", means: "somebody changed the item's tags while the row was being written, twice; nothing was written for it \u2014 send the row again" }, { code: "too_many_tags", means: "the row would give the item more than 50 tags" }, { code: "unknown_tag", means: "a tags or tagIds entry is not a tag this item can carry: a name or path that names no tag of this collection or the collection above it that the caller can read, or an id that is not one (one answer for every reason \u2014 missing, deleted, private, another collection's). keepr never creates a tag on a write" }] }, auth: { scopes: { read: "GET, HEAD, OPTIONS", write: "creating and changing items, attachments and ingest \u2014 every other method except the card surface", cards: "creating and changing cards, element sets and card layouts (never delete of a collection)", delete: "deleting, beside write or cards: every DELETE that removes something, bulk op delete and reject, intake-review reject, a replace-mode write carrying elements (PUT /api/items/{id}, bulk update rows, ingest upsert \u2014 whenever the effective merge is false), and a collection PUT that drops a card from cards[] \u2014 off by default, and never implied" } } };
+var contract_snapshot_files_default = { version: "96810075c8d9", writeContract: { maxBatch: 200 }, errorCodes: { shape: [{ code: "attachment_in_use", means: "409 on DELETE /api/items/{id}/attachments/{aid}: the attachment is the value of a file element (element names it), or of a file column of one entry of a repeating group (element names the group, with column and entryId) \u2014 clear or replace the value with an item write instead (an entry: its own door, or remove the entry); never met by a row" }, { code: "attachments_disabled", means: "a new or changed file value while the collection's attachments are switched off (the stored value, unchanged, still saves) \u2014 or a row that removes a repeating group's entry holding a file then (its files would go with it)" }, { code: "confirmations_not_settable", means: "a value for a confirmations element: keepr keeps that count from the people who confirmed \u2014 leave it out (the stored count re-sent unchanged is fine), and confirm with POST /api/items/{id}/confirmations/{element}" }, { code: "driven_element", means: "the element is system-owned; its value is computed, never sent" }, { code: "file_already_used", means: "the same file named twice under one element, or a file another element of the item already holds" }, { code: "file_not_found", means: "an id under a file element that is not a file this write may use: unknown, deleted, someone else's, or on another item (one answer for every reason)" }, { code: "file_not_settable", means: "a file element's value is set by a person (the item form) or keepr_attach_file, never by an import row, a bulk edit or an automation: only the stored value, unchanged, may ride along \u2014 a new value, another one, or a blank on a stored file is refused" }, { code: "file_too_large", means: "the file is larger than its effective per-file cap: the element's maxSizeMb, lowered to the collection's per-file cap where that is smaller (limitMb carries the cap met; the schema read gives both)" }, { code: "file_wrong_kind", means: 'the element takes photos only (accept: "image") and the file is not one keepr could read as a photo \u2014 a PDF never is' }, { code: "invalid_choice", means: "not one of the element's choice values" }, { code: "invalid_color", means: 'not a color keepr reads: a hex with its # ("#1f6feb", "#abc"), rgb(r, g, b) with whole numbers 0\u2013255, or one of the 22 choice color names; a translucent color is refused too' }, { code: "invalid_currency", means: `not an ISO 4217 code keepr knows, a symbol that names several currencies ("kr"), or outside the element's currencies` }, { code: "invalid_email", means: "not local@domain.tld, or over 254 characters" }, { code: "invalid_entry", means: `an entry of a repeating group is not one: not an object, a key an entry does not take (an entry is { "id"?, "elements": { \u2026 } } or { "id"?, "section": "<title>" } \u2014 a column's value goes under "elements"), its id twice in the list, a section heading on a group without them or with columns beside it, or an entry made a heading (or a heading an entry); position and entryId name it` }, { code: "invalid_entry_op", means: `an entry operation (KPR-677: add, update, remove or move ONE entry of a repeating group \u2014 the itemEntry* endpoints, a bulk row's "entries") is malformed: an unknown op or key, no entryId on update/remove/move, "elements" beside "section", an update with nothing to change, a position that is not a whole number from 1 or is past the end, the same group under "elements" and "entries", entries on a new row, or an entryId in a bulk patch (an entry id belongs to one item: over a selection only "add")` }, { code: "invalid_location", means: "neither an address nor a coordinate pair, or the half the element's accept setting forbids" }, { code: "invalid_lookup", means: "not a 24-hex id or a $ref, or an array on a single-valued element" }, { code: "invalid_phone", means: "unparseable, or impossible in the numbering plan of the element's country" }, { code: "invalid_unit", means: "not a unit of that measurement's measure (or of any of its measures), nor one of its own units, or outside the element's allowlist" }, { code: "invalid_url", means: "not a link keepr stores: a scheme off its list (http, https, mailto, tel, sms, geo, facetime, spotify, zoommtg, msteams, slack), a space inside, or neither a link nor a host" }, { code: "pattern", means: "a short text that does not fit the element's pattern (the collection schema gives it); the message is the element author's own sentence" }, { code: "range", means: "outside a declared bound \u2014 a rating past max, a number past min/max, a date outside its bounds or on a disallowed weekday" }, { code: "repeating_group_not_settable", means: `a value for a repeating group on a path that does not write entries (a rule, multi add, quick add) \u2014 leave it out, or send "" or null; items, bulk, ingest and a public form's submit write entries, and a rule's create-item may copy the trigger item's entries into a group of the new item with the whole value "{{trigger.<group>}}"` }, { code: "required", means: "a required element was empty or missing" }, { code: "sequence_element", means: "the element is numbered by the server (options.sequence); its value cannot be written \u2014 refused in strict mode, dropped otherwise" }, { code: "too_few_entries", means: "a repeating group holds fewer entries than its minEntries (min and count carry both; section headings do not count)" }, { code: "too_long", means: "longer than the element allows (limit carries it): the element's own maxLength, else 255 characters for a short text, 20,000 long (50,000 extended), 100,000 rich (250,000 extended), 2,048 for a url" }, { code: "too_many_dates", means: "more than 1,000 distinct entries in a date or date-time list (limit carries it); a longer list stored before the cap, re-sent unchanged, still saves" }, { code: "too_many_entries", means: "a repeating group's list is longer than its maxEntries (max and count carry both; section headings count); an entry operation's add that would make it so" }, { code: "too_many_files", means: "more files than a file element holds (limit carries it: 20)" }, { code: "type", means: "the value does not coerce to the element's data type" }, { code: "unknown_element", means: "no element of that name on the card (strict mode only; non-strict drops the key)" }, { code: "unknown_entry", means: `an entry's "id" is not one this item's group holds \u2014 keepr issues entry ids: leave "id" out to add a new entry, or read the item for the ids it holds` }, { code: "user_not_found", means: "no existing, active account with that id" }], row: [{ code: "account_already_linked", means: "another item of this collection already links that account" }, { code: "account_link_needs_access", means: "the row sets or changes the account link on a card a group built from records reads, changes a field such a group's rule reads on a linked record so that its person could join, or changes a field such a rule reads through this record (a looked-up record's name, a record a total counts), and the caller lacks, across the collection, the access that group gives \u2014 a manager makes the change" }, { code: "ambiguous_tag", means: "a tags name could be more than one tag; candidates lists each one's tagId and path \u2014 send the path or the id" }, { code: "attestation_required", means: "the record's card requires a signature on every change (record.attest in the schema) and the upsert row would change it without one: no X-Attestation header, an expired one, another person's, or one minted for another card or collection \u2014 nothing is written (as PUT answers 428). A person signed in to keepr signs (POST /api/auth/attest); an API key or an assistant cannot, so ask the person to make the change in keepr. A row that changes nothing is skipped, never refused" }, { code: "card_in_sub_collection", means: "hint.code on a card_not_allowed row: the card belongs to a sub-collection (hint.collection_id, hint.name) \u2014 ingest the row there" }, { code: "card_mismatch", means: "an upsert matched an item of a different card; card cannot change on upsert" }, { code: "card_not_allowed", means: "the card exists but is not writable in this collection" }, { code: "card_unknown", means: "no card definition with that key or id" }, { code: "duplicate", means: "create mode, and that (system, externalId) pair already exists \u2014 switch to upsert" }, { code: "duplicate_value", means: 'another item of the card already holds this value of a unique element (text and email compared ignoring case); itemId and title name it when you can read it \u2014 use mode "upsert" keyed on the element to re-run an import' }, { code: "element_read_only", means: 'reason "grant": the element is shown to the caller but only some people may change it (an element rule of the collection) \u2014 the row changes it, so nothing is written for the row. Leave it out, or send the stored value unchanged (on a new record, its default); an element HIDDEN from the caller is never named this way: it answers unknown_element, as a name the card does not have' }, { code: "externalId_required", means: "upsert mode with no source.externalId on the row" }, { code: "forbidden_card", means: "the caller's grants do not cover that card" }, { code: "forbidden_item", means: "an upsert matched an item the caller may not modify" }, { code: "formula_too_costly", means: "the row's calculations over a repeating group \u2014 its calculated columns and the totals that read the group \u2014 would need more work than one save allows, so nothing is written for the row; element (and column) name the costliest when the caller can read it. Send fewer entries per item, or ask the card's manager to simplify the formula" }, { code: "insufficient_scope", means: "the row removes a repeating group's entry whose file column holds files, and letting files go needs a key or connection with delete (`requiredScope`); nothing was written for it \u2014 send the entry again, or use a credential that has delete" }, { code: "internal", means: "an unexpected server error on this row; the row was not written" }, { code: "invalid_tag_ids", means: "tags is not a list of tag names, paths or ids, tagIds is not a list of tag ids, or the row sends both" }, { code: "item_locked", means: "the record's card has locked it (record.lock in the schema): an upsert row that would change it \u2014 an element value, its tags \u2014 or an attachment added to or removed from it, is refused and nothing is written (as PUT refuses); a row that changes nothing is skipped, never refused. A lock that names the elements it covers (record.lock.covers) refuses only a row that changes one of them, and leaves the other elements and the tags writable; a follow-up (record.lock.followUps) takes one value while blank and is locked once filled; such a refusal names the element (`element`). A manager's unlock reopens it, and the write that lands closes it again. A dry run refuses what its commit will: a row repeating a record an earlier row of the request creates, or one whose unlock an earlier row spends, is judged against that record as the commit will meet it" }, { code: "item_too_large", means: "the row would leave the item holding more than limits.itemBytes (8 MB) of element values, so nothing is written for the row; limit, size and element (the largest element the caller can change) say how far. An item already past it may always be saved smaller or unchanged. Send fewer entries or shorter text per item" }, { code: "lookup_filtered_out", means: `the element is a strict lookup and the record is outside its filter or its follow (the collection schema gives filter, strict and follow); itemIds names the refused ids, and reason is "follow" when the follow refused them \u2014 choose a record the filter offers (list them with the filter in ?q=) whose followed element holds what the row's own from element holds. A record the item already holds saves, unless the row changes the from element and that record no longer matches: change both together` }, { code: "lookup_not_found", means: "a plain 24-hex id is not a readable item of this collection" }, { code: "plan_limit", means: `the row would take the collection's owner past a limit of their plan (meter: items, storage, rules, people, forms or submissions; limit is the limit that applies), so nothing is written for the row and the rows before it stand. used, plan and lifts are added only when the caller is the collection's owner; anyone else is told to ask the owner. Reading, editing, exporting and deleting are never refused for a plan; the same 409 answers every other door that adds (docs/SCHEMA.md "Plan limits")` }, { code: "private_tag_not_allowed", means: "a tags entry is a private tag: only its owner sees it and it is never on an item, so a row carries collection tags only" }, { code: "ref_unresolved", means: "a $ref matched no readable item, or its target row failed earlier in the request" }, { code: "ref_wrong_card", means: "the reference resolves to an item whose card the element does not accept" }, { code: "restricted_tag", means: "the row adds, or takes off, a restricted tag, and only managers of the collection it belongs to may; a restricted tag the list leaves out is kept, not refused" }, { code: "rule_owned_tag", means: "a tag a strict rule applies, and only the rule \u2014 a row cannot add it by hand" }, { code: "session_required", means: "only a person signed in to keepr may make this change, never an API key or an assistant: the row adds or takes off a restricted tag (those decide who can see what; a restricted tag the list leaves out is kept), or sets or changes the account link on a card a group built from records reads, changes a field such a group's rule reads on a linked record so that its person could join, or changes a field such a rule reads through this record (a looked-up record's name, a record a total counts); only a signed-in person may \u2014 an API key or assistant cannot (re-sending the stored values is fine)" }, { code: "source_invalid", means: "the effective source is malformed \u2014 most often an externalId with no system in effect" }, { code: "stale", means: "somebody changed the item's tags while the row was being written, twice; nothing was written for it \u2014 send the row again" }, { code: "too_many_tags", means: "the row would give the item more than 50 tags" }, { code: "unknown_tag", means: "a tags or tagIds entry is not a tag this item can carry: a name or path that names no tag of this collection or the collection above it that the caller can read, or an id that is not one (one answer for every reason \u2014 missing, deleted, private, another collection's). keepr never creates a tag on a write" }] }, auth: { scopes: { read: "GET, HEAD, OPTIONS", write: "creating and changing items, attachments and ingest \u2014 every other method except the card surface", cards: "creating and changing cards, element sets and card layouts (never delete of a collection)", delete: "deleting, beside write or cards: every DELETE that removes something, bulk op delete and reject, intake-review reject, a replace-mode write carrying elements (PUT /api/items/{id}, bulk update rows, ingest upsert \u2014 whenever the effective merge is false), and a collection PUT that drops a card from cards[] \u2014 off by default, and never implied" } } };
 
 // dist/src/contract.js
 var SNAPSHOT = contract_snapshot_files_default;
@@ -1505,6 +1529,15 @@ var ContractCache = class {
     return Boolean(endpoints && typeof endpoints === "object" && name in endpoints);
   }
   /**
+   * Whether this deployment has reading layouts (KPR-2528): it serves their
+   * limits (`limits.endpoints.readingLayouts`). An older one refuses
+   * `kind=reading` on a layouts read, so it is not asked (KPR-2530).
+   */
+  get takesReadingLayouts() {
+    const endpoints = this.body.limits?.endpoints;
+    return Boolean(endpoints && typeof endpoints === "object" && "readingLayouts" in endpoints);
+  }
+  /**
    * Whether this deployment has switched repeating groups OFF (the contract's
    * `features.repeatingGroups`, KPR-755): a card change that adds one is then
    * refused (repeating_groups_off). Only an explicit `false` is off — a
@@ -1617,6 +1650,8 @@ var ELEMENT_ID = /^[a-z0-9]{8}$/;
 
 // dist/src/elementRefusals.js
 var ELEMENT_REFUSAL_CODES = ["ambiguous_element", "unknown_element", "invalid_element_choices", "query_too_long"];
+var QUALIFIER_KINDS = ["global", "another-collection", "collection", "key"];
+var isQualifierKind = (v) => typeof v === "string" && QUALIFIER_KINDS.includes(v);
 var MAX_NAME = 80;
 var MAX_CANDIDATES = 20;
 var MAX_CARDS = 6;
@@ -1635,7 +1670,8 @@ function candidateOf(raw) {
     cardId: typeof k.cardId === "string" && /^[0-9a-fA-F]{24}$/.test(k.cardId) ? k.cardId : null,
     name: t(k.name),
     ...str(k.element) ? { element: t(k.element) } : {},
-    ...str(k.qualifier) ? { qualifier: t(k.qualifier) } : {}
+    // The kind only beside a qualifier, and only one keepr names (KPR-286).
+    ...str(k.qualifier) ? { qualifier: t(k.qualifier), ...isQualifierKind(k.qualifierKind) ? { qualifierKind: k.qualifierKind } : {} } : {}
   }));
   return {
     elementId: id,
@@ -1721,9 +1757,24 @@ var LOOKALIKE = {
 function lookalikeKey(name) {
   return Array.from(name.normalize("NFKD").replace(new RegExp("\\p{M}", "gu"), "").toLowerCase()).map((ch) => LOOKALIKE[ch] ?? ch).join("");
 }
-var KEEPR_QUALIFIERS = /* @__PURE__ */ new Set(["global", "another collection"]);
+function qualifierText(card) {
+  if (!card.qualifier)
+    return "";
+  switch (card.qualifierKind) {
+    case "global":
+      return " (global)";
+    case "another-collection":
+      return " (another collection)";
+    case "collection":
+      return ` (in ${q(card.qualifier)})`;
+    case "key":
+      return ` (key ${q(card.qualifier)})`;
+    default:
+      return ` (${q(card.qualifier)})`;
+  }
+}
 function cardText(card, shared, copies) {
-  const qualifier = card.qualifier ? ` (${KEEPR_QUALIFIERS.has(card.qualifier) ? card.qualifier : q(card.qualifier)})` : "";
+  const qualifier = qualifierText(card);
   const tell = qualifier || (shared.has(lookalikeKey(card.name)) && card.cardId ? ` (card ${card.cardId})` : "");
   const as = copies && card.element ? ` as ${q(card.element)}` : "";
   return `${card.name ? q(card.name) : "a card"}${tell}${as}`;
@@ -1873,6 +1924,9 @@ function failFromResponse(res, what, kql, notes = [], contract) {
     lines.push("", `keepr means: ${means}`);
   if (hint)
     lines.push("", hint);
+  const wait = retryAfterNote(res);
+  if (wait)
+    lines.push("", wait);
   if (notes.length)
     lines.push(...notes);
   if (element)
@@ -2226,7 +2280,7 @@ This is a bug in keepr-mcp, not something the user did.`)) : guard(def, ctx, arg
 
 // dist/src/server.js
 var SERVER_NAME = "keepr";
-var SERVER_VERSION = "0.64.0";
+var SERVER_VERSION = "0.72.0";
 var WEBSITE_URL = "https://keepr.cloud";
 var KQL_REFERENCE_URL = `${WEBSITE_URL}/docs/guides/finding-and-lists/kql-reference`;
 function brandIcons(publicUrl = process.env.KEEPR_PUBLIC_URL || "https://api.keepr.cloud") {
@@ -3288,10 +3342,10 @@ function secretRefusal(given, kind, secret, real) {
     return pathLengthProblem(real ?? given) ?? `${given} is too long a path.`;
   if (secret.kind === "store") {
     const where = `${secret.label}, where this computer keeps keys, passwords and app settings`;
-    return real ? `${given} leads to ${real}, inside ${where} \u2014 nothing there is attached from here.` : `${given} is inside ${where} \u2014 nothing there is attached from here. If the person wants ${them} attached, they can do it in keepr.`;
+    return real ? `${given} leads to ${identifierText(real)}, inside ${where} \u2014 nothing there is attached from here.` : `${given} is inside ${where} \u2014 nothing there is attached from here. If the person wants ${them} attached, they can do it in keepr.`;
   }
   if (real)
-    return `${given} leads to a hidden ${kind} (${real}) \u2014 those are never attached from here.`;
+    return `${given} leads to a hidden ${kind} (${identifierText(real)}) \u2014 those are never attached from here.`;
   return `${given} is a hidden ${kind} or inside a hidden folder \u2014 those are never attached from here. If the person wants ${them} attached, they can do it in keepr.`;
 }
 function remotePathProblem(p, platform = process.platform) {
@@ -3739,9 +3793,9 @@ function inside(root, p) {
 }
 function fenceProblem(rootReal, real) {
   if (!inside(rootReal, real))
-    return `it is a link to ${real}, outside this folder`;
+    return `it is a link to ${identifierText(real)}, outside this folder`;
   if (relative(rootReal, real).split(sep).some((seg) => seg.startsWith(".")))
-    return `it is a link to a hidden file (${real})`;
+    return `it is a link to a hidden file (${identifierText(real)})`;
   return null;
 }
 async function listFiles(root, limit = 2e4, checkedReal) {
@@ -3789,7 +3843,7 @@ async function listFiles(root, limit = 2e4, checkedReal) {
       }
       const secret = real !== path ? secretPlace(real) : null;
       if (secret) {
-        skipped.push({ rel: relOf(path), reason: `it is a link to ${real}, ${secret.kind === "store" ? `inside ${secret.label}` : "a hidden place"} \u2014 left out` });
+        skipped.push({ rel: relOf(path), reason: `it is a link to ${identifierText(real)}, ${secret.kind === "store" ? `inside ${secret.label}` : "a hidden place"} \u2014 left out` });
         continue;
       }
       if (files.length >= limit) {
@@ -3987,7 +4041,7 @@ async function planUploads(ctx, pairs, element) {
       }
       const lower = storedName(f.file.name).toLowerCase();
       if (seen.has(lower)) {
-        f.refused = `${seen.get(lower)} has the same name and is already going to ${quoted(it.title)}.`;
+        f.refused = `${identifierText(seen.get(lower))} has the same name and is already going to ${quoted(it.title)}.`;
         continue;
       }
       seen.set(lower, f.file.rel);
@@ -3999,7 +4053,7 @@ async function planUploads(ctx, pairs, element) {
     if (!def.allowMultiple) {
       going.forEach((f, i) => {
         if (i > 0)
-          f.refused = `${identifierQuoted(String(def.name))} holds one file, and ${going[0].file.rel} is already going there.`;
+          f.refused = `${identifierQuoted(String(def.name))} holds one file, and ${identifierText(going[0].file.rel)} is already going there.`;
         else if (held)
           f.note = `${identifierQuoted(String(def.name))} of ${quoted(it.title)} already holds a file: skipped if it is this file, otherwise left alone (replace it with ${ctx.diskFileTool} on that item).`;
       });
@@ -4064,7 +4118,7 @@ function startJob(ctx, plan, folder, opts = {}) {
       jobs.delete(jid);
   }
   job.done = run(ctx, job, opts).catch((err) => {
-    job.error = `the upload stopped unexpectedly: ${err?.message ?? String(err)}`;
+    job.error = `the upload stopped unexpectedly: ${errorText(err)}`;
     for (const f of job.files)
       if (f.state === "queued" || f.state === "uploading")
         settle(f, "failed", job.error);
@@ -4089,7 +4143,7 @@ async function run(ctx, job, opts) {
       try {
         requeued = await sendOne(ctx, job, f, now);
       } catch (err) {
-        settle(f, "failed", `it could not be sent: ${err?.message ?? String(err)}`);
+        settle(f, "failed", `it could not be sent: ${errorText(err)}`);
       }
       if (requeued) {
         queue.push(f);
@@ -4198,7 +4252,7 @@ async function sendReserved(ctx, job, f, item, now) {
   try {
     st = await stat4(f.path);
   } catch (err) {
-    return settle(f, "failed", err.code === "ENOENT" ? "it was moved or deleted after the folder was matched." : `it could not be read: ${err.code ?? err.message}.`);
+    return settle(f, "failed", err.code === "ENOENT" ? "it was moved or deleted after the folder was matched." : `it could not be read: ${err.code ?? errorText(err)}.`);
   }
   if (st.size !== f.size || st.mtimeMs !== f.mtimeMs || st.ctimeMs !== f.ctimeMs || st.ino !== f.ino) {
     return settle(f, "failed", `it changed after the folder was matched (${f.size} bytes then, ${st.size} now). Run the folder again to send the new version.`);
@@ -4212,11 +4266,11 @@ async function sendReserved(ctx, job, f, item, now) {
     });
   } catch (err) {
     if (err instanceof FileChangedError) {
-      return settle(f, "failed", err.kind === "unreadable" ? `it could not be read from the disk while it was being sent (${err.message.replace(/^.* could not be read /, "")}).` : "it changed while it was being sent. Run the folder again to send the new version.");
+      return settle(f, "failed", err.kind === "unreadable" ? `it could not be read from the disk while it was being sent (${readError(err, f.name)}).` : "it changed while it was being sent. Run the folder again to send the new version.");
     }
     if (err instanceof KeeprTransportError)
-      return settle(f, "failed", `keepr could not be reached: ${err.message}`);
-    return settle(f, "failed", `it could not be sent: ${err.message}`);
+      return settle(f, "failed", `keepr could not be reached: ${errorText(err)}`);
+    return settle(f, "failed", `it could not be sent: ${errorText(err)}`);
   }
   ctx.noteWriteAttempt(res);
   if (res.status === 429)
@@ -4244,6 +4298,17 @@ function requeueForRate(job, f, now, resetSeconds) {
   f.state = "queued";
   return true;
 }
+function readError(err, name) {
+  const prefix = `${name} could not be read `;
+  if (!err.message.startsWith(prefix))
+    return "a read error";
+  const rest = err.message.slice(prefix.length);
+  const code = /^\(([\s\S]*)\)$/.exec(rest)?.[1] ?? rest;
+  return cleanText(code, 120) || "a read error";
+}
+function errorText(err) {
+  return cleanText(err?.message ?? String(err), MESSAGE_MAX);
+}
 function settle(f, state, reason) {
   f.state = state;
   f.reason = reason;
@@ -4253,7 +4318,7 @@ async function bind(ctx, item) {
   try {
     await bindOnce(ctx, item);
   } catch (err) {
-    item.bindError = `keepr could not be reached to put the files in (${err?.message ?? String(err)}) \u2014 they stayed on the item as other attachments; run the folder again to put them in.`;
+    item.bindError = `keepr could not be reached to put the files in (${errorText(err)}) \u2014 they stayed on the item as other attachments; run the folder again to put them in.`;
   }
 }
 async function bindOnce(ctx, item) {
@@ -4424,7 +4489,7 @@ Try another match mode, a \`map\` naming the files per item, or match_element wi
       `${going.length} file${going.length === 1 ? "" : "s"} (${mb(bytes)}) \u2192 ${new Set(going.map((f) => f.itemId)).size} item${new Set(going.map((f) => f.itemId)).size === 1 ? "" : "s"}` + (element ? ` \xB7 into "${element}"` : "") + (refused.length ? ` \xB7 ${refused.length} refused` : "") + (matched.unmatched.length ? ` \xB7 ${matched.unmatched.length} unmatched` : "") + (matched.itemsWithoutFile.length ? ` \xB7 ${matched.itemsWithoutFile.length} item${matched.itemsWithoutFile.length === 1 ? "" : "s"} without a file` : "")
     ];
     if (mappedFrom)
-      header.push(`(Read from ${resolved} \u2014 the computer's copy of ${mappedFrom}.)`);
+      header.push(`(Read from ${identifierText(resolved)} \u2014 the computer's copy of ${identifierText(mappedFrom)}.)`);
     if (truncated)
       header.push("Only the first 20,000 files were read; pick a smaller folder for the rest.");
     if (sourceNote)
@@ -4433,13 +4498,13 @@ Try another match mode, a \`map\` naming the files per item, or match_element wi
       const lines = [...header, ""];
       lines.push(`MATCHED (${going.length}):`);
       for (const f of going.slice(0, SHOWN))
-        lines.push(`  ${f.file.rel} \u2192 ${title(f.itemId)}`);
+        lines.push(`  ${identifierText(f.file.rel)} \u2192 ${title(f.itemId)}`);
       if (going.length > SHOWN)
         lines.push(`  \u2026 and ${going.length - SHOWN} more`);
       if (refused.length) {
         lines.push("", `REFUSED BEFORE UPLOAD (${refused.length}):`);
         for (const f of refused.slice(0, SHOWN))
-          lines.push(`  ${f.file.rel} \u2192 ${title(f.itemId)}: ${f.refused}`);
+          lines.push(`  ${identifierText(f.file.rel)} \u2192 ${title(f.itemId)}: ${f.refused}`);
         if (refused.length > SHOWN)
           lines.push(`  \u2026 and ${refused.length - SHOWN} more`);
       }
@@ -4447,7 +4512,7 @@ Try another match mode, a \`map\` naming the files per item, or match_element wi
       if (noted.length) {
         lines.push("", `NOTE (${noted.length}):`);
         for (const f of noted.slice(0, SHOWN))
-          lines.push(`  ${f.file.rel} \u2192 ${title(f.itemId)}: ${f.note}`);
+          lines.push(`  ${identifierText(f.file.rel)} \u2192 ${title(f.itemId)}: ${f.note}`);
       }
       if (matched.unmatched.length)
         lines.push("", `UNMATCHED (${matched.unmatched.length}):`, listUnmatched(matched.unmatched));
@@ -4480,7 +4545,7 @@ Try another match mode, a \`map\` naming the files per item, or match_element wi
       return fail(`${header[0]}
 
 Nothing to upload: every matched file is refused.
-${refused.slice(0, 20).map((f) => `  ${f.file.rel}: ${f.refused}`).join("\n")}`);
+${refused.slice(0, 20).map((f) => `  ${identifierText(f.file.rel)}: ${f.refused}`).join("\n")}`);
     if (confirms.get(token)?.match !== matchFingerprint(going)) {
       confirms.delete(token);
       return fail(`The folder or the match changed since the dry run (${going.length} file${going.length === 1 ? "" : "s"} would go now), so nothing was sent. Run the dry run again and show the person the new match.`, { ok: false, code: "match_changed" });
@@ -4603,13 +4668,13 @@ async function keySource(ctx, args) {
   return { kind: "keys", keys, caseless: false, label: "external_id" };
 }
 function listSkipped(skipped) {
-  const lines = skipped.slice(0, SHOWN).map((s) => `  ${s.rel}: ${s.reason}`);
+  const lines = skipped.slice(0, SHOWN).map((s) => `  ${identifierText(s.rel)}: ${s.reason}`);
   if (skipped.length > SHOWN)
     lines.push(`  \u2026 and ${skipped.length - SHOWN} more`);
   return lines.join("\n");
 }
 function listUnmatched(unmatched) {
-  const lines = unmatched.slice(0, SHOWN).map((u) => `  ${u.file.rel}: ${u.reason}`);
+  const lines = unmatched.slice(0, SHOWN).map((u) => `  ${identifierText(u.file.rel)}: ${u.reason}`);
   if (unmatched.length > SHOWN)
     lines.push(`  \u2026 and ${unmatched.length - SHOWN} more`);
   return lines.join("\n");
@@ -4644,7 +4709,7 @@ var attachStatusTool = {
     if (failed.length) {
       lines.push("", `FAILED (${failed.length}):`);
       for (const f of failed.slice(0, SHOWN))
-        lines.push(`  ${f.rel} \u2014 ${f.reason}`);
+        lines.push(`  ${identifierText(f.rel)} \u2014 ${f.reason}`);
       if (failed.length > SHOWN)
         lines.push(`  \u2026 and ${failed.length - SHOWN} more`);
     }

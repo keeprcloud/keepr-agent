@@ -3,6 +3,60 @@
 Each release lists the two versions it carries: the skill's (which is also the
 plugin's) and the server's.
 
+## 2.78.0 — 2026-11-13
+
+Skill 2.78.0, keepr-mcp 0.72.0. Also the first release of 2.77.0, 2.76.0, 2.75.0, 2.74.0, 2.73.0, 2.72.0, 2.71.0 and 2.70.0, below.
+
+- Your assistant can now set up a reading layout, which shows a record and the records under it as one continuous text, like a recipe that reads like a recipe. It previews the layout part by part in plain words before anything is saved, and lists each card's reading layouts with its other layouts.
+
+## 2.77.0 — 2026-11-13
+
+Skill 2.77.0, keepr-mcp 0.71.0.
+
+- When your assistant attaches files from the command line, a file or folder whose name holds a line break, a hidden character, a quote or a backslash is now shown in quotes with those characters spelled out, on its own line, so a name in a downloaded or unpacked folder cannot pass itself off as part of keepr's answer. Ordinary names look as they did. A file it cannot read is now named as failed, and the rest of the folder still goes.
+
+## 2.76.0 — 2026-11-13
+
+Skill 2.76.0, keepr-mcp 0.70.0.
+
+- When two cards share a name, your assistant now says which is which by what keepr tells it: keepr's own shared card reads as global, a card of one of your collections names that collection in quotes, so a collection you happen to call "global" is never mistaken for keepr's own word.
+
+## 2.75.0 — 2026-11-13
+
+Skill 2.75.0, keepr-mcp 0.69.0.
+
+- Reading items by their ids now shows each item's title instead of "(no title)".
+
+## 2.74.0 — 2026-11-13
+
+Skill 2.74.0, keepr-mcp 0.68.0.
+
+- When your assistant attaches a folder from your computer, a file whose name holds a line break, a hidden character, a quote or a backslash is now shown in quotes with those characters spelled out, on its own line, so a name in a downloaded or unpacked folder cannot pass itself off as part of keepr's answer. Ordinary names look as they did.
+
+## 2.73.0 — 2026-11-13
+
+Skill 2.73.0, keepr-mcp 0.67.0.
+
+- When keepr asks your assistant to wait a minute or more, it now says so at once, with how long to wait and whether anything was changed, instead of sitting silent until the assistant's own timeout ends the call.
+
+## 2.72.0 — 2026-11-13
+
+Skill 2.72.0, keepr-mcp 0.66.0.
+
+- Your assistant no longer changes an item when it only meant to preview the change. Asking to preview a change to one item is now refused with a sentence that says nothing was changed; the preview and its confirmation still work for a change to many items.
+
+## 2.71.0 — 2026-11-13
+
+Skill 2.71.0, keepr-mcp 0.65.0.
+
+- Attaching a folder of photos from the command line no longer trips on a file name with a quote or a line break in it, and running the same folder again no longer sends a file a second time just because keepr stores its name a little differently (a quote becomes %22, a leading dot goes).
+
+## 2.70.0 — 2026-11-13
+
+Skill 2.70.0, keepr-mcp 0.65.0.
+
+- Your assistant can now read an item's fields even when it is shown only the text of an answer. Reading one item prints each field, a linked record by its title and a file by its name, and a list or a read by ids does the same when it asks for the fields.
+
 ## 2.69.0 — 2026-11-13
 
 Skill 2.69.0, keepr-mcp 0.64.0. Also the first release of 2.68.0, below.

@@ -99,12 +99,13 @@ which element").
 
 ## Layouts
 
-Each entry: `{ "kind": "tile" | "table" | "form" | "page", "cardRef": …,
-"scope": "collection" | "card", "body": … }`. On a card the collection owns,
+Each entry: `{ "kind": "tile" | "table" | "form" | "page" | "reading",
+"cardRef": …, "scope": "collection" | "card", "body": … }`. On a card the collection owns,
 `scope: "card"` sets it wherever the card is used; by default the layout
 belongs to this collection, and `scope: "card"` on a card the collection does
 not own is refused, not moved. A form layout is card-tier
-only, on a card the collection owns. A page layout also has a `name`.
+only, on a card the collection owns. A page layout and a reading layout also
+have a `name`.
 
 **Tile** — the card as it appears in the item list. A grid of **6 columns and at
 most 3 rows**: say `"cols": 6`, and each row's spans add up to 6 at most; each
@@ -173,6 +174,51 @@ query selects, with blocks placed in the sheet's units. Pages are designed
 best in keepr's page editor; propose one only from an existing page's body the
 person shows you, or for a change the person names precisely (a new name, a
 size). The preview shows a page by its subject, size and number of blocks.
+
+**Reading** — how one record, and the records under it, read as one continuous
+text: a recipe as a recipe (its photo, a line of times, the ingredients, the
+numbered steps), a chapter of rules with every rule under it, a chapter of
+verses as running text. The record and each record under it stay records; the
+reading view only draws them. The body is an ordered list of **parts**, each
+with an `id` of your own (letters, digits, `-`, `_`; unique in the layout) and
+a `type`:
+
+| part | what it draws | what it names |
+| --- | --- | --- |
+| `heading` | a line of words and values | `template`: pieces `{ "text": … }` or `{ "element": … }` |
+| `text` | a long text or rich text element as paragraphs | `element` |
+| `line` | several short values on one line | `values`: `[{ "element": … }]` |
+| `picture` | a photo from a file element | `element` |
+| `list` | a repeating group's entries, as bullets, numbered steps, a table or running text (`show`) | `group`, and a `template` of `{ "text" }` and `{ "column" }` pieces |
+| `records` | the records under this one: a related list of the card, or the records a lookup names, as sections, a list, numbered, or running text (`show`) | `source`: `{ "relatedList": name }` or `{ "lookup": element }`, and its own `parts`, drawn for each record |
+| `words` | words you write | `text` |
+
+Name an element, a column or a related list by its **name** as `keepr_schema`
+lists it (or its `#id`): a card the setup makes has no ids yet, and keepr
+writes each one's id when it applies the setup. A `records` part's own parts
+name the elements of the card it lists. A `records` part may also take a
+`title`, a `sort` (up to three `{ "element", "direction" }`) and a `filter`
+over the records it lists. The whole body may say `"columns": 2` and
+`"openFirst": true` (the one layout of the card that opens first).
+
+```json example
+{ "kind": "reading", "cardRef": { "key": "recipe" }, "name": "Recipe card",
+  "body": { "parts": [
+    { "id": "photo", "type": "picture", "element": "photo" },
+    { "id": "title", "type": "heading", "template": [ { "element": "name" } ] },
+    { "id": "times", "type": "line", "values": [ { "element": "prep" }, { "element": "cook" } ] },
+    { "id": "ingredients", "type": "list", "group": "ingredients", "show": "bullets",
+      "template": [ { "column": "amount" }, { "text": " " }, { "column": "item" } ] },
+    { "id": "steps", "type": "list", "group": "steps", "show": "numbered", "template": [ { "column": "step" } ] },
+    { "id": "served", "type": "records", "source": { "relatedList": "Meals" }, "show": "list",
+      "parts": [ { "id": "on", "type": "heading", "template": [ { "element": "served" } ] } ] } ] } }
+```
+
+Propose a reading layout when the person says how a record should read, and
+build it from the card's own elements in the order the person reads them. The
+preview draws it part by part in words ("the entries of ingredients as
+bullets…"): read those lines to the person. A name the card does not have is
+the setup's problem, naming the part, and nothing is applied.
 
 ## Related lists
 

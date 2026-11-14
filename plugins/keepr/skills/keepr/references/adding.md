@@ -179,6 +179,11 @@ with `collection`:
 It is all or nothing — if keepr ever says it stopped part-way, tell the person
 how many changed and that the collection's history shows which — it touches
 only the collection's own items, and it never deletes.
+
+`dry_run` is for that many-item change only. **One item** (`item_id`) is written
+at once, with no preview: `dry_run: true` there is refused and nothing is
+changed. To show the person what an item holds before changing it, read it with
+`keepr_get_items`, then send the change.
 Items with an external id are better changed with `keepr_ingest` in `upsert`
 mode.
 
