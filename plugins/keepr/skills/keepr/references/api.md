@@ -119,7 +119,7 @@ curl -s -H "Authorization: Bearer $KEEPR_API_KEY" \
 | `collection_id` | required with `q`; the collection to list |
 | `q` | a KQL filter (`references/kql.md`). Malformed → **400** naming the character position; an unknown element name matches nothing, silently |
 | `card_id` | one card by id, exact match (`include_descendants=true` to include its children). `card = <key>` inside `q` does the same by key, descendants included |
-| `sort_field` | `primaryDate` (the default — each item's card's primary date), `createdAt`, `updatedAt`, or an element name. An unknown value falls back to the default rather than erroring |
+| `sort_field` | `primaryDate` (the default — each item's card's primary date), `createdAt`, `updatedAt`, `:title` or `:subtitle` (each record by its title or its subtitle; one with none comes last), or an element name (a bare `title` is an element so named). An unknown value falls back to the default rather than erroring |
 | `sort_direction` | `asc` or `desc` (default `desc`) |
 | `limit` | page size; keepr says its default and the most a page holds (the pointer under this table). A larger limit is cut to the most, not refused |
 | `skip` | offset, default 0 |

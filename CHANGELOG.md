@@ -3,6 +3,12 @@
 Each release lists the two versions it carries: the skill's (which is also the
 plugin's) and the server's.
 
+## 2.88.0 — 2026-11-14
+
+Skill 2.88.0, keepr-mcp 0.82.0.
+
+- When your assistant lists records, it can now sort them by their title or by their subtitle, and a saved filter or a table can keep that order.
+
 ## 2.87.0 — 2026-11-14
 
 Skill 2.87.0, keepr-mcp 0.81.0. Also the first release of 2.86.0, 2.85.0, 2.84.0, 2.83.0, 2.82.0 and 2.81.0, below.
