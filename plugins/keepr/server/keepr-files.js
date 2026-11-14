@@ -2280,7 +2280,7 @@ This is a bug in keepr-mcp, not something the user did.`)) : guard(def, ctx, arg
 
 // dist/src/server.js
 var SERVER_NAME = "keepr";
-var SERVER_VERSION = "0.72.0";
+var SERVER_VERSION = "0.74.0";
 var WEBSITE_URL = "https://keepr.cloud";
 var KQL_REFERENCE_URL = `${WEBSITE_URL}/docs/guides/finding-and-lists/kql-reference`;
 function brandIcons(publicUrl = process.env.KEEPR_PUBLIC_URL || "https://api.keepr.cloud") {
@@ -3115,7 +3115,7 @@ function storedName(name) {
   if (n.length > 255) {
     const m = /\.([A-Za-z0-9]{1,12})$/.exec(n);
     const suffix = m ? `.${m[1].toLowerCase()}` : "";
-    n = n.slice(0, 255 - suffix.length) + suffix;
+    n = n.slice(0, 255 - suffix.length).toWellFormed() + suffix;
   }
   return n;
 }

@@ -3,6 +3,18 @@
 Each release lists the two versions it carries: the skill's (which is also the
 plugin's) and the server's.
 
+## 2.80.0 — 2026-11-13
+
+Skill 2.80.0, keepr-mcp 0.74.0. Also the first release of 2.79.0, below.
+
+- When your assistant attaches a folder from the command line, it now sends only the folder's own files: a link that points out of the folder or into a place that holds keys and passwords, a hard link to a file elsewhere, a named pipe or a device is never read, and each is named with the reason, in the dry run and the real run. A file named on its own goes through a link only to an ordinary file.
+
+## 2.79.0 — 2026-11-13
+
+Skill 2.79.0, keepr-mcp 0.74.0.
+
+- When your assistant changes a record, it no longer writes over a change someone else made since it read the record: keepr refuses the write, nothing is changed, and the assistant is shown what the record holds now so it can fold your change in.
+
 ## 2.78.0 — 2026-11-13
 
 Skill 2.78.0, keepr-mcp 0.72.0. Also the first release of 2.77.0, 2.76.0, 2.75.0, 2.74.0, 2.73.0, 2.72.0, 2.71.0 and 2.70.0, below.
