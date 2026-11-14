@@ -2280,7 +2280,7 @@ This is a bug in keepr-mcp, not something the user did.`)) : guard(def, ctx, arg
 
 // dist/src/server.js
 var SERVER_NAME = "keepr";
-var SERVER_VERSION = "0.74.0";
+var SERVER_VERSION = "0.81.0";
 var WEBSITE_URL = "https://keepr.cloud";
 var KQL_REFERENCE_URL = `${WEBSITE_URL}/docs/guides/finding-and-lists/kql-reference`;
 function brandIcons(publicUrl = process.env.KEEPR_PUBLIC_URL || "https://api.keepr.cloud") {
@@ -3752,7 +3752,7 @@ import { stat as stat5, realpath as realpath4 } from "node:fs/promises";
 import { createHash as createHash2, randomBytes as randomBytes5 } from "node:crypto";
 
 // dist/src/folderMatch.js
-import { readdir as readdir2, stat as stat3, realpath as realpath2 } from "node:fs/promises";
+import { readdir as readdir2, stat as stat3, lstat, realpath as realpath2 } from "node:fs/promises";
 import { join as join4, relative, sep, basename as basename3, extname } from "node:path";
 var MATCH_MODES = ["auto", "folder", "stem", "exact"];
 var COUNTER_SUFFIX = /[\s._-]*(?:\(\s*[0-9]+\s*\)|[0-9]+)$/;
@@ -3788,6 +3788,80 @@ function keysFor(rel, mode) {
       out.push(k);
   return out;
 }
+function stampOf(st) {
+  return {
+    size: Number(st.size),
+    mtimeMs: Number(st.mtimeNs) / 1e6,
+    ctimeMs: Number(st.ctimeNs) / 1e6,
+    ino: Number(st.ino),
+    id: idOf(st)
+  };
+}
+function idOf(st) {
+  return `${st.dev}:${st.ino}`;
+}
+var ERRNO_TEXT = {
+  ENOENT: "No such file or directory",
+  ELOOP: "Too many levels of symbolic links",
+  EACCES: "Permission denied",
+  ENOTDIR: "Not a directory",
+  ENAMETOOLONG: "File name too long",
+  EPERM: "Operation not permitted"
+};
+function errnoText(err) {
+  const code = err?.code ?? "";
+  return ERRNO_TEXT[code] ?? (code || "error");
+}
+function kindOf(st) {
+  if (st.isDirectory())
+    return "a folder";
+  if (st.isFIFO())
+    return "a named pipe";
+  if (st.isSocket())
+    return "a socket";
+  if (st.isCharacterDevice() || st.isBlockDevice())
+    return "a device";
+  return "something other than a file";
+}
+var CHANGED = "it changed while it was being checked \u2014 left out";
+var HARD_LINK = "it is a hard link: the same file also has a name outside this folder, or a hidden one in it \u2014 left out";
+async function checkEntry(path) {
+  let named;
+  try {
+    named = await lstat(path, { bigint: true });
+  } catch (err) {
+    return { ok: false, missing: err.code ?? "error" };
+  }
+  const link = named.isSymbolicLink();
+  let st;
+  let real;
+  try {
+    st = await stat3(path, { bigint: true });
+    real = await realpath2(path);
+  } catch (err) {
+    return link ? { ok: false, reason: `it is a link that leads nowhere (${errnoText(err)}) \u2014 left out` } : { ok: false, reason: `it could not be read (${err.code ?? "error"}) \u2014 left out` };
+  }
+  if (link && st.isDirectory())
+    return { ok: false, reason: "it is a link to a folder, which is never followed" };
+  if (!st.isFile())
+    return { ok: false, reason: `it is ${link ? "a link to " : ""}${kindOf(st)}, not a file \u2014 never opened` };
+  let again = null;
+  try {
+    again = await stat3(real, { bigint: true });
+  } catch {
+  }
+  if (!again || again.dev !== st.dev || again.ino !== st.ino)
+    return { ok: false, reason: CHANGED };
+  if (!link && (named.dev !== st.dev || named.ino !== st.ino))
+    return { ok: false, reason: CHANGED };
+  try {
+    if (await realpath2(path) !== real)
+      return { ok: false, reason: CHANGED };
+  } catch {
+    return { ok: false, reason: CHANGED };
+  }
+  return { ok: true, st, real, link };
+}
 function inside(root, p) {
   return p === root || p.startsWith(root.endsWith(sep) ? root : root + sep);
 }
@@ -3798,11 +3872,51 @@ function fenceProblem(rootReal, real) {
     return `it is a link to a hidden file (${identifierText(real)})`;
   return null;
 }
+function leadsInto(real, secret) {
+  if (secret.kind === "too-long")
+    return `${pathLengthProblem(real) ?? "the path is too long"} \u2014 left out`;
+  if (secret.kind === "store")
+    return `it leads to ${identifierText(real)}, inside ${secret.label}, where this computer keeps keys, passwords and app settings \u2014 nothing there is attached from here`;
+  return `it leads to a hidden file (${identifierText(real)}) \u2014 those are never attached from here`;
+}
+async function countNames(walked) {
+  const names = /* @__PURE__ */ new Map();
+  for (const w of walked)
+    if (!w.link)
+      names.set(w.file.id, (names.get(w.file.id) ?? 0) + 1);
+  for (const w of walked) {
+    if (w.link || w.nlink < 2n || names.get(w.file.id) === 0)
+      continue;
+    let now = null;
+    try {
+      now = await lstat(w.file.path, { bigint: true });
+    } catch {
+    }
+    if (!now || idOf(now) !== w.file.id || now.nlink !== w.nlink)
+      names.set(w.file.id, 0);
+  }
+  return names;
+}
+function sharedOutside(nlink, id, names) {
+  return nlink > BigInt(names.get(id) ?? 0);
+}
 async function listFiles(root, limit = 2e4, checkedReal) {
+  const rootReal = checkedReal ?? await realpath2(root);
+  const { walked, truncated, skipped } = await walkFolder(root, limit, rootReal);
+  const names = await countNames(walked);
   const files = [];
+  for (const w of walked) {
+    if (sharedOutside(w.nlink, w.file.id, names))
+      skipped.push({ rel: w.file.rel, reason: HARD_LINK });
+    else
+      files.push(w.file);
+  }
+  return { files, truncated, skipped };
+}
+async function walkFolder(root, limit, rootReal) {
+  const walked = [];
   const skipped = [];
   let truncated = false;
-  const rootReal = checkedReal ?? await realpath2(root);
   const relOf = (p) => relative(root, p).split(sep).join("/");
   const storeAt = storeMatcher();
   async function walk(dir, top) {
@@ -3817,25 +3931,34 @@ async function listFiles(root, limit = 2e4, checkedReal) {
       skipped.push({ rel: `${relOf(dir)}/`, reason: `this folder could not be read (${err.code ?? "error"}) \u2014 its files were left out` });
       return;
     }
-    const dirs = entries.filter((e) => e.isDirectory() && !e.name.startsWith(".")).map((e) => e.name).sort().filter((d) => {
+    const dirNames = [];
+    const names = [];
+    for (const e of entries) {
+      if (e.name.startsWith("."))
+        continue;
+      let isDir = e.isDirectory();
+      if (!isDir && !e.isFile() && !e.isSymbolicLink() && !e.isFIFO() && !e.isSocket() && !e.isCharacterDevice() && !e.isBlockDevice()) {
+        try {
+          isDir = (await lstat(join4(dir, e.name))).isDirectory();
+        } catch {
+        }
+      }
+      (isDir ? dirNames : names).push(e.name);
+    }
+    const dirs = dirNames.sort().filter((d) => {
       const store = storeAt(join4(dir, d));
       if (store)
         skipped.push({ rel: `${relOf(join4(dir, d))}/`, reason: `${store}, where this computer keeps keys, passwords and app settings \u2014 left out` });
       return !store;
     });
-    const names = entries.filter((e) => (e.isFile() || e.isSymbolicLink()) && !e.name.startsWith(".")).map((e) => e.name).sort();
-    for (const name of names) {
+    for (const name of names.sort()) {
       const path = join4(dir, name);
-      let st;
-      let real;
-      try {
-        st = await stat3(path);
-        real = await realpath2(path);
-      } catch {
+      const entry = await checkEntry(path);
+      if (!entry.ok) {
+        skipped.push({ rel: relOf(path), reason: "missing" in entry ? `it could not be read (${entry.missing}) \u2014 left out` : entry.reason });
         continue;
       }
-      if (!st.isFile())
-        continue;
+      const { st, real, link } = entry;
       const fenced = fenceProblem(rootReal, real);
       if (fenced) {
         skipped.push({ rel: relOf(path), reason: `${fenced} \u2014 left out` });
@@ -3843,20 +3966,20 @@ async function listFiles(root, limit = 2e4, checkedReal) {
       }
       const secret = real !== path ? secretPlace(real) : null;
       if (secret) {
-        skipped.push({ rel: relOf(path), reason: `it is a link to ${identifierText(real)}, ${secret.kind === "store" ? `inside ${secret.label}` : "a hidden place"} \u2014 left out` });
+        skipped.push({ rel: relOf(path), reason: leadsInto(real, secret) });
         continue;
       }
-      if (files.length >= limit) {
+      if (walked.length >= limit) {
         truncated = true;
         return;
       }
-      files.push({ path, rel: relOf(path), name, size: st.size, mtimeMs: st.mtimeMs, ctimeMs: st.ctimeMs, ino: st.ino });
+      walked.push({ file: { path, rel: relOf(path), name, ...stampOf(st) }, nlink: st.nlink, link });
     }
     for (const d of dirs)
       await walk(join4(dir, d), false);
   }
   await walk(root, true);
-  return { files, truncated, skipped };
+  return { walked, truncated, skipped };
 }
 function foldKey(v) {
   return v.trim().normalize("NFC").toLowerCase();
@@ -3892,6 +4015,7 @@ async function matchByMap(root, map, resolve2, checkedReal, keyHint = "give an i
   const pairs = [];
   const unmatched = [];
   const rootReal = checkedReal ?? await realpath2(root);
+  let counted = null;
   for (const [key, value] of Object.entries(map)) {
     const names = Array.isArray(value) ? value : [value];
     const itemId = resolve2(key);
@@ -3912,19 +4036,12 @@ async function matchByMap(root, map, resolve2, checkedReal, keyHint = "give an i
         unmatched.push({ file: shown, reason: "a hidden file, or a path outside the folder \u2014 the map names files in the folder" });
         continue;
       }
-      let st;
-      let real;
-      try {
-        st = await stat3(path);
-        real = await realpath2(path);
-      } catch {
-        unmatched.push({ file: shown, reason: "no such file" });
+      const entry = await checkEntry(path);
+      if (!entry.ok) {
+        unmatched.push({ file: shown, reason: "missing" in entry ? "no such file" : entry.reason });
         continue;
       }
-      if (!st.isFile()) {
-        unmatched.push({ file: shown, reason: "not a file" });
-        continue;
-      }
+      const { st, real } = entry;
       const fenced = fenceProblem(rootReal, real);
       if (fenced) {
         unmatched.push({ file: shown, reason: `${fenced} \u2014 the map names files in the folder` });
@@ -3935,15 +4052,22 @@ async function matchByMap(root, map, resolve2, checkedReal, keyHint = "give an i
         unmatched.push({ file: shown, reason: secret.kind === "store" ? `inside ${secret.label}, where this computer keeps keys, passwords and app settings \u2014 nothing there is attached from here` : "a hidden file \u2014 never attached from here" });
         continue;
       }
-      pairs.push({ file: { ...shown, size: st.size, mtimeMs: st.mtimeMs, ctimeMs: st.ctimeMs, ino: st.ino }, itemId, key });
+      if (st.nlink > 1n) {
+        counted ??= await countNames((await walkFolder(root, 2e4, rootReal)).walked);
+        if (sharedOutside(st.nlink, idOf(st), counted)) {
+          unmatched.push({ file: shown, reason: HARD_LINK });
+          continue;
+        }
+      }
+      pairs.push({ file: { ...shown, ...stampOf(st) }, itemId, key });
     }
   }
   return { pairs, unmatched, itemsWithoutFile: [] };
 }
 
 // dist/src/attachJobs.js
-import { createReadStream as createReadStream2 } from "node:fs";
-import { stat as stat4, realpath as realpath3 } from "node:fs/promises";
+import { constants } from "node:fs";
+import { open, stat as stat4, realpath as realpath3 } from "node:fs/promises";
 import { randomBytes as randomBytes4 } from "node:crypto";
 import { setTimeout as sleep3 } from "node:timers/promises";
 var IDS_PER_CALL = 100;
@@ -4080,6 +4204,7 @@ function startJob(ctx, plan, folder, opts = {}) {
     mtimeMs: f.file.mtimeMs,
     ctimeMs: f.file.ctimeMs,
     ino: f.file.ino,
+    id: f.file.id,
     itemId: f.itemId,
     state: f.refused ? "refused" : "queued",
     reason: f.refused,
@@ -4228,6 +4353,23 @@ async function sendOne(ctx, job, f, now) {
       item.reserved--;
   }
 }
+var CHUNK = 64 * 1024;
+function readsFrom(fh, length) {
+  return async function* reads() {
+    let pos = 0;
+    while (pos < length) {
+      const buf = Buffer.allocUnsafe(Math.min(CHUNK, length - pos));
+      const { bytesRead } = await fh.read(buf, 0, buf.length, pos);
+      if (!bytesRead)
+        return;
+      pos += bytesRead;
+      yield buf.subarray(0, bytesRead);
+    }
+    const extra = Buffer.allocUnsafe(1);
+    if ((await fh.read(extra, 0, 1, pos)).bytesRead)
+      yield extra;
+  };
+}
 function reserve(item) {
   const current = idsIn(item.info.elements[item.target.name]);
   if (current.length + item.reserved >= MAX_FILES)
@@ -4236,7 +4378,6 @@ function reserve(item) {
   return true;
 }
 async function sendReserved(ctx, job, f, item, now) {
-  const target = item.target;
   if (!job.rootReal)
     job.rootReal = realpath3(job.folder).catch(() => null);
   const rootReal = await job.rootReal;
@@ -4248,21 +4389,49 @@ async function sendReserved(ctx, job, f, item, now) {
   const fenced = rootReal && real ? fenceProblem(rootReal, real) : null;
   if (fenced)
     return settle(f, "failed", `${fenced} now \u2014 it was not sent.`);
-  let st;
+  let fh;
   try {
-    st = await stat4(f.path);
+    fh = await open(f.path, constants.O_RDONLY | (constants.O_NONBLOCK ?? 0));
   } catch (err) {
     return settle(f, "failed", err.code === "ENOENT" ? "it was moved or deleted after the folder was matched." : `it could not be read: ${err.code ?? errorText(err)}.`);
   }
-  if (st.size !== f.size || st.mtimeMs !== f.mtimeMs || st.ctimeMs !== f.ctimeMs || st.ino !== f.ino) {
-    return settle(f, "failed", `it changed after the folder was matched (${f.size} bytes then, ${st.size} now). Run the folder again to send the new version.`);
+  try {
+    return await sendOpened(ctx, job, f, item, now, fh, real);
+  } finally {
+    await fh.close().catch(() => {
+    });
   }
+}
+async function sendOpened(ctx, job, f, item, now, fh, real) {
+  const target = item.target;
+  let st;
+  try {
+    st = await fh.stat({ bigint: true });
+  } catch (err) {
+    return settle(f, "failed", `it could not be read: ${err.code ?? errorText(err)}.`);
+  }
+  const seen = stampOf(st);
+  if (!st.isFile() || seen.size !== f.size || seen.mtimeMs !== f.mtimeMs || seen.ctimeMs !== f.ctimeMs || seen.id !== f.id) {
+    return settle(f, "failed", st.isFile() ? `it changed after the folder was matched (${f.size} bytes then, ${seen.size} now). Run the folder again to send the new version.` : "it is no longer a file (something else was put in its place after the folder was matched) \u2014 it was not sent.");
+  }
+  let again = null;
+  try {
+    again = real ? await stat4(real, { bigint: true }) : null;
+  } catch {
+  }
+  let still = null;
+  try {
+    still = await realpath3(f.path);
+  } catch {
+  }
+  if (!again || idOf(again) !== seen.id || still !== real)
+    return settle(f, "failed", "it changed while it was being sent \u2014 it was not sent. Run the folder again.");
   let res;
   try {
     res = await ctx.http.request({
       method: "POST",
       path: `/api/items/${f.itemId}/attachments`,
-      stream: { open: () => createReadStream2(f.path), length: f.size, filename: f.name, contentType: contentTypeFor(f.name) }
+      stream: { open: readsFrom(fh, f.size), length: f.size, filename: f.name, contentType: contentTypeFor(f.name) }
     });
   } catch (err) {
     if (err instanceof FileChangedError) {
@@ -4486,7 +4655,7 @@ Try another match mode, a \`map\` naming the files per item, or match_element wi
     const bytes = going.reduce((n, f) => n + f.file.size, 0);
     const title = (id) => plan.items.get(id)?.title ?? id;
     const header = [
-      `${going.length} file${going.length === 1 ? "" : "s"} (${mb(bytes)}) \u2192 ${new Set(going.map((f) => f.itemId)).size} item${new Set(going.map((f) => f.itemId)).size === 1 ? "" : "s"}` + (element ? ` \xB7 into "${element}"` : "") + (refused.length ? ` \xB7 ${refused.length} refused` : "") + (matched.unmatched.length ? ` \xB7 ${matched.unmatched.length} unmatched` : "") + (matched.itemsWithoutFile.length ? ` \xB7 ${matched.itemsWithoutFile.length} item${matched.itemsWithoutFile.length === 1 ? "" : "s"} without a file` : "")
+      `${going.length} file${going.length === 1 ? "" : "s"} (${mb(bytes)}) \u2192 ${new Set(going.map((f) => f.itemId)).size} item${new Set(going.map((f) => f.itemId)).size === 1 ? "" : "s"}` + (element ? ` \xB7 into "${element}"` : "") + (refused.length ? ` \xB7 ${refused.length} refused` : "") + (matched.unmatched.length ? ` \xB7 ${matched.unmatched.length} unmatched` : "") + (skipped.length ? ` \xB7 ${skipped.length} left out` : "") + (matched.itemsWithoutFile.length ? ` \xB7 ${matched.itemsWithoutFile.length} item${matched.itemsWithoutFile.length === 1 ? "" : "s"} without a file` : "")
     ];
     if (mappedFrom)
       header.push(`(Read from ${identifierText(resolved)} \u2014 the computer's copy of ${identifierText(mappedFrom)}.)`);
@@ -4557,8 +4726,11 @@ ${refused.slice(0, 20).map((f) => `  ${identifierText(f.file.rel)}: ${f.refused}
       "",
       `Uploading in the background (job ${job.id}), ${CONCURRENCY} at a time, streamed from disk.`,
       `Call keepr_attach_status with job_id ${job.id} to see progress \u2014 every minute or so, not in a tight loop.`,
-      "The job runs inside this server: if the app restarts, run the same folder again and it sends only what is missing."
-    ].join("\n"), { ok: true, dryRun: false, job_id: job.id, counts: { files: going.length, refused: refused.length, unmatched: matched.unmatched.length, bytes } });
+      "The job runs inside this server: if the app restarts, run the same folder again and it sends only what is missing.",
+      // What does not go is said in the real run too, not only in the dry run before it (KPR-2563, as keepr.py does).
+      ...matched.unmatched.length ? ["", `UNMATCHED (${matched.unmatched.length}):`, listUnmatched(matched.unmatched)] : [],
+      ...skipped.length ? ["", `LEFT OUT (${skipped.length}):`, listSkipped(skipped)] : []
+    ].join("\n"), { ok: true, dryRun: false, job_id: job.id, leftOut: skipped.slice(0, 500), counts: { files: going.length, refused: refused.length, unmatched: matched.unmatched.length, leftOut: skipped.length, bytes } });
   }
 };
 async function readKeys(ctx, collection, keyOf) {

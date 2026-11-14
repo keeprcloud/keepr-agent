@@ -15,7 +15,7 @@ or nothing**. The preview is what the person agrees to — so read it to them.
 | the person wants… | use |
 | --- | --- |
 | a new card, or a field added to one card | `keepr_propose_card` (`references/cards.md`) |
-| to start keeping a new kind of record — its cards, rules and dashboards together | Discover first: a ready-made package may already hold it (`references/cards.md`, "Discover first"); a setup when none fits |
+| to start keeping a new kind of record — its cards, rules and dashboards together | Discover first: a ready-made bundle may already hold it (`references/cards.md`, "Discover first"); a setup when none fits |
 | a list, table, form or page laid out differently | a setup |
 | filters or quick adds for everyone | a setup |
 | a named list on each item of the items that link to it — an epic's "Open work items" | a setup (related lists) |
@@ -139,7 +139,8 @@ what you arrange. Zero rows is a tile of identity and date alone.
 
 **Table** — the item table's columns, in order: `{ "columns": [ { "element":
 "title" }, { "system": "updatedAt" }, … ] }`. System columns: `title`,
-`primaryDate`, `updatedAt`, `createdAt`, `sourceCreatedAt`, `tags`, `owner`.
+`primaryDate`, `updatedAt`, `createdAt`, `sourceCreatedAt`, `tags`, `owner`, `subtitle` (the card's subtitle, its own
+column beside the title; not sortable).
 
 **Form** — the item form's order, groups and field widths. A group's `elements`
 holds **entries**: an element's name, or `{ "element": name, "span": …,
@@ -189,7 +190,7 @@ a `type`:
 | `text` | a long text or rich text element as paragraphs | `element` |
 | `line` | several short values on one line | `values`: `[{ "element": … }]` |
 | `picture` | a photo from a file element | `element` |
-| `list` | a repeating group's entries, as bullets, numbered steps, a table or running text (`show`) | `group`, and a `template` of `{ "text" }` and `{ "column" }` pieces |
+| `list` | a repeating group's entries, as bullets, numbered steps, a table or running text (`show`); a file column in the template draws each entry's photo under its words (a recipe's step photo) | `group`, and a `template` of `{ "text" }` and `{ "column" }` pieces |
 | `records` | the records under this one: a related list of the card, or the records a lookup names, as sections, a list, numbered, or running text (`show`) | `source`: `{ "relatedList": name }` or `{ "lookup": element }`, and its own `parts`, drawn for each record |
 | `words` | words you write | `text` |
 
@@ -209,7 +210,7 @@ over the records it lists. The whole body may say `"columns": 2` and
     { "id": "times", "type": "line", "values": [ { "element": "prep" }, { "element": "cook" } ] },
     { "id": "ingredients", "type": "list", "group": "ingredients", "show": "bullets",
       "template": [ { "column": "amount" }, { "text": " " }, { "column": "item" } ] },
-    { "id": "steps", "type": "list", "group": "steps", "show": "numbered", "template": [ { "column": "step" } ] },
+    { "id": "steps", "type": "list", "group": "steps", "show": "numbered", "template": [ { "column": "step" }, { "column": "photo" } ] },
     { "id": "served", "type": "records", "source": { "relatedList": "Meals" }, "show": "list",
       "parts": [ { "id": "on", "type": "heading", "template": [ { "element": "served" } ] } ] } ] } }
 ```

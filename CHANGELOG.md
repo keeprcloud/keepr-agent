@@ -3,6 +3,48 @@
 Each release lists the two versions it carries: the skill's (which is also the
 plugin's) and the server's.
 
+## 2.87.0 — 2026-11-14
+
+Skill 2.87.0, keepr-mcp 0.81.0. Also the first release of 2.86.0, 2.85.0, 2.84.0, 2.83.0, 2.82.0 and 2.81.0, below.
+
+- When your assistant lays out a card's table, it can now add the card's Subtitle as a column of its own beside the title.
+
+## 2.86.0 — 2026-11-14
+
+Skill 2.86.0, keepr-mcp 0.80.0.
+
+- Your assistant can give a card a subtitle when it makes or changes one, reads each card's subtitle in a collection's schema, and says when moving records to another card gives them its subtitle or takes theirs away.
+
+## 2.85.0 — 2026-11-14
+
+Skill 2.85.0, keepr-mcp 0.79.0.
+
+- When a card gives its records a subtitle, your assistant now reads each record as its title then its subtitle, in a list, one record and a search, and keeps the subtitle as its own field. Importing a spreadsheet keepr exported leaves its Title and Subtitle columns alone, so each field comes back with its own value.
+
+## 2.84.0 — 2026-11-14
+
+Skill 2.84.0, keepr-mcp 0.78.0.
+
+- Your assistant now calls everything Discover lists a bundle, in what it says and in the tool descriptions it reads, instead of a package, a card bundle or a collection. What it can do is unchanged.
+
+## 2.83.0 — 2026-11-14
+
+Skill 2.83.0, keepr-mcp 0.77.0.
+
+- When your assistant sets up a reading layout, a list of a repeating group's entries can name a file column: each entry's photo, such as a recipe step's, reads under its words.
+
+## 2.82.0 — 2026-11-14
+
+Skill 2.82.0, keepr-mcp 0.76.0.
+
+- When your assistant asks you for files by link and you put a file where it asked, that file now counts as the one it asked for even when its name is different, such as a photo your phone named IMG_0172. The link page shows which file each one stands in for, and you can send one to the item's other attachments instead.
+
+## 2.81.0 — 2026-11-13
+
+Skill 2.81.0, keepr-mcp 0.75.0.
+
+- When your assistant attaches a folder from your computer, it now sends only the folder's own files: a hard link to a file elsewhere, a link that leads nowhere or to a folder, a named pipe, a socket or a device is never read, and each is named with the reason, in the dry run and now in the real run's answer too. A file goes only if it is still the very file that was checked.
+
 ## 2.80.0 — 2026-11-13
 
 Skill 2.80.0, keepr-mcp 0.74.0. Also the first release of 2.79.0, below.

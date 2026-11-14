@@ -84,7 +84,7 @@ Three words the person reads, and you use too:
    reminders for each car. It has nowhere for tyre pressures."). Say which one
    you would pick, and which scenario fits them when it has scenarios.
    `keepr_propose_card` for a new card also searches Discover on its own, and
-   when up to three packages are a strong match its answer lists them under
+   when up to three bundles are a strong match its answer lists them under
    `DISCOVER:` (and as `discover`). That is a backstop for an assistant that
    skipped this step, not a replacement for it: show those to the person
    before they apply the proposal. The proposal itself is unchanged.
@@ -130,13 +130,13 @@ Three words the person reads, and you use too:
    off until they turn it on. Its answer ends with a preview token and the
    install link with those choices filled in (the link carries the scenario,
    add-ons and examples, not the selection: they untick those again there). A
-   health package's preview says the person adds it: an assistant never does.
+   health bundle's preview says the person adds it: an assistant never does.
 
    **A bundle that can use a card they already have.** Some bundles' cards
    (a Staff member, a Resident) can use a card the collection already holds
    instead of adding a second one. The preview's **CARDS YOU ALREADY HAVE**
    says, for each, what it would use now — one of their cards, the bundle's
-   own card, or the card a package it needs brings — and the other cards that
+   own card, or the card a bundle it needs brings — and the other cards that
    could fill it, with what each would change. keepr's own choice never
    changes a card of theirs. To use a different card that fits as it is, send
    the `BINDING to send` the preview printed for it in `bindings`, and preview
@@ -147,19 +147,19 @@ Three words the person reads, and you use too:
    YOUR CARDS) and hand over the link, where they choose the card and approve
    each change themselves.
 
-   **A bundle that needs other packages.** The preview's **PACKAGES THIS
-   NEEDS** lists the packages it builds on (added first), and each one's
+   **A bundle that needs other bundles.** The preview's **BUNDLES THIS
+   NEEDS** lists the bundles it builds on (added first), and each one's
    add-ons. The first preview of such a bundle is refused
-   `dependencies_unconfirmed`: nothing comes unseen. Tell them which packages
+   `dependencies_unconfirmed`: nothing comes unseen. Tell them which bundles
    it would add and ask which add-ons of each they want (a *needed* one comes
    anyway), then preview again with `dependencies`:
    `[{ "package": "core-staff", "install": true, "add_ons": ["training"] }]`,
-   one entry per package listed. One already in the collection is skipped. A
-   selection is the asked bundle's alone: a package it needs comes whole.
+   one entry per bundle listed. One already in the collection is skipped. A
+   selection is the asked bundle's alone: a bundle it needs comes whole.
 6. **Add it once they say yes — or hand over the link.** Ask plainly: this
    bundle, this scenario, these add-ons, leaving out these things, into this
    collection (or a new one named so), with or without the examples — and,
-   when the preview lists them, these packages it needs with these add-ons,
+   when the preview lists them, these bundles it needs with these add-ons,
    using these cards of theirs? Only after a clear yes to all of it, call
    `keepr_add_package` with the preview's `preview_token` and
    `confirm_collection_name`, the collection's name exactly as the preview
@@ -173,14 +173,14 @@ Three words the person reads, and you use too:
    added, what was left out, and what arrived paused or off — rules,
    notifications and forms wait for them in keepr, and you may turn on only a
    rule that changes nothing beyond its own record. If they would rather add it
-   themselves, or the package is a health package (it asks for their own
+   themselves, or the bundle is a health bundle (it asks for their own
    consent), give them the link with three steps: open it; check the
    collection it goes into, the scenario and the add-ons ticked, and untick
    anything they leave out; press **Add to collection**. If the install's
    answer is lost, read the collection before anything else: it may be there.
 7. **Extend a good fit afterwards.** What a good fit lacks becomes a card
    change once it is installed (`keepr_propose_card` with a `change`, on the
-   card the package made), not a second card beside it. Read the collection's
+   card the bundle made), not a second card beside it. Read the collection's
    schema again first: the card keys are the ones keepr gave on install.
 
 ## Creating a card
@@ -224,7 +224,10 @@ and the whole apply is undone; so is a key nothing in the
 collection has. Table layouts are for cards in the spec
 (`{ "card": "task", "columns": ["kpr", "title", "status"] }`). A card also
 carries `icon` and `color` (below), and may carry `displayTemplate`
-(`"{{kpr}} {{title}}"`), `elementSets` (set keys) and `options` (`primaryDate`…).
+(`"{{kpr}} {{title}}"`), `subtitleTemplate` (a second, longer line in the same
+form, shown under or beside the title where there is room: `"{{kpr}}"` as the
+title and `"{{title}}"` as the subtitle; a child without one shows its parent's),
+`elementSets` (set keys) and `options` (`primaryDate`…).
 
 ### Every new card gets an icon and a color
 
