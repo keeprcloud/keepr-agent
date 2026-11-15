@@ -207,8 +207,13 @@ curl -s -H "Authorization: Bearer $KEEPR_API_KEY" \
 Each bucket uses exactly the read scope of its own list endpoint. Items are
 matched on the tags you can read and the element values a list's
 search box reads (text, links, rich text, a phone by its digits, a choice by
-its label, a location's address, a number sequence as spelled); the response has
-every bucket, empty when not searched:
+its label, a location's address, a number sequence as spelled), and on the
+record's subtitle wherever the key is shown it as stored (where its person
+reads only part of a collection, a subtitle that can name a linked record is
+not searched). Each item carries `displayValue`, `displaySubtitle`
+when it has one, `score` and a `snippet` whose `in.kind` is `title`,
+`subtitle`, `element` or `tag`. The response has every bucket, empty when not
+searched:
 
 ```jsonc
 { "query": "blue bottle",

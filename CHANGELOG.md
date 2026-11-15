@@ -3,6 +3,12 @@
 Each release lists the two versions it carries: the skill's (which is also the
 plugin's) and the server's.
 
+## 2.89.0 — 2026-11-14
+
+Skill 2.89.0, keepr-mcp 0.83.0.
+
+- Search now finds a record by the words of its subtitle, wherever you are shown that subtitle whole, and says when the words it quotes came from it.
+
 ## 2.88.0 — 2026-11-14
 
 Skill 2.88.0, keepr-mcp 0.82.0.
