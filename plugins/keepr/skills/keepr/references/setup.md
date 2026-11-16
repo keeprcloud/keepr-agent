@@ -97,6 +97,15 @@ one they mean, ask them, never pick, and propose again with the `#id` — or, fo
 any of those cards, the condition once per id (`kql.md`, "When keepr asks
 which element").
 
+**A filter that opens as a Gantt.** When a card's records carry the dates a
+person plans by, offer a filter that draws them as bars on a timeline:
+`{ "name": "Roadmap", "query": "…", "cardRef": { "key": "task" }, "gantt": { "start": "Starts", "end": "Ends" } }`,
+each element by name on that card.
+The preview says in words what the view will show, and refuses an element the
+card lacks or a start or end that is not a date; `schema` names a filter that
+is one. A filter you change without naming its `gantt` keeps it, and
+`"gantt": null, "view": null` takes it away.
+
 ## Layouts
 
 Each entry: `{ "kind": "tile" | "table" | "form" | "page" | "reading",

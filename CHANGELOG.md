@@ -3,6 +3,18 @@
 Each release lists the two versions it carries: the skill's (which is also the
 plugin's) and the server's.
 
+## 2.91.0 — 2026-11-16
+
+Skill 2.91.0, keepr-mcp 0.85.0. Also the first release of 2.90.0, below.
+
+- When your assistant sets up a reading layout, a list of a record's entries can carry a title, drawn above the entries and left out when there are none.
+
+## 2.90.0 — 2026-11-15
+
+Skill 2.90.0, keepr-mcp 0.84.0.
+
+- Your assistant can read a saved filter that opens as a Gantt and set one up, naming the elements it is drawn by, and a filter it rewrites keeps the Gantt it had.
+
 ## 2.89.0 — 2026-11-14
 
 Skill 2.89.0, keepr-mcp 0.83.0.
