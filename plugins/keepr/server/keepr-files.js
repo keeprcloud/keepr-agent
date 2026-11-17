@@ -392,6 +392,7 @@ var KeeprHttp = class {
         requestId: res.headers.get("x-request-id"),
         nonJson,
         etag: res.headers.get("etag"),
+        queryCanonical: res.headers.get("x-query-canonical"),
         ...asked !== null ? { retryAfterSeconds: asked } : {},
         ...!["GET", "HEAD", "OPTIONS"].includes(method) ? { wasWrite: true } : {}
       };
@@ -2284,7 +2285,7 @@ This is a bug in keepr-mcp, not something the user did.`)) : guard(def, ctx, arg
 
 // dist/src/server.js
 var SERVER_NAME = "keepr";
-var SERVER_VERSION = "0.85.0";
+var SERVER_VERSION = "0.86.0";
 var WEBSITE_URL = "https://keepr.cloud";
 var KQL_REFERENCE_URL = `${WEBSITE_URL}/docs/guides/finding-and-lists/kql-reference`;
 function brandIcons(publicUrl = process.env.KEEPR_PUBLIC_URL || "https://api.keepr.cloud") {

@@ -3,6 +3,24 @@
 Each release lists the two versions it carries: the skill's (which is also the
 plugin's) and the server's.
 
+## 2.94.0 — 2026-11-16
+
+Skill 2.94.0, keepr-mcp 0.86.0. Also the first release of 2.93.0 and 2.92.0, below.
+
+- When your assistant reads records with a filter and it works, it now sees the filter the way keepr read it, with each field written as its id, and is told to store or repeat that form. A filter it saves later no longer depends on a field's name staying the same.
+
+## 2.93.0 — 2026-11-16
+
+Skill 2.93.0, keepr-mcp 0.85.1.
+
+- When your assistant lists a collection's saved charts, it lists only that collection's own, since charts are not inherited from a collection above.
+
+## 2.92.0 — 2026-11-16
+
+Skill 2.92.0, keepr-mcp 0.85.0.
+
+- A copy of the keepr skill installed on its own updates itself again. Its script had grown past the size an installed copy accepts, so `keepr.py update` stopped with "The bundle is larger than a skill can be" and every copy stayed where it was. The script now comes in several files, each well under that size, and running `keepr.py update` once brings a copy onto them. `keepr.py --version` says which release a copy is. Nothing else changes in how it works.
+
 ## 2.91.0 — 2026-11-16
 
 Skill 2.91.0, keepr-mcp 0.85.0. Also the first release of 2.90.0, below.

@@ -172,6 +172,10 @@ never pick one yourself — then write that element's `#id`, or for any of those
 cards the condition once per id (`references/kql.md`, "When keepr asks which
 element").
 
+When a filter you sent worked, `keepr_get_items` prints one more line, "keepr
+read this filter as", with the filter's element names written as `#id`. Copy
+that line, not your own wording, when you store the filter or repeat it later.
+
 If the user named no collection, list them (`keepr_collections`)
 and ask which one. Never pick one for them.
 
@@ -213,7 +217,7 @@ Two rules hold in every chapter:
 
 ## This copy
 
-This is keepr skill **2.91.0**. Every fact that changes comes from keepr, so a
+This is keepr skill **2.94.0**. Every fact that changes comes from keepr, so a
 copy a release behind is still right about the way of working.
 
 ## Files
