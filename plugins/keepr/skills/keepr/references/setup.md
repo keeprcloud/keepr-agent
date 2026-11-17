@@ -163,11 +163,19 @@ starts:
               { "id": "g2", "title": "Dates", "elements": ["due"], "collapsed": true } ] }
 ```
 
+A group starts folded with `collapsed: true` (form and read view), `collapsedInForm: true` (form only)
+or `collapsedInView: true` (read view only); the preview says which: `(collapsed)`,
+`(collapsed on the form)`, `(collapsed in the read view)`.
+
 `span` is how many of the form's columns the field takes, or `"auto"`; a bare
 name is `auto` with no new row, which is also what every layout saved before
 widths existed means. `newRow: true` starts the field on a fresh row. Write an
 entry as an object only for a field the person asked to size or to start a row:
 the rest stay bare names, so each keeps the width its own kind of data suits.
+A form on a child card may also carry `leftOut`: a list of the inherited
+elements' names it leaves out (`"leftOut": ["odometer", "gcwr"]`). The
+preview says so after the groups, `left out: odometer, gcwr`, and a long list
+ends with `and N more`; a form with no `leftOut` leaves nothing out.
 Do not work out a width from what you know of the data. How wide a field may be
 depends on what it holds, and keepr decides: its preview refuses a width the
 field cannot take, naming the field and the range, and the next proposal uses

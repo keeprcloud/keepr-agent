@@ -2285,7 +2285,7 @@ This is a bug in keepr-mcp, not something the user did.`)) : guard(def, ctx, arg
 
 // dist/src/server.js
 var SERVER_NAME = "keepr";
-var SERVER_VERSION = "0.86.0";
+var SERVER_VERSION = "0.94.0";
 var WEBSITE_URL = "https://keepr.cloud";
 var KQL_REFERENCE_URL = `${WEBSITE_URL}/docs/guides/finding-and-lists/kql-reference`;
 function brandIcons(publicUrl = process.env.KEEPR_PUBLIC_URL || "https://api.keepr.cloud") {
@@ -2516,7 +2516,13 @@ var KeeprContext = class {
         // owner's key minted without Can change cards still cannot.
         canCreateCards: cardRole && !archived && this.hasScope("cards") !== false,
         archived,
-        allowAttachments: typeof c.allowAttachments === "boolean" ? c.allowAttachments : null,
+        // keepr is strict (attachmentUtils: `allowAttachments === true` or attachments are
+        // off; docs/schema/canonical-collection.md: absent = off). GET /api/collections
+        // therefore leaves the field out for a collection attachments were never turned
+        // on for, so null ("unknown") would send an upload keepr is certain to 403.
+        // Not a gate for an older keepr: strict since attachments shipped, before this
+        // connector existed (lesson mcp-contract-floor-no-compat-gates).
+        allowAttachments: c.allowAttachments === true,
         kind: collectionKind(c),
         // A sub-collection names its parent: cards defined there are
         // usable here, and a record of one of this collection's own
@@ -2804,9 +2810,9 @@ function requiredScopeOf(body) {
 }
 
 // dist/src/tools/attach.js
-import { createReadStream } from "node:fs";
-import { stat as stat2, realpath } from "node:fs/promises";
-import { basename as basename2 } from "node:path";
+import { constants as constants2 } from "node:fs";
+import { open as open2, stat as stat4, realpath as realpath3 } from "node:fs/promises";
+import { basename as basename3 } from "node:path";
 
 // dist/src/zodLite.js
 var LiteSchema = class _LiteSchema {
@@ -3028,112 +3034,21 @@ var z = new Proxy(builders, {
   }
 });
 
-// dist/src/fileRules.js
-var REFUSED_EXT = /* @__PURE__ */ new Set([
-  "exe",
-  "dll",
-  "msi",
-  "bat",
-  "cmd",
-  "com",
-  "scr",
-  "ps1",
-  "sh",
-  "jar",
-  "apk",
-  "vbs",
-  "js",
-  "mjs",
-  "hta",
-  "cpl",
-  "pif",
-  "lnk",
-  "reg"
-]);
-var MAX_FILES = 20;
-var MAX_FILE_BYTES = 100 * 1024 * 1024;
-var PHOTO_EXT = /* @__PURE__ */ new Set(["jpg", "jpeg", "jpe", "png", "gif", "webp", "tif", "tiff", "avif", "heic", "heif"]);
-function extOf(name) {
-  return name.includes(".") ? name.split(".").pop().toLowerCase() : "";
-}
-var TYPES = {
-  jpg: "image/jpeg",
-  jpeg: "image/jpeg",
-  jpe: "image/jpeg",
-  png: "image/png",
-  gif: "image/gif",
-  webp: "image/webp",
-  tif: "image/tiff",
-  tiff: "image/tiff",
-  avif: "image/avif",
-  heic: "image/heic",
-  heif: "image/heif",
-  pdf: "application/pdf",
-  txt: "text/plain",
-  csv: "text/csv",
-  json: "application/json",
-  mov: "video/quicktime",
-  mp4: "video/mp4",
-  m4v: "video/x-m4v",
-  mp3: "audio/mpeg",
-  m4a: "audio/mp4",
-  wav: "audio/wav",
-  doc: "application/msword",
-  docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  xls: "application/vnd.ms-excel",
-  xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  zip: "application/zip"
-};
-function contentTypeFor(name) {
-  return TYPES[extOf(name)] ?? "application/octet-stream";
-}
-function refusalFor(name, size, element, contentType) {
-  const ext = extOf(name);
-  if (REFUSED_EXT.has(ext))
-    return `keepr refuses .${ext} files \u2014 executables and scripts are never accepted.`;
-  if (size === 0)
-    return "the file is empty.";
-  if (size > MAX_FILE_BYTES)
-    return `${mb(size)} \u2014 every attachment is limited to 100 MB.`;
-  if (element) {
-    if (element.accept === "image" && !PHOTO_EXT.has(ext) && !String(contentType ?? "").startsWith("image/")) {
-      return `"${element.name}" takes photos only (JPEG, PNG, WebP, GIF, AVIF, TIFF, HEIC).`;
-    }
-    if (typeof element.maxSizeMb === "number" && size > element.maxSizeMb * 1024 * 1024) {
-      return `${mb(size)} \u2014 larger than ${element.maxSizeMb} MB, the limit of "${element.name}".`;
-    }
-  }
-  return null;
-}
-function mb(bytes) {
-  if (bytes <= 0)
-    return "0 KB";
-  return bytes >= 1024 * 1024 ? `${(bytes / 1024 / 1024).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`;
-}
-function storedName(name) {
-  let n = name.replace(/"/g, "%22").replace(/\r/g, "%0D").replace(/\n/g, "%0A");
-  n = n.replace(/[\u0000-\u001f\u007f]/g, "").replace(/["\\]/g, "");
-  n = n.split("/").pop() ?? "";
-  n = n.replace(/^\.+/, "").trim();
-  if (!n)
-    return "file";
-  if (n.length > 255) {
-    const m = /\.([A-Za-z0-9]{1,12})$/.exec(n);
-    const suffix = m ? `.${m[1].toLowerCase()}` : "";
-    n = n.slice(0, 255 - suffix.length).toWellFormed() + suffix;
-  }
-  return n;
-}
+// dist/src/attachJobs.js
+import { constants } from "node:fs";
+import { open, stat as stat3, realpath as realpath2 } from "node:fs/promises";
+import { randomBytes as randomBytes4 } from "node:crypto";
+import { setTimeout as sleep3 } from "node:timers/promises";
 
-// dist/src/entryRules.js
-var GROUP_NAME_RE = /^[A-Za-z0-9][A-Za-z0-9 _-]{0,99}$/;
-var ENTRY_ID_RE = /^[a-z][0-9a-z]{9}$/;
+// dist/src/folderMatch.js
+import { readdir as readdir2, stat as stat2, lstat as lstat2, realpath } from "node:fs/promises";
 
 // dist/src/agentPaths.js
 import { statSync as statSync2 } from "node:fs";
-import { readdir, readFile, stat } from "node:fs/promises";
+import { readdir, readFile, stat, lstat, readlink } from "node:fs/promises";
 import { homedir, userInfo } from "node:os";
 import { join as join3, basename, dirname as dirname2, resolve } from "node:path";
+import * as nodePath from "node:path";
 function sessionsRoot(env = process.env) {
   return env.KEEPR_COWORK_SESSIONS || join3(homedir(), "Library", "Application Support", "Claude", "local-agent-mode-sessions");
 }
@@ -3210,7 +3125,7 @@ async function resolveAgentPath(given, env = process.env) {
         candidates.push(folder + tail);
   }
   for (const c of candidates)
-    if (await exists(c))
+    if (!await remoteLinkProblem(c) && await exists(c))
       return { path: c, mappedFrom: given };
   return { path: given, mappedFrom: null };
 }
@@ -3353,412 +3268,100 @@ function secretRefusal(given, kind, secret, real) {
     return `${given} leads to a hidden ${kind} (${identifierText(real)}) \u2014 those are never attached from here.`;
   return `${given} is a hidden ${kind} or inside a hidden folder \u2014 those are never attached from here. If the person wants ${them} attached, they can do it in keepr.`;
 }
+var REMOTE_WORDS = "a network or device path, which this server never opens \u2014 opening one can send the person's Windows sign-in to another computer";
 function remotePathProblem(p, platform = process.platform) {
   if (platform !== "win32")
     return null;
   if (!/^[\\/]{2}/.test(p) && !/^\\\?\?\\/.test(p))
     return null;
-  return `${p} is a network or device path, which this server never opens \u2014 opening one can send the person's Windows sign-in to another computer. Give the path of a file or folder on this computer's own disk.`;
+  return `${p} is ${REMOTE_WORDS}. Give the path of a file or folder on this computer's own disk.`;
 }
-
-// dist/src/tools/attach.js
-var HEX24 = /^[0-9a-fA-F]{24}$/;
-var MAX_INLINE_BYTES = 1e6;
-var LOCAL_FILE_TOOL = "keepr_attach_local_file";
-var LOCAL_TOOLS_PRESENT = "only if keepr's local file tools are among your tools and the file is on that computer";
-var attachFileTool = {
-  name: "keepr_attach_file",
-  title: "Attach files",
-  // The stdio server's full mode (a path works there). The connector lists
-  // attachFileOnConnectorTool below, in its own words.
-  description: "Attaches files to a keepr item. A file held in the conversation goes as content_base64 with a filename, about a megabyte at most; a file on this computer goes by its `path`, streamed from disk, up to 100 MB. keepr_attach_folder fits many files, and keepr_request_upload gives the person a link for files this server cannot read. The item is named by item_id, or by external_id from a keepr_ingest run. With `element`, the files go into one of the item's file elements: a single file element is replaced (the old file is deleted, which needs Can delete records), a list is appended to.",
-  writes: true,
-  // It can replace the file in a single file element. Not idempotent:
-  // skip_if_present: false uploads the same file again.
-  annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: false },
-  inputSchema: {
-    item_id: z.string().optional().describe("The item to attach to, 24 hex characters."),
-    run_id: z.string().optional().describe("A runId from a committed keepr_ingest, used with external_id instead of item_id."),
-    external_id: z.string().optional().describe("The external_id of a row written by keepr_ingest in this session."),
-    files: z.array(z.custom()).min(1).max(20).describe("Files: {filename, content_base64, content_type?} for a small file held in the conversation (about a megabyte at most; the file as the person gave it, not resized or converted) \u2014 or {path} for a file on the computer this server runs on."),
-    skip_if_present: z.boolean().optional().describe("Default true. Skips a file whose name is already attached, so re-running after adding two photos uploads two photos. With `element`, an attachment already there is reused only when no element holds it and its name and size both match; anything else is uploaded fresh."),
-    element: z.string().optional().describe(`A file element of the item's card to put the files into (its name, as keepr_schema lists it, dataType "file", with accept, maxSizeMb and allowMultiple). A single file element takes one file and is replaced; a list is appended to, 20 files at most. Without it, the files are the item's other attachments. With entry_id and column, the repeating group instead.`),
-    entry_id: z.string().optional().describe("With element (a repeating group) and column: the entry to put the files in, by the id keepr gave it (read the item's entries)."),
-    column: z.string().optional().describe("With element and entry_id: a file column of that group (keepr_schema lists a group's columns). It takes files as a file element does.")
-  },
-  handler: async (args, ctx) => {
-    let itemId = typeof args.item_id === "string" ? args.item_id : "";
-    if (!itemId && typeof args.external_id === "string" && args.external_id) {
-      const found = ctx.ledger.resolveExternalId(args.external_id, typeof args.run_id === "string" ? args.run_id : null);
-      if (!found) {
-        const known = ctx.ledger.size;
-        return fail(`No item in this session was written with external_id "${args.external_id}".` + (known ? ` ${known} ingest run${known === 1 ? "" : "s"} are remembered, but none contains it.` : " No committed ingest runs are remembered \u2014 a dry run does not create anything to attach to.") + "\n\nUse keepr_get_items to find the item and pass its item_id instead.");
-      }
-      itemId = found.itemId;
-    }
-    if (!HEX24.test(itemId)) {
-      return fail("No item given. Pass item_id (24 hex characters), or external_id from a committed keepr_ingest run in this session.");
-    }
-    const files = args.files ?? [];
-    if (!Array.isArray(files) || !files.length)
-      return fail("No files given.");
-    const item = await ctx.http.request({ path: `/api/items/${itemId}` });
-    if (!item.ok)
-      return ctx.failFromResponse(item, `reading item ${itemId}`);
-    const collectionId = String(item.body?.collection_id ?? "");
-    const collection = ctx.knownCollections().find((c) => c.id === collectionId);
-    if (collection?.allowAttachments === false) {
-      return fail(`Attachments are turned off for ${quoted(collection.name)}. Every upload here is refused until someone enables them in the collection's settings in the web app.`);
-    }
-    if (collection?.archived) {
-      return fail(`${quoted(collection.name)} is archived and is read-only for everyone, so nothing can be attached.`);
-    }
-    const elementName = typeof args.element === "string" ? args.element.trim() : "";
-    const entryId = typeof args.entry_id === "string" ? args.entry_id.trim() : "";
-    const columnName = typeof args.column === "string" ? args.column.trim() : "";
-    if ((entryId || columnName) && !(entryId && columnName && elementName)) {
-      return fail("entry_id and column name a file column of one entry: give both, with element set to the repeating group that holds them.");
-    }
-    if (entryId && (!ENTRY_ID_RE.test(entryId) || !GROUP_NAME_RE.test(elementName))) {
-      return fail(`entry_id is an entry's id as keepr issued it (ten letters and digits), and element the repeating group's name as keepr_schema lists it \u2014 read the item for its entries.`);
-    }
-    const placeName = entryId ? `"${columnName}" in entry ${entryId} of "${elementName}"` : `"${elementName}"`;
-    let target = null;
-    let current = [];
-    if (elementName) {
-      const schema = await ctx.schemaFor(collectionId);
-      if (!schema.ok)
-        return ctx.failFromResponse(schema, "reading the elements of this item's collection");
-      const card = (schema.body?.cards ?? []).find((c) => c.id === String(item.body?.card_id ?? ""));
-      if (entryId) {
-        const groups = (card?.elements ?? []).filter((e) => e.dataType === "repeating-group");
-        const group = groups.find((e) => e.name === elementName) ?? null;
-        if (!group) {
-          const withFiles = groups.filter((g) => (g.columns ?? []).some((c) => c.dataType === "file"));
-          return fail(`"${elementName}" is not a repeating group of this item's card.` + (withFiles.length ? ` Its groups with a file column: ${withFiles.map((g) => identifierText(String(g.name))).join(", ")}.` : " The card has no group with a file column."));
-        }
-        const fileColumns = (group.columns ?? []).filter((c) => c.dataType === "file");
-        target = fileColumns.find((c) => c.name === columnName) ?? null;
-        if (!target) {
-          return fail(`"${columnName}" is not a file column of "${elementName}".` + (fileColumns.length ? ` Its file columns: ${fileColumns.map((c) => identifierText(String(c.name))).join(", ")}.` : " The group has no file column."));
-        }
-        const list = item.body?.elements?.[elementName];
-        const entry = (Array.isArray(list) ? list : []).find((e) => !!e && typeof e === "object" && e.id === entryId);
-        if (!entry)
-          return fail(`"${elementName}" holds no entry ${entryId} on this item \u2014 read the item for its entries' ids.`);
-        const stored = entry.elements?.[columnName];
-        current = (Array.isArray(stored) ? stored : stored ? [stored] : []).map(String).filter(Boolean);
-      } else {
-        const fileElements = (card?.elements ?? []).filter((e) => e.dataType === "file");
-        target = fileElements.find((e) => e.name === elementName) ?? null;
-        if (!target) {
-          return fail(`"${elementName}" is not a file element of this item's card.` + (fileElements.length ? ` Its file elements: ${fileElements.map((e) => identifierText(String(e.name))).join(", ")}.` : " The card has no file element \u2014 leave out `element` to attach the files as other attachments."));
-        }
-        const stored = item.body?.elements?.[elementName];
-        current = (Array.isArray(stored) ? stored : stored ? [stored] : []).map(String).filter(Boolean);
-      }
-      if (!target.allowMultiple && files.length > 1) {
-        return fail(`${placeName} holds one file, and ${files.length} were given. Pass one file for it, or leave out \`element\` to attach the rest as other attachments.`);
-      }
-      if (target.allowMultiple && current.length + files.length > MAX_FILES) {
-        return fail(`${placeName} holds at most ${MAX_FILES} files; it has ${current.length}, and ${files.length} more would pass that.`);
-      }
-      if (!target.allowMultiple && current.length && ctx.hasScope("delete") === false) {
-        return fail(`${placeName} already holds a file, and putting another there REPLACES it: the old file is deleted (restorable for 30 days), which needs Can delete records. ${ctx.deleteRefusal()}`);
-      }
-    }
-    const present = /* @__PURE__ */ new Map();
-    if (args.skip_if_present !== false) {
-      const existing = await ctx.http.request({ path: `/api/items/${itemId}/attachments` });
-      if (existing.ok && Array.isArray(existing.body)) {
-        for (const a of existing.body)
-          present.set(String(a.originalName ?? ""), { id: String(a._id ?? ""), element: a.element ?? null, entryId: a.entryId ?? null, column: a.column ?? null, size: typeof a.size === "number" ? a.size : null });
-      }
-    }
-    const inTarget = (a) => a.element === elementName && (entryId ? a.entryId === entryId && a.column === columnName : !a.column);
-    const bindReplaces = !!target && !target.allowMultiple && current.length > 0;
-    const toBind = [];
-    const allowPath = ctx.config.keySource !== "bearer";
-    const tooLarge = [];
-    const uploaded = [];
-    const skipped = [];
-    const failed = [];
-    for (const spec of files) {
-      const loaded = await loadBytes(spec, allowPath, ctx.filesOnly);
-      if (!loaded.ok) {
-        failed.push({ filename: loaded.filename, message: loaded.message });
-        if (loaded.tooLarge)
-          tooLarge.push(loaded.filename);
-        continue;
-      }
-      const { filename, size } = loaded;
-      const there = present.get(filename);
-      if (there && !target) {
-        skipped.push({ filename, reason: "already attached to this item" });
-        continue;
-      }
-      if (there && target && there.id && there.size === size) {
-        if (inTarget(there) && current.includes(there.id)) {
-          skipped.push({ filename, reason: `already in ${placeName}` });
-          continue;
-        }
-        if (there.element === null && !bindReplaces && !toBind.includes(there.id)) {
-          toBind.push(there.id);
-          skipped.push({ filename, reason: "already attached to this item (same name and size) \u2014 put into the element" });
-          continue;
-        }
-      }
-      const ext = filename.includes(".") ? filename.split(".").pop().toLowerCase() : "";
-      if (REFUSED_EXT.has(ext)) {
-        failed.push({ filename, message: `keepr refuses .${ext} files \u2014 executables and scripts are never accepted. Images, PDFs and documents are fine.` });
-        continue;
-      }
-      if (target && target.accept === "image" && !PHOTO_EXT.has(ext) && !String(spec.content_type ?? "").startsWith("image/")) {
-        failed.push({ filename, message: `${placeName} takes photos only (JPEG, PNG, WebP, GIF, AVIF, TIFF, HEIC) \u2014 a PDF or a document never fits it. Leave out \`element\` to attach it as another attachment.` });
-        continue;
-      }
-      if (target && typeof target.maxSizeMb === "number" && size > target.maxSizeMb * 1024 * 1024) {
-        failed.push({ filename, message: `larger than ${target.maxSizeMb} MB, the limit of ${placeName}.` });
-        continue;
-      }
-      let form;
-      if (loaded.inline) {
-        form = new FormData();
-        form.append("file", new Blob([new Uint8Array(loaded.inline)], { type: spec.content_type || "application/octet-stream" }), filename);
-      }
-      let res;
-      try {
-        res = await ctx.http.request({
-          method: "POST",
-          path: `/api/items/${itemId}/attachments`,
-          ...form ? { formData: form } : { stream: loaded.stream }
-        });
-      } catch (err) {
-        if (err instanceof FileChangedError) {
-          failed.push({ filename, message: err.kind === "unreadable" ? `it could not be read from the disk: ${err.message}.` : "it changed while it was being sent. Try again once it is finished being written." });
-          continue;
-        }
-        throw err;
-      }
-      ctx.noteWriteAttempt(res);
-      if (!res.ok) {
-        const refusedScope = ctx.scopeRefusedBy(res, "write");
-        if (refusedScope)
-          return fail(ctx.refusalFor(refusedScope));
-        const code = errorCode(res.body);
-        const meaning = code ? ctx.contract.meaningOf(code) : null;
-        const said = `${code ? `${code}: ` : ""}${errorMessage(res.body, "")}${meaning ? ` (${meaning})` : ""}`.trim();
-        const why = res.status === 413 ? "over the per-user attachment cap (100 MB). The user has to free space before this will work." : res.status === 403 ? `refused \u2014 attachments may be off for this collection, or the owner's email is unverified.${said ? ` keepr said: ${said}` : ""}` : said || `HTTP ${res.status}`;
-        failed.push({ filename, message: why });
-        continue;
-      }
-      uploaded.push({ attachmentId: String(res.body?._id ?? ""), filename, bytes: size });
-      present.set(filename, { id: String(res.body?._id ?? ""), element: null, entryId: null, column: null, size });
-      if (target && res.body?._id)
-        toBind.push(String(res.body._id));
-    }
-    let bound = [];
-    let bindError = null;
-    if (target && toBind.length) {
-      const replacing = !target.allowMultiple && current.length > 0;
-      const value = target.allowMultiple ? [...current, ...toBind] : toBind[0];
-      const put = entryId ? await ctx.http.request({
-        method: "PATCH",
-        path: `/api/items/${itemId}/entries/${encodeURIComponent(elementName)}/${entryId}`,
-        body: { elements: { [columnName]: value } }
-      }) : await ctx.http.request({
-        method: "PUT",
-        path: `/api/items/${itemId}`,
-        body: { elements: { [elementName]: value }, merge: true }
-      });
-      ctx.noteWriteAttempt(put, replacing ? "delete" : "write");
-      if (put.ok)
-        bound = target.allowMultiple ? toBind : [toBind[0]];
-      else {
-        const code = errorCode(put.body);
-        const meaning = code ? ctx.contract.meaningOf(code) : null;
-        const scopeRefused = ctx.scopeRefusedBy(put, replacing ? "delete" : "write");
-        bindError = `${code ? `${code}: ` : ""}${errorMessage(put.body, `HTTP ${put.status}`)}${meaning ? ` (${meaning})` : ""}` + (scopeRefused ? ` ${ctx.refusalFor(scopeRefused)}` : "");
-      }
-    }
-    const title = item.body?.displayValue ? sayName(item.body.displayValue) : itemId;
-    const lines = [
-      failed.length ? `PARTIAL \u2014 ${uploaded.length} attached to "${title}", ${failed.length} failed.` : `Attached ${uploaded.length} file${uploaded.length === 1 ? "" : "s"} to "${title}".`
-    ];
-    if (target && bound.length) {
-      lines.push("", !target.allowMultiple && current.length ? `Put into ${placeName}, replacing the file that was there (deleted softly \u2014 History can bring it back for 30 days).` : `Put into ${placeName} (${bound.length} file${bound.length === 1 ? "" : "s"}).`);
-    }
-    if (bindError)
-      lines.push("", `NOT PUT INTO ${placeName} \u2014 keepr refused the bind: ${bindError}`, "The uploaded files stay on the item as other attachments.");
-    if (uploaded.length) {
-      lines.push("", "ATTACHED:");
-      for (const u of uploaded)
-        lines.push(`  ${u.filename}  (${u.bytes} bytes)`);
-    }
-    if (skipped.length) {
-      lines.push("", "SKIPPED:");
-      for (const s of skipped)
-        lines.push(`  ${s.filename} \u2014 ${s.reason}`);
-    }
-    if (failed.length) {
-      lines.push("", "FAILED:");
-      for (const f of failed)
-        lines.push(`  ${f.filename} \u2014 ${f.message}`);
-    }
-    const next = tooLarge.length ? routesFor(tooLarge, itemId, collectionId, elementName || null, allowPath, entryId ? { entry_id: entryId, column: columnName } : null) : null;
-    if (next)
-      lines.push("", ...next.lines);
-    const result = {
-      itemId,
-      itemDisplayValue: item.body?.displayValue ?? null,
-      uploaded,
-      skipped,
-      failed,
-      ...target ? { element: elementName, ...entryId ? { entry_id: entryId, column: columnName } : {}, bound, ...bindError ? { bindError } : {} } : {},
-      ...next ? { next: next.calls } : {}
-    };
-    return failed.length || bindError ? fail(lines.join("\n"), result) : ok(lines.join("\n"), result);
-  }
-};
-function routesFor(names, itemId, collectionId, element, allowPath, entry = null) {
-  const place = element ? { element, ...entry ?? {} } : {};
-  const request = { tool: "keepr_request_upload", args: { collection: collectionId, entries: names.map((name) => ({ item_id: itemId, name, ...place })) } };
-  const lines = [`NEXT \u2014 ${names.length === 1 ? "this file is" : "these files are"} too big to send inline (about a megabyte at most). Do NOT resize or convert ${names.length === 1 ? "it" : "them"}.`];
-  const calls = [];
-  if (allowPath) {
-    const byPath = { tool: "keepr_attach_file", args: { item_id: itemId, files: names.map(() => ({ path: "<where the file is on this computer>" })), ...place } };
-    lines.push("  If the file is on the computer this server runs on (Claude Code, the extension, the plugin), give its path \u2014 streamed from disk, up to 100 MB:", `    keepr_attach_file ${JSON.stringify(byPath.args)}`, "  Many files in one folder: keepr_attach_folder.", "  If you cannot reach the file (it is on the person's phone, or only in the chat), ask the person for it with a link:");
-    calls.push(byPath);
-  } else {
-    const local = { tool: LOCAL_FILE_TOOL, args: { item_id: itemId, files: names.map(() => ({ path: "<where the file is on that computer>" })), ...place }, when: LOCAL_TOOLS_PRESENT };
-    lines.push("  This connector cannot read files from the person's computer. If keepr's local file tools are among your tools (the keepr plugin adds them in Claude Code, and in Cowork on the person's computer) and the file is on that computer, attach it from there by its path \u2014 streamed from disk, up to 100 MB:", `    ${LOCAL_FILE_TOOL} ${JSON.stringify(local.args)}`, "  Many files in one folder: keepr_attach_folder, from the same local tools.", "  Otherwise (no local file tools, or the file is only in the chat or on a phone), ask the person for it with a link \u2014 they drop it in keepr, and you can check it arrived:");
-    calls.push(local);
-  }
-  lines.push(`    keepr_request_upload ${JSON.stringify(request.args)}`);
-  calls.push(request);
-  return { lines, calls };
+var MAX_LINKS = 63;
+function followable(target) {
+  if (/^[A-Za-z]:[\\/]/.test(target))
+    return true;
+  return !/^[\\/]/.test(target) && !/^[A-Za-z]:/.test(target);
 }
-async function loadBytes(spec, allowPath, filesOnly = false) {
-  if (spec.content_base64) {
-    const name = spec.filename || "attachment";
-    let bytes;
+async function remoteLinkProblem(p, trusted, platform = process.platform, io = { path: nodePath, lstat, readlink }) {
+  if (platform !== "win32")
+    return null;
+  const { resolve: full, join: under, parse: split, sep: s } = io.path;
+  const abs = full(p);
+  const base = trusted ? full(trusted) : null;
+  let done = base && (abs === base || abs.startsWith(base.endsWith(s) ? base : base + s)) ? base : split(abs).root;
+  let rest = abs.slice(done.length).split(s).filter(Boolean);
+  let links = 0;
+  while (rest.length) {
+    const next = under(done, rest.shift());
+    let named;
     try {
-      bytes = Buffer.from(spec.content_base64, "base64");
-    } catch {
-      return { ok: false, filename: name, message: "content_base64 is not valid base64." };
-    }
-    if (!bytes.length)
-      return { ok: false, filename: name, message: "content_base64 decoded to zero bytes." };
-    if (bytes.length > MAX_INLINE_BYTES) {
-      return { ok: false, filename: name, tooLarge: true, message: `${mb(bytes.length)} is too big to send inline (about a megabyte at most) \u2014 see NEXT for the way that works.` };
-    }
-    if (!spec.filename)
-      return { ok: false, filename: name, message: "content_base64 was given without a filename. keepr stores the name, so it cannot be guessed." };
-    return { ok: true, filename: spec.filename, size: bytes.length, inline: bytes };
-  }
-  if (spec.path) {
-    const name = spec.filename || basename2(spec.path);
-    if (!allowPath) {
-      return {
-        ok: false,
-        filename: name,
-        message: `this connector cannot read files by path \u2014 it runs on keepr's servers, not on the person's computer. If keepr's local file tools are among your tools, ${LOCAL_FILE_TOOL} attaches it by path from there. A small file you hold: content_base64 with a filename (about a megabyte at most). Anything else: keepr_request_upload gives the person a link to upload it.`
-      };
-    }
-    const remote = remotePathProblem(spec.path) ?? pathLengthProblem(spec.path);
-    if (remote)
-      return { ok: false, filename: name, message: remote };
-    const secret = secretPlace(spec.path);
-    if (secret)
-      return { ok: false, filename: name, message: secretRefusal(spec.path, "file", secret) };
-    const { path } = await resolveAgentPath(spec.path);
-    let size;
-    try {
-      const real = await realpath(path);
-      const leadsTo = secretPlace(real);
-      if (leadsTo)
-        return { ok: false, filename: name, message: secretRefusal(spec.path, "file", leadsTo, real) };
-      const st = await stat2(path);
-      if (!st.isFile())
-        return { ok: false, filename: name, message: `${spec.path} is not a file.` };
-      size = st.size;
+      named = await io.lstat(next);
     } catch (err) {
-      return { ok: false, filename: name, message: pathProblem(spec.path, err.code, filesOnly) };
+      return links ? { kind: "nowhere", code: err.code ?? "error" } : null;
     }
-    if (size > MAX_FILE_BYTES)
-      return { ok: false, filename: name, message: "over 100 MB \u2014 every attachment is limited to 100 MB." };
-    if (!size)
-      return { ok: false, filename: name, message: "the file is empty." };
-    return {
-      ok: true,
-      filename: name,
-      size,
-      stream: { open: () => createReadStream(path), length: size, filename: name, contentType: spec.content_type || contentTypeFor(name) }
-    };
+    if (!named.isSymbolicLink()) {
+      done = next;
+      continue;
+    }
+    if (++links > MAX_LINKS)
+      return { kind: "chain" };
+    let target;
+    try {
+      target = await io.readlink(next);
+    } catch (err) {
+      return { kind: "unreadable", code: err.code ?? "error" };
+    }
+    if (remotePathProblem(target, platform))
+      return { kind: "remote", target };
+    if (!followable(target))
+      return { kind: "unfollowed", target };
+    const to = full(done, target);
+    if (remotePathProblem(to, platform))
+      return { kind: "remote", target: to };
+    done = split(to).root;
+    rest = [...to.slice(done.length).split(s).filter(Boolean), ...rest];
   }
-  return { ok: false, filename: spec.filename || "attachment", message: "neither content_base64 nor path was given." };
+  return null;
 }
-var attachFileOnConnectorTool = {
-  ...attachFileTool,
-  title: "Attach a small file",
-  // What the connector can do, in its own words (KPR-256): no `path`, no
-  // "plugin" or "extension", and the local tools only on their condition.
-  description: `Attaches a small file held in the conversation to a keepr item: content_base64 with a filename, about a megabyte at most, every character passing through the chat. This connector runs on keepr's servers and cannot read the person's disk. A larger file, or one on the person's computer, goes through keepr's local file tools when they are among the tools (${LOCAL_FILE_TOOL}, keepr_attach_folder), otherwise through keepr_request_upload's link. With \`element\`, they go into a file element: a single one is replaced (its old file deleted, which needs Can delete records), a list appended to.`,
-  inputSchema: {
-    ...attachFileTool.inputSchema,
-    files: z.array(z.custom()).min(1).max(20).describe("Files: {filename, content_base64, content_type?} \u2014 a small file held in the conversation (about a megabyte at most; the file as the person gave it, not resized or converted). This connector reads no file from a disk.")
-  }
+var ERRNO_TEXT = {
+  ENOENT: "No such file or directory",
+  ELOOP: "Too many levels of symbolic links",
+  EACCES: "Permission denied",
+  ENOTDIR: "Not a directory",
+  ENAMETOOLONG: "File name too long",
+  EPERM: "Operation not permitted"
 };
-var attachLocalFileTool = {
-  name: LOCAL_FILE_TOOL,
-  title: "Attach files from this computer",
-  // The Claude directory's review (KPR-251): say what the tool does and when
-  // it fits; no lines aimed at the model's behaviour, no outside software, no
-  // tool this server does not list.
-  description: "Attaches files from this computer's disk to one keepr item, by their path. Each file is streamed from disk, up to 100 MB, so nothing passes through the conversation; keepr_attach_folder fits a whole folder. The item is named by its id, 24 hex characters. With `element`, the files go into one of the item's file elements: a single file element takes one file and replaces the file there (the old file is deleted, which needs Can delete records), and a list takes up to 20. Without `element`, they are the item's other attachments.",
-  writes: true,
-  // Not idempotent by contract: a re-run skips a same-named file, but a
-  // single file element is replaced. It writes to keepr, a closed world.
-  annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: false },
-  inputSchema: {
-    item_id: z.string().describe("The item to attach to, 24 hex characters."),
-    files: z.array(z.custom()).min(1).max(20).describe("Files: {path, filename?, content_type?} \u2014 path is where the file is on this computer (in Cowork, inside a folder the person selected for the session, under /sessions/<name>/mnt/); filename renames it in keepr. Hidden files, and anything in a hidden folder of the home folder, are not attached."),
-    skip_if_present: z.boolean().optional().describe("Default true. Skips a file whose name is already attached, so re-running after adding two photos uploads two photos. With `element`, an attachment already there is reused only when no element holds it and its name and size both match; anything else is uploaded fresh."),
-    element: z.string().optional().describe("A file element of the item's card to put the files into, by its name. A single file element is replaced; a list is appended to. With entry_id and column, the repeating group instead."),
-    entry_id: z.string().optional().describe("With element (a repeating group) and column: the entry to put the files in, by its id."),
-    column: z.string().optional().describe("With element and entry_id: a file column of that group.")
-  },
-  handler: async (args, ctx) => {
-    const itemId = typeof args.item_id === "string" ? args.item_id.trim() : "";
-    if (!HEX24.test(itemId)) {
-      return fail("No item given. Pass item_id: the item's id in keepr, 24 hex characters.");
-    }
-    const files = Array.isArray(args.files) ? args.files : [];
-    if (!files.length)
-      return fail("No files given.");
-    const inline = files.filter((f) => f && typeof f === "object" && f.content_base64);
-    const pathless = files.filter((f) => !f || typeof f !== "object" || typeof f.path !== "string" || !f.path.trim());
-    if (inline.length || pathless.length) {
-      return fail(`${LOCAL_FILE_TOOL} reads files from this computer by \`path\`, and ${inline.length ? "takes no content_base64" : `${pathless.length} of the files had no path`}. A small file held in the conversation goes up through the keepr connector instead.`);
-    }
-    return attachFileTool.handler({
-      item_id: itemId,
-      files: files.map((f) => ({ path: f.path, ...f.filename ? { filename: f.filename } : {}, ...f.content_type ? { content_type: f.content_type } : {} })),
-      ...args.skip_if_present !== void 0 ? { skip_if_present: args.skip_if_present } : {},
-      ...args.element !== void 0 ? { element: args.element } : {},
-      ...args.entry_id !== void 0 ? { entry_id: args.entry_id } : {},
-      ...args.column !== void 0 ? { column: args.column } : {}
-    }, ctx);
-  }
-};
-
-// dist/src/tools/attachFolder.js
-import { stat as stat5, realpath as realpath4 } from "node:fs/promises";
-import { createHash as createHash2, randomBytes as randomBytes5 } from "node:crypto";
+function errnoText(err) {
+  const code = err?.code ?? "";
+  return ERRNO_TEXT[code] ?? (code || "error");
+}
+var UNFOLLOWED_WORDS = "a form of path this server never follows (only a drive path such as C:\\\u2026 or one relative to the link)";
+var LINK_CHAIN = "it is a chain of more links than this computer follows \u2014 never opened";
+function linkProblemReason(x) {
+  if (x.kind === "chain")
+    return LINK_CHAIN;
+  if (x.kind === "unreadable")
+    return `it leads through a link that could not be read (${x.code}) \u2014 never opened`;
+  if (x.kind === "nowhere")
+    return `it is a link that leads nowhere (${errnoText(x)}) \u2014 left out`;
+  if (x.kind === "unfollowed")
+    return `it leads to ${identifierText(x.target)}, ${UNFOLLOWED_WORDS} \u2014 never opened`;
+  return `it leads to ${identifierText(x.target)}, ${REMOTE_WORDS}`;
+}
+function linkProblemRefusal(given, x) {
+  if (x.kind === "chain")
+    return `${given} is a chain of more links than this computer follows \u2014 it was never opened.`;
+  if (x.kind === "unreadable")
+    return `${given} leads through a link that could not be read (${x.code}) \u2014 it was never opened.`;
+  if (x.kind === "nowhere")
+    return `Nothing is at ${given} past the link on its path (${errnoText(x)}) \u2014 it was never opened.`;
+  if (x.kind === "unfollowed")
+    return `${given} leads to ${identifierText(x.target)}, ${UNFOLLOWED_WORDS}. Give the path of a file or folder on this computer's own disk.`;
+  return `${given} leads to ${identifierText(x.target)}, ${REMOTE_WORDS}. Give the path of a file or folder on this computer's own disk.`;
+}
 
 // dist/src/folderMatch.js
-import { readdir as readdir2, stat as stat3, lstat, realpath as realpath2 } from "node:fs/promises";
-import { join as join4, relative, sep, basename as basename3, extname } from "node:path";
+import { join as join4, relative, sep, basename as basename2, extname } from "node:path";
 var MATCH_MODES = ["auto", "folder", "stem", "exact"];
 var COUNTER_SUFFIX = /[\s._-]*(?:\(\s*[0-9]+\s*\)|[0-9]+)$/;
 function stemOf(name) {
@@ -3805,18 +3408,6 @@ function stampOf(st) {
 function idOf(st) {
   return `${st.dev}:${st.ino}`;
 }
-var ERRNO_TEXT = {
-  ENOENT: "No such file or directory",
-  ELOOP: "Too many levels of symbolic links",
-  EACCES: "Permission denied",
-  ENOTDIR: "Not a directory",
-  ENAMETOOLONG: "File name too long",
-  EPERM: "Operation not permitted"
-};
-function errnoText(err) {
-  const code = err?.code ?? "";
-  return ERRNO_TEXT[code] ?? (code || "error");
-}
 function kindOf(st) {
   if (st.isDirectory())
     return "a folder";
@@ -3830,10 +3421,13 @@ function kindOf(st) {
 }
 var CHANGED = "it changed while it was being checked \u2014 left out";
 var HARD_LINK = "it is a hard link: the same file also has a name outside this folder, or a hidden one in it \u2014 left out";
-async function checkEntry(path) {
+async function checkEntry(path, trusted) {
+  const far = await remoteLinkProblem(path, trusted);
+  if (far)
+    return { ok: false, reason: linkProblemReason(far) };
   let named;
   try {
-    named = await lstat(path, { bigint: true });
+    named = await lstat2(path, { bigint: true });
   } catch (err) {
     return { ok: false, missing: err.code ?? "error" };
   }
@@ -3841,8 +3435,8 @@ async function checkEntry(path) {
   let st;
   let real;
   try {
-    st = await stat3(path, { bigint: true });
-    real = await realpath2(path);
+    st = await stat2(path, { bigint: true });
+    real = await realpath(path);
   } catch (err) {
     return link ? { ok: false, reason: `it is a link that leads nowhere (${errnoText(err)}) \u2014 left out` } : { ok: false, reason: `it could not be read (${err.code ?? "error"}) \u2014 left out` };
   }
@@ -3852,7 +3446,7 @@ async function checkEntry(path) {
     return { ok: false, reason: `it is ${link ? "a link to " : ""}${kindOf(st)}, not a file \u2014 never opened` };
   let again = null;
   try {
-    again = await stat3(real, { bigint: true });
+    again = await stat2(real, { bigint: true });
   } catch {
   }
   if (!again || again.dev !== st.dev || again.ino !== st.ino)
@@ -3860,7 +3454,7 @@ async function checkEntry(path) {
   if (!link && (named.dev !== st.dev || named.ino !== st.ino))
     return { ok: false, reason: CHANGED };
   try {
-    if (await realpath2(path) !== real)
+    if (await realpath(path) !== real)
       return { ok: false, reason: CHANGED };
   } catch {
     return { ok: false, reason: CHANGED };
@@ -3894,7 +3488,7 @@ async function countNames(walked) {
       continue;
     let now = null;
     try {
-      now = await lstat(w.file.path, { bigint: true });
+      now = await lstat2(w.file.path, { bigint: true });
     } catch {
     }
     if (!now || idOf(now) !== w.file.id || now.nlink !== w.nlink)
@@ -3906,7 +3500,7 @@ function sharedOutside(nlink, id, names) {
   return nlink > BigInt(names.get(id) ?? 0);
 }
 async function listFiles(root, limit = 2e4, checkedReal) {
-  const rootReal = checkedReal ?? await realpath2(root);
+  const rootReal = checkedReal ?? await realpath(root);
   const { walked, truncated, skipped } = await walkFolder(root, limit, rootReal);
   const names = await countNames(walked);
   const files = [];
@@ -3944,7 +3538,7 @@ async function walkFolder(root, limit, rootReal) {
       let isDir = e.isDirectory();
       if (!isDir && !e.isFile() && !e.isSymbolicLink() && !e.isFIFO() && !e.isSocket() && !e.isCharacterDevice() && !e.isBlockDevice()) {
         try {
-          isDir = (await lstat(join4(dir, e.name))).isDirectory();
+          isDir = (await lstat2(join4(dir, e.name))).isDirectory();
         } catch {
         }
       }
@@ -3958,7 +3552,7 @@ async function walkFolder(root, limit, rootReal) {
     });
     for (const name of names.sort()) {
       const path = join4(dir, name);
-      const entry = await checkEntry(path);
+      const entry = await checkEntry(path, dir);
       if (!entry.ok) {
         skipped.push({ rel: relOf(path), reason: "missing" in entry ? `it could not be read (${entry.missing}) \u2014 left out` : entry.reason });
         continue;
@@ -4019,7 +3613,7 @@ function matchByKeys(files, mode, source) {
 async function matchByMap(root, map, resolve2, checkedReal, keyHint = "give an item id, or an external_id from a keepr_ingest run in this session") {
   const pairs = [];
   const unmatched = [];
-  const rootReal = checkedReal ?? await realpath2(root);
+  const rootReal = checkedReal ?? await realpath(root);
   let counted = null;
   for (const [key, value] of Object.entries(map)) {
     const names = Array.isArray(value) ? value : [value];
@@ -4027,12 +3621,12 @@ async function matchByMap(root, map, resolve2, checkedReal, keyHint = "give an i
     for (const name of names) {
       const remote = remotePathProblem(String(name)) ?? pathLengthProblem(String(name));
       if (remote) {
-        unmatched.push({ file: { path: String(name), rel: String(name), name: basename3(String(name)) }, reason: remote });
+        unmatched.push({ file: { path: String(name), rel: String(name), name: basename2(String(name)) }, reason: remote });
         continue;
       }
       const path = String(name).startsWith("/") ? String(name) : join4(root, String(name));
       const rel = relative(root, path).split(sep).join("/");
-      const shown = { path, rel, name: basename3(path) };
+      const shown = { path, rel, name: basename2(path) };
       if (!itemId) {
         unmatched.push({ file: shown, reason: `no item for ${identifierQuoted(key)} \u2014 ${keyHint}` });
         continue;
@@ -4041,7 +3635,7 @@ async function matchByMap(root, map, resolve2, checkedReal, keyHint = "give an i
         unmatched.push({ file: shown, reason: "a hidden file, or a path outside the folder \u2014 the map names files in the folder" });
         continue;
       }
-      const entry = await checkEntry(path);
+      const entry = await checkEntry(path, rootReal);
       if (!entry.ok) {
         unmatched.push({ file: shown, reason: "missing" in entry ? "no such file" : entry.reason });
         continue;
@@ -4070,11 +3664,107 @@ async function matchByMap(root, map, resolve2, checkedReal, keyHint = "give an i
   return { pairs, unmatched, itemsWithoutFile: [] };
 }
 
+// dist/src/fileRules.js
+var REFUSED_EXT = /* @__PURE__ */ new Set([
+  "exe",
+  "dll",
+  "msi",
+  "bat",
+  "cmd",
+  "com",
+  "scr",
+  "ps1",
+  "sh",
+  "jar",
+  "apk",
+  "vbs",
+  "js",
+  "mjs",
+  "hta",
+  "cpl",
+  "pif",
+  "lnk",
+  "reg"
+]);
+var MAX_FILES = 20;
+var MAX_FILE_BYTES = 100 * 1024 * 1024;
+var PHOTO_EXT = /* @__PURE__ */ new Set(["jpg", "jpeg", "jpe", "png", "gif", "webp", "tif", "tiff", "avif", "heic", "heif"]);
+function extOf(name) {
+  return name.includes(".") ? name.split(".").pop().toLowerCase() : "";
+}
+var TYPES = {
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  jpe: "image/jpeg",
+  png: "image/png",
+  gif: "image/gif",
+  webp: "image/webp",
+  tif: "image/tiff",
+  tiff: "image/tiff",
+  avif: "image/avif",
+  heic: "image/heic",
+  heif: "image/heif",
+  pdf: "application/pdf",
+  txt: "text/plain",
+  csv: "text/csv",
+  json: "application/json",
+  mov: "video/quicktime",
+  mp4: "video/mp4",
+  m4v: "video/x-m4v",
+  mp3: "audio/mpeg",
+  m4a: "audio/mp4",
+  wav: "audio/wav",
+  doc: "application/msword",
+  docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  xls: "application/vnd.ms-excel",
+  xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  zip: "application/zip"
+};
+function contentTypeFor(name) {
+  return TYPES[extOf(name)] ?? "application/octet-stream";
+}
+function refusalFor(name, size, element, contentType) {
+  const ext = extOf(name);
+  if (REFUSED_EXT.has(ext))
+    return `keepr refuses .${ext} files \u2014 executables and scripts are never accepted.`;
+  if (size === 0)
+    return "the file is empty.";
+  if (size > MAX_FILE_BYTES)
+    return `${mb(size)} \u2014 every attachment is limited to 100 MB.`;
+  if (element) {
+    if (element.accept === "image" && !PHOTO_EXT.has(ext) && !String(contentType ?? "").startsWith("image/")) {
+      return `"${element.name}" takes photos only (JPEG, PNG, WebP, GIF, AVIF, TIFF, HEIC).`;
+    }
+    if (typeof element.maxSizeMb === "number" && size > element.maxSizeMb * 1024 * 1024) {
+      return `${mb(size)} \u2014 larger than ${element.maxSizeMb} MB, the limit of "${element.name}".`;
+    }
+  }
+  return null;
+}
+function mb(bytes) {
+  if (bytes <= 0)
+    return "0 KB";
+  return bytes >= 1024 * 1024 ? `${(bytes / 1024 / 1024).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`;
+}
+function carriedName(name) {
+  return name.replace(/[\u2028\u2029]/g, " ").toWellFormed();
+}
+function storedName(name) {
+  let n = carriedName(name).replace(/"/g, "%22").replace(/\r/g, "%0D").replace(/\n/g, "%0A");
+  n = n.replace(/[\u0000-\u001f\u007f]/g, "").replace(/["\\]/g, "");
+  n = n.split("/").pop() ?? "";
+  n = n.replace(/^\.+/, "").trim();
+  if (!n)
+    return "file";
+  if (n.length > 255) {
+    const m = /\.([A-Za-z0-9]{1,12})$/.exec(n);
+    const suffix = m ? `.${m[1].toLowerCase()}` : "";
+    n = n.slice(0, 255 - suffix.length).toWellFormed() + suffix;
+  }
+  return n;
+}
+
 // dist/src/attachJobs.js
-import { constants } from "node:fs";
-import { open, stat as stat4, realpath as realpath3 } from "node:fs/promises";
-import { randomBytes as randomBytes4 } from "node:crypto";
-import { setTimeout as sleep3 } from "node:timers/promises";
 var IDS_PER_CALL = 100;
 var CONCURRENCY = 3;
 var MAX_RATE_WAITS = 20;
@@ -4114,7 +3804,7 @@ async function planUploads(ctx, pairs, element) {
     if (collectionRefusal.has(it.collectionId))
       continue;
     const row = ctx.knownCollections().find((c) => c.id === it.collectionId);
-    collectionRefusal.set(it.collectionId, !row ? null : row.allowAttachments === false ? `attachments are turned off in "${row.name}" \u2014 someone who manages it can turn them on in its settings.` : row.archived ? `"${row.name}" is archived and read-only.` : null);
+    collectionRefusal.set(it.collectionId, !row ? null : !row.allowAttachments ? `attachments are turned off in "${row.name}" \u2014 someone who manages it can turn them on in its settings.` : row.archived ? `"${row.name}" is archived and read-only.` : null);
   }
   const targets = /* @__PURE__ */ new Map();
   const schemas = /* @__PURE__ */ new Map();
@@ -4384,11 +4074,14 @@ function reserve(item) {
 }
 async function sendReserved(ctx, job, f, item, now) {
   if (!job.rootReal)
-    job.rootReal = realpath3(job.folder).catch(() => null);
+    job.rootReal = realpath2(job.folder).catch(() => null);
   const rootReal = await job.rootReal;
+  const far = await remoteLinkProblem(f.path, rootReal);
+  if (far)
+    return settle(f, "failed", `something else was put in its place after the folder was matched: ${linkProblemReason(far)}. It was not sent.`);
   let real = null;
   try {
-    real = await realpath3(f.path);
+    real = await realpath2(f.path);
   } catch {
   }
   const fenced = rootReal && real ? fenceProblem(rootReal, real) : null;
@@ -4421,12 +4114,12 @@ async function sendOpened(ctx, job, f, item, now, fh, real) {
   }
   let again = null;
   try {
-    again = real ? await stat4(real, { bigint: true }) : null;
+    again = real ? await stat3(real, { bigint: true }) : null;
   } catch {
   }
   let still = null;
   try {
-    still = await realpath3(f.path);
+    still = await realpath2(f.path);
   } catch {
   }
   if (!again || idOf(again) !== seen.id || still !== real)
@@ -4436,7 +4129,8 @@ async function sendOpened(ctx, job, f, item, now, fh, real) {
     res = await ctx.http.request({
       method: "POST",
       path: `/api/items/${f.itemId}/attachments`,
-      stream: { open: readsFrom(fh, f.size), length: f.size, filename: f.name, contentType: contentTypeFor(f.name) }
+      // carriedName: a name keepr cannot carry goes as the name it will be stored under (KPR-2549); http.ts escapes the rest.
+      stream: { open: readsFrom(fh, f.size), length: f.size, filename: carriedName(f.name), contentType: contentTypeFor(f.name) }
     });
   } catch (err) {
     if (err instanceof FileChangedError) {
@@ -4544,7 +4238,440 @@ function summarise(job) {
   return t2;
 }
 
+// dist/src/entryRules.js
+var GROUP_NAME_RE = /^[A-Za-z0-9][A-Za-z0-9 _-]{0,99}$/;
+var ENTRY_ID_RE = /^[a-z][0-9a-z]{9}$/;
+
+// dist/src/tools/attach.js
+var HEX24 = /^[0-9a-fA-F]{24}$/;
+var MAX_INLINE_BYTES = 1e6;
+var LOCAL_FILE_TOOL = "keepr_attach_local_file";
+var LOCAL_TOOLS_PRESENT = "only if keepr's local file tools are among your tools and the file is on that computer";
+var attachFileTool = {
+  name: "keepr_attach_file",
+  title: "Attach files",
+  // The stdio server's full mode (a path works there). The connector lists
+  // attachFileOnConnectorTool below, in its own words.
+  description: "Attaches files to a keepr item. A file held in the conversation goes as content_base64 with a filename, about a megabyte at most; a file on this computer goes by its `path`, streamed from disk, up to 100 MB. keepr_attach_folder fits many files, and keepr_request_upload gives the person a link for files this server cannot read. The item is named by item_id, or by external_id from a keepr_ingest run. With `element`, the files go into one of the item's file elements: a single file element is replaced (the old file is deleted, which needs Can delete records), a list is appended to.",
+  writes: true,
+  // It can replace the file in a single file element. Not idempotent:
+  // skip_if_present: false uploads the same file again.
+  annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: false },
+  inputSchema: {
+    item_id: z.string().optional().describe("The item to attach to, 24 hex characters."),
+    run_id: z.string().optional().describe("A runId from a committed keepr_ingest, used with external_id instead of item_id."),
+    external_id: z.string().optional().describe("The external_id of a row written by keepr_ingest in this session."),
+    files: z.array(z.custom()).min(1).max(20).describe("Files: {filename, content_base64, content_type?} for a small file held in the conversation (about a megabyte at most; the file as the person gave it, not resized or converted) \u2014 or {path} for a file on the computer this server runs on."),
+    skip_if_present: z.boolean().optional().describe("Default true. Skips a file whose name is already attached, so re-running after adding two photos uploads two photos. With `element`, an attachment already there is reused only when no element holds it and its name and size both match; anything else is uploaded fresh."),
+    element: z.string().optional().describe(`A file element of the item's card to put the files into (its name, as keepr_schema lists it, dataType "file", with accept, maxSizeMb and allowMultiple). A single file element takes one file and is replaced; a list is appended to, 20 files at most. Without it, the files are the item's other attachments. With entry_id and column, the repeating group instead.`),
+    entry_id: z.string().optional().describe("With element (a repeating group) and column: the entry to put the files in, by the id keepr gave it (read the item's entries)."),
+    column: z.string().optional().describe("With element and entry_id: a file column of that group (keepr_schema lists a group's columns). It takes files as a file element does.")
+  },
+  handler: async (args, ctx) => {
+    let itemId = typeof args.item_id === "string" ? args.item_id : "";
+    if (!itemId && typeof args.external_id === "string" && args.external_id) {
+      const found = ctx.ledger.resolveExternalId(args.external_id, typeof args.run_id === "string" ? args.run_id : null);
+      if (!found) {
+        const known = ctx.ledger.size;
+        return fail(`No item in this session was written with external_id "${args.external_id}".` + (known ? ` ${known} ingest run${known === 1 ? "" : "s"} are remembered, but none contains it.` : " No committed ingest runs are remembered \u2014 a dry run does not create anything to attach to.") + "\n\nUse keepr_get_items to find the item and pass its item_id instead.");
+      }
+      itemId = found.itemId;
+    }
+    if (!HEX24.test(itemId)) {
+      return fail("No item given. Pass item_id (24 hex characters), or external_id from a committed keepr_ingest run in this session.");
+    }
+    const files = args.files ?? [];
+    if (!Array.isArray(files) || !files.length)
+      return fail("No files given.");
+    const item = await ctx.http.request({ path: `/api/items/${itemId}` });
+    if (!item.ok)
+      return ctx.failFromResponse(item, `reading item ${itemId}`);
+    const collectionId = String(item.body?.collection_id ?? "");
+    const collection = ctx.knownCollections().find((c) => c.id === collectionId);
+    if (collection && !collection.allowAttachments) {
+      return fail(`Attachments are turned off for ${quoted(collection.name)}. Every upload here is refused until someone enables them in the collection's settings in the web app.`);
+    }
+    if (collection?.archived) {
+      return fail(`${quoted(collection.name)} is archived and is read-only for everyone, so nothing can be attached.`);
+    }
+    const elementName = typeof args.element === "string" ? args.element.trim() : "";
+    const entryId = typeof args.entry_id === "string" ? args.entry_id.trim() : "";
+    const columnName = typeof args.column === "string" ? args.column.trim() : "";
+    if ((entryId || columnName) && !(entryId && columnName && elementName)) {
+      return fail("entry_id and column name a file column of one entry: give both, with element set to the repeating group that holds them.");
+    }
+    if (entryId && (!ENTRY_ID_RE.test(entryId) || !GROUP_NAME_RE.test(elementName))) {
+      return fail(`entry_id is an entry's id as keepr issued it (ten letters and digits), and element the repeating group's name as keepr_schema lists it \u2014 read the item for its entries.`);
+    }
+    const placeName = entryId ? `"${columnName}" in entry ${entryId} of "${elementName}"` : `"${elementName}"`;
+    let target = null;
+    let current = [];
+    if (elementName) {
+      const schema = await ctx.schemaFor(collectionId);
+      if (!schema.ok)
+        return ctx.failFromResponse(schema, "reading the elements of this item's collection");
+      const card = (schema.body?.cards ?? []).find((c) => c.id === String(item.body?.card_id ?? ""));
+      if (entryId) {
+        const groups = (card?.elements ?? []).filter((e) => e.dataType === "repeating-group");
+        const group = groups.find((e) => e.name === elementName) ?? null;
+        if (!group) {
+          const withFiles = groups.filter((g) => (g.columns ?? []).some((c) => c.dataType === "file"));
+          return fail(`"${elementName}" is not a repeating group of this item's card.` + (withFiles.length ? ` Its groups with a file column: ${withFiles.map((g) => identifierText(String(g.name))).join(", ")}.` : " The card has no group with a file column."));
+        }
+        const fileColumns = (group.columns ?? []).filter((c) => c.dataType === "file");
+        target = fileColumns.find((c) => c.name === columnName) ?? null;
+        if (!target) {
+          return fail(`"${columnName}" is not a file column of "${elementName}".` + (fileColumns.length ? ` Its file columns: ${fileColumns.map((c) => identifierText(String(c.name))).join(", ")}.` : " The group has no file column."));
+        }
+        const list = item.body?.elements?.[elementName];
+        const entry = (Array.isArray(list) ? list : []).find((e) => !!e && typeof e === "object" && e.id === entryId);
+        if (!entry)
+          return fail(`"${elementName}" holds no entry ${entryId} on this item \u2014 read the item for its entries' ids.`);
+        const stored = entry.elements?.[columnName];
+        current = (Array.isArray(stored) ? stored : stored ? [stored] : []).map(String).filter(Boolean);
+      } else {
+        const fileElements = (card?.elements ?? []).filter((e) => e.dataType === "file");
+        target = fileElements.find((e) => e.name === elementName) ?? null;
+        if (!target) {
+          return fail(`"${elementName}" is not a file element of this item's card.` + (fileElements.length ? ` Its file elements: ${fileElements.map((e) => identifierText(String(e.name))).join(", ")}.` : " The card has no file element \u2014 leave out `element` to attach the files as other attachments."));
+        }
+        const stored = item.body?.elements?.[elementName];
+        current = (Array.isArray(stored) ? stored : stored ? [stored] : []).map(String).filter(Boolean);
+      }
+      if (!target.allowMultiple && files.length > 1) {
+        return fail(`${placeName} holds one file, and ${files.length} were given. Pass one file for it, or leave out \`element\` to attach the rest as other attachments.`);
+      }
+      if (target.allowMultiple && current.length + files.length > MAX_FILES) {
+        return fail(`${placeName} holds at most ${MAX_FILES} files; it has ${current.length}, and ${files.length} more would pass that.`);
+      }
+      if (!target.allowMultiple && current.length && ctx.hasScope("delete") === false) {
+        return fail(`${placeName} already holds a file, and putting another there REPLACES it: the old file is deleted (restorable for 30 days), which needs Can delete records. ${ctx.deleteRefusal()}`);
+      }
+    }
+    const present = /* @__PURE__ */ new Map();
+    if (args.skip_if_present !== false) {
+      const existing = await ctx.http.request({ path: `/api/items/${itemId}/attachments` });
+      if (existing.ok && Array.isArray(existing.body)) {
+        for (const a of existing.body)
+          present.set(String(a.originalName ?? ""), { id: String(a._id ?? ""), element: a.element ?? null, entryId: a.entryId ?? null, column: a.column ?? null, size: typeof a.size === "number" ? a.size : null });
+      }
+    }
+    const inTarget = (a) => a.element === elementName && (entryId ? a.entryId === entryId && a.column === columnName : !a.column);
+    const bindReplaces = !!target && !target.allowMultiple && current.length > 0;
+    const toBind = [];
+    const allowPath = ctx.config.keySource !== "bearer";
+    const tooLarge = [];
+    const uploaded = [];
+    const skipped = [];
+    const failed = [];
+    for (const spec of files) {
+      const loaded = await loadBytes(spec, allowPath, ctx.filesOnly);
+      if (!loaded.ok) {
+        failed.push({ filename: loaded.filename, message: loaded.message });
+        if (loaded.tooLarge)
+          tooLarge.push(loaded.filename);
+        continue;
+      }
+      try {
+        const { filename, size } = loaded;
+        const there = present.get(storedName(filename));
+        if (there && !target) {
+          skipped.push({ filename, reason: "already attached to this item" });
+          continue;
+        }
+        if (there && target && there.id && there.size === size) {
+          if (inTarget(there) && current.includes(there.id)) {
+            skipped.push({ filename, reason: `already in ${placeName}` });
+            continue;
+          }
+          if (there.element === null && !bindReplaces && !toBind.includes(there.id)) {
+            toBind.push(there.id);
+            skipped.push({ filename, reason: "already attached to this item (same name and size) \u2014 put into the element" });
+            continue;
+          }
+        }
+        const ext = filename.includes(".") ? filename.split(".").pop().toLowerCase() : "";
+        if (REFUSED_EXT.has(ext)) {
+          failed.push({ filename, message: `keepr refuses .${ext} files \u2014 executables and scripts are never accepted. Images, PDFs and documents are fine.` });
+          continue;
+        }
+        if (target && target.accept === "image" && !PHOTO_EXT.has(ext) && !String(spec.content_type ?? "").startsWith("image/")) {
+          failed.push({ filename, message: `${placeName} takes photos only (JPEG, PNG, WebP, GIF, AVIF, TIFF, HEIC) \u2014 a PDF or a document never fits it. Leave out \`element\` to attach it as another attachment.` });
+          continue;
+        }
+        if (target && typeof target.maxSizeMb === "number" && size > target.maxSizeMb * 1024 * 1024) {
+          failed.push({ filename, message: `larger than ${target.maxSizeMb} MB, the limit of ${placeName}.` });
+          continue;
+        }
+        let form;
+        if (loaded.inline) {
+          form = new FormData();
+          form.append("file", new Blob([new Uint8Array(loaded.inline)], { type: spec.content_type || "application/octet-stream" }), carriedName(filename));
+        }
+        let res;
+        try {
+          res = await ctx.http.request({
+            method: "POST",
+            path: `/api/items/${itemId}/attachments`,
+            ...form ? { formData: form } : { stream: loaded.stream }
+          });
+        } catch (err) {
+          if (err instanceof FileChangedError) {
+            failed.push({ filename, message: err.kind === "unreadable" ? `it could not be read from the disk: ${err.message}.` : "it changed while it was being sent. Try again once it is finished being written." });
+            continue;
+          }
+          throw err;
+        }
+        ctx.noteWriteAttempt(res);
+        if (!res.ok) {
+          const refusedScope = ctx.scopeRefusedBy(res, "write");
+          if (refusedScope)
+            return fail(ctx.refusalFor(refusedScope));
+          const code = errorCode(res.body);
+          const meaning = code ? ctx.contract.meaningOf(code) : null;
+          const said = `${code ? `${code}: ` : ""}${errorMessage(res.body, "")}${meaning ? ` (${meaning})` : ""}`.trim();
+          const why = res.status === 413 ? "over the per-user attachment cap (100 MB). The user has to free space before this will work." : res.status === 403 ? `refused \u2014 attachments may be off for this collection, or the owner's email is unverified.${said ? ` keepr said: ${said}` : ""}` : said || `HTTP ${res.status}`;
+          failed.push({ filename, message: why });
+          continue;
+        }
+        uploaded.push({ attachmentId: String(res.body?._id ?? ""), filename, bytes: size });
+        present.set(storedName(filename), { id: String(res.body?._id ?? ""), element: null, entryId: null, column: null, size });
+        if (target && res.body?._id)
+          toBind.push(String(res.body._id));
+      } finally {
+        await loaded.close?.();
+      }
+    }
+    let bound = [];
+    let bindError = null;
+    if (target && toBind.length) {
+      const replacing = !target.allowMultiple && current.length > 0;
+      const value = target.allowMultiple ? [...current, ...toBind] : toBind[0];
+      const put = entryId ? await ctx.http.request({
+        method: "PATCH",
+        path: `/api/items/${itemId}/entries/${encodeURIComponent(elementName)}/${entryId}`,
+        body: { elements: { [columnName]: value } }
+      }) : await ctx.http.request({
+        method: "PUT",
+        path: `/api/items/${itemId}`,
+        body: { elements: { [elementName]: value }, merge: true }
+      });
+      ctx.noteWriteAttempt(put, replacing ? "delete" : "write");
+      if (put.ok)
+        bound = target.allowMultiple ? toBind : [toBind[0]];
+      else {
+        const code = errorCode(put.body);
+        const meaning = code ? ctx.contract.meaningOf(code) : null;
+        const scopeRefused = ctx.scopeRefusedBy(put, replacing ? "delete" : "write");
+        bindError = `${code ? `${code}: ` : ""}${errorMessage(put.body, `HTTP ${put.status}`)}${meaning ? ` (${meaning})` : ""}` + (scopeRefused ? ` ${ctx.refusalFor(scopeRefused)}` : "");
+      }
+    }
+    const title = item.body?.displayValue ? sayName(item.body.displayValue) : itemId;
+    const lines = [
+      failed.length ? `PARTIAL \u2014 ${uploaded.length} attached to "${title}", ${failed.length} failed.` : `Attached ${uploaded.length} file${uploaded.length === 1 ? "" : "s"} to "${title}".`
+    ];
+    if (target && bound.length) {
+      lines.push("", !target.allowMultiple && current.length ? `Put into ${placeName}, replacing the file that was there (deleted softly \u2014 History can bring it back for 30 days).` : `Put into ${placeName} (${bound.length} file${bound.length === 1 ? "" : "s"}).`);
+    }
+    if (bindError)
+      lines.push("", `NOT PUT INTO ${placeName} \u2014 keepr refused the bind: ${bindError}`, "The uploaded files stay on the item as other attachments.");
+    if (uploaded.length) {
+      lines.push("", "ATTACHED:");
+      for (const u of uploaded)
+        lines.push(`  ${u.filename}  (${u.bytes} bytes)`);
+    }
+    if (skipped.length) {
+      lines.push("", "SKIPPED:");
+      for (const s of skipped)
+        lines.push(`  ${s.filename} \u2014 ${s.reason}`);
+    }
+    if (failed.length) {
+      lines.push("", "FAILED:");
+      for (const f of failed)
+        lines.push(`  ${f.filename} \u2014 ${f.message}`);
+    }
+    const next = tooLarge.length ? routesFor(tooLarge, itemId, collectionId, elementName || null, allowPath, entryId ? { entry_id: entryId, column: columnName } : null) : null;
+    if (next)
+      lines.push("", ...next.lines);
+    const result = {
+      itemId,
+      itemDisplayValue: item.body?.displayValue ?? null,
+      uploaded,
+      skipped,
+      failed,
+      ...target ? { element: elementName, ...entryId ? { entry_id: entryId, column: columnName } : {}, bound, ...bindError ? { bindError } : {} } : {},
+      ...next ? { next: next.calls } : {}
+    };
+    return failed.length || bindError ? fail(lines.join("\n"), result) : ok(lines.join("\n"), result);
+  }
+};
+function routesFor(names, itemId, collectionId, element, allowPath, entry = null) {
+  const place = element ? { element, ...entry ?? {} } : {};
+  const request = { tool: "keepr_request_upload", args: { collection: collectionId, entries: names.map((name) => ({ item_id: itemId, name, ...place })) } };
+  const lines = [`NEXT \u2014 ${names.length === 1 ? "this file is" : "these files are"} too big to send inline (about a megabyte at most). Do NOT resize or convert ${names.length === 1 ? "it" : "them"}.`];
+  const calls = [];
+  if (allowPath) {
+    const byPath = { tool: "keepr_attach_file", args: { item_id: itemId, files: names.map(() => ({ path: "<where the file is on this computer>" })), ...place } };
+    lines.push("  If the file is on the computer this server runs on (Claude Code, the extension, the plugin), give its path \u2014 streamed from disk, up to 100 MB:", `    keepr_attach_file ${JSON.stringify(byPath.args)}`, "  Many files in one folder: keepr_attach_folder.", "  If you cannot reach the file (it is on the person's phone, or only in the chat), ask the person for it with a link:");
+    calls.push(byPath);
+  } else {
+    const local = { tool: LOCAL_FILE_TOOL, args: { item_id: itemId, files: names.map(() => ({ path: "<where the file is on that computer>" })), ...place }, when: LOCAL_TOOLS_PRESENT };
+    lines.push("  This connector cannot read files from the person's computer. If keepr's local file tools are among your tools (the keepr plugin adds them in Claude Code, and in Cowork on the person's computer) and the file is on that computer, attach it from there by its path \u2014 streamed from disk, up to 100 MB:", `    ${LOCAL_FILE_TOOL} ${JSON.stringify(local.args)}`, "  Many files in one folder: keepr_attach_folder, from the same local tools.", "  Otherwise (no local file tools, or the file is only in the chat or on a phone), ask the person for it with a link \u2014 they drop it in keepr, and you can check it arrived:");
+    calls.push(local);
+  }
+  lines.push(`    keepr_request_upload ${JSON.stringify(request.args)}`);
+  calls.push(request);
+  return { lines, calls };
+}
+function closeOnce(handle) {
+  let closed = false;
+  return async () => {
+    const fh = handle();
+    if (closed || !fh)
+      return;
+    closed = true;
+    await fh.close().catch(() => {
+    });
+  };
+}
+async function loadBytes(spec, allowPath, filesOnly = false) {
+  if (spec.content_base64) {
+    const name = spec.filename || "attachment";
+    let bytes;
+    try {
+      bytes = Buffer.from(spec.content_base64, "base64");
+    } catch {
+      return { ok: false, filename: name, message: "content_base64 is not valid base64." };
+    }
+    if (!bytes.length)
+      return { ok: false, filename: name, message: "content_base64 decoded to zero bytes." };
+    if (bytes.length > MAX_INLINE_BYTES) {
+      return { ok: false, filename: name, tooLarge: true, message: `${mb(bytes.length)} is too big to send inline (about a megabyte at most) \u2014 see NEXT for the way that works.` };
+    }
+    if (!spec.filename)
+      return { ok: false, filename: name, message: "content_base64 was given without a filename. keepr stores the name, so it cannot be guessed." };
+    return { ok: true, filename: spec.filename, size: bytes.length, inline: bytes };
+  }
+  if (spec.path) {
+    const name = spec.filename || basename3(spec.path);
+    if (!allowPath) {
+      return {
+        ok: false,
+        filename: name,
+        message: `this connector cannot read files by path \u2014 it runs on keepr's servers, not on the person's computer. If keepr's local file tools are among your tools, ${LOCAL_FILE_TOOL} attaches it by path from there. A small file you hold: content_base64 with a filename (about a megabyte at most). Anything else: keepr_request_upload gives the person a link to upload it.`
+      };
+    }
+    const remote = remotePathProblem(spec.path) ?? pathLengthProblem(spec.path);
+    if (remote)
+      return { ok: false, filename: name, message: remote };
+    const far = await remoteLinkProblem(spec.path);
+    if (far)
+      return { ok: false, filename: name, message: linkProblemRefusal(spec.path, far) };
+    const secret = secretPlace(spec.path);
+    if (secret)
+      return { ok: false, filename: name, message: secretRefusal(spec.path, "file", secret) };
+    const { path } = await resolveAgentPath(spec.path);
+    let fh = null;
+    const close = closeOnce(() => fh);
+    let size;
+    try {
+      const real = await realpath3(path);
+      const leadsTo = secretPlace(real);
+      if (leadsTo)
+        return { ok: false, filename: name, message: secretRefusal(spec.path, "file", leadsTo, real) };
+      const checked = await stat4(real, { bigint: true });
+      if (!checked.isFile())
+        return { ok: false, filename: name, message: `${spec.path} is not a file.` };
+      fh = await open2(path, constants2.O_RDONLY | (constants2.O_NONBLOCK ?? 0));
+      const st = await fh.stat({ bigint: true });
+      if (!st.isFile()) {
+        await close();
+        return { ok: false, filename: name, message: `${spec.path} is no longer a file (something else was put in its place after it was checked) \u2014 it was not sent.` };
+      }
+      if (idOf(st) !== idOf(checked) || await realpath3(path) !== real) {
+        await close();
+        return { ok: false, filename: name, message: `${spec.path} changed while it was being checked (something else was put in its place) \u2014 it was not sent. Try again.` };
+      }
+      size = Number(st.size);
+    } catch (err) {
+      await close();
+      return { ok: false, filename: name, message: pathProblem(spec.path, err.code, filesOnly) };
+    }
+    if (size > MAX_FILE_BYTES) {
+      await close();
+      return { ok: false, filename: name, message: "over 100 MB \u2014 every attachment is limited to 100 MB." };
+    }
+    if (!size) {
+      await close();
+      return { ok: false, filename: name, message: "the file is empty." };
+    }
+    return {
+      ok: true,
+      filename: name,
+      size,
+      close,
+      stream: { open: readsFrom(fh, size), length: size, filename: carriedName(name), contentType: spec.content_type || contentTypeFor(name) }
+    };
+  }
+  return { ok: false, filename: spec.filename || "attachment", message: "neither content_base64 nor path was given." };
+}
+var attachFileOnConnectorTool = {
+  ...attachFileTool,
+  title: "Attach a small file",
+  // What the connector can do, in its own words (KPR-256): no `path`, no
+  // "plugin" or "extension", and the local tools only on their condition.
+  description: `Attaches a small file held in the conversation to a keepr item: content_base64 with a filename, about a megabyte at most, every character passing through the chat. This connector runs on keepr's servers and cannot read the person's disk. A larger file, or one on the person's computer, goes through keepr's local file tools when they are among the tools (${LOCAL_FILE_TOOL}, keepr_attach_folder), otherwise through keepr_request_upload's link. With \`element\`, they go into a file element: a single one is replaced (its old file deleted, which needs Can delete records), a list appended to.`,
+  inputSchema: {
+    ...attachFileTool.inputSchema,
+    files: z.array(z.custom()).min(1).max(20).describe("Files: {filename, content_base64, content_type?} \u2014 a small file held in the conversation (about a megabyte at most; the file as the person gave it, not resized or converted). This connector reads no file from a disk.")
+  }
+};
+var attachLocalFileTool = {
+  name: LOCAL_FILE_TOOL,
+  title: "Attach files from this computer",
+  // The Claude directory's review (KPR-251): say what the tool does and when
+  // it fits; no lines aimed at the model's behaviour, no outside software, no
+  // tool this server does not list.
+  description: "Attaches files from this computer's disk to one keepr item, by their path. Each file is streamed from disk, up to 100 MB, so nothing passes through the conversation; keepr_attach_folder fits a whole folder. The item is named by its id, 24 hex characters. With `element`, the files go into one of the item's file elements: a single file element takes one file and replaces the file there (the old file is deleted, which needs Can delete records), and a list takes up to 20. Without `element`, they are the item's other attachments.",
+  writes: true,
+  // Not idempotent by contract: a re-run skips a same-named file, but a
+  // single file element is replaced. It writes to keepr, a closed world.
+  annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: false },
+  inputSchema: {
+    item_id: z.string().describe("The item to attach to, 24 hex characters."),
+    files: z.array(z.custom()).min(1).max(20).describe("Files: {path, filename?, content_type?} \u2014 path is where the file is on this computer (in Cowork, inside a folder the person selected for the session, under /sessions/<name>/mnt/); filename renames it in keepr. Hidden files, and anything in a hidden folder of the home folder, are not attached."),
+    skip_if_present: z.boolean().optional().describe("Default true. Skips a file whose name is already attached, so re-running after adding two photos uploads two photos. With `element`, an attachment already there is reused only when no element holds it and its name and size both match; anything else is uploaded fresh."),
+    element: z.string().optional().describe("A file element of the item's card to put the files into, by its name. A single file element is replaced; a list is appended to. With entry_id and column, the repeating group instead."),
+    entry_id: z.string().optional().describe("With element (a repeating group) and column: the entry to put the files in, by its id."),
+    column: z.string().optional().describe("With element and entry_id: a file column of that group.")
+  },
+  handler: async (args, ctx) => {
+    const itemId = typeof args.item_id === "string" ? args.item_id.trim() : "";
+    if (!HEX24.test(itemId)) {
+      return fail("No item given. Pass item_id: the item's id in keepr, 24 hex characters.");
+    }
+    const files = Array.isArray(args.files) ? args.files : [];
+    if (!files.length)
+      return fail("No files given.");
+    const inline = files.filter((f) => f && typeof f === "object" && f.content_base64);
+    const pathless = files.filter((f) => !f || typeof f !== "object" || typeof f.path !== "string" || !f.path.trim());
+    if (inline.length || pathless.length) {
+      return fail(`${LOCAL_FILE_TOOL} reads files from this computer by \`path\`, and ${inline.length ? "takes no content_base64" : `${pathless.length} of the files had no path`}. A small file held in the conversation goes up through the keepr connector instead.`);
+    }
+    return attachFileTool.handler({
+      item_id: itemId,
+      files: files.map((f) => ({ path: f.path, ...f.filename ? { filename: f.filename } : {}, ...f.content_type ? { content_type: f.content_type } : {} })),
+      ...args.skip_if_present !== void 0 ? { skip_if_present: args.skip_if_present } : {},
+      ...args.element !== void 0 ? { element: args.element } : {},
+      ...args.entry_id !== void 0 ? { entry_id: args.entry_id } : {},
+      ...args.column !== void 0 ? { column: args.column } : {}
+    }, ctx);
+  }
+};
+
 // dist/src/tools/attachFolder.js
+import { stat as stat5, realpath as realpath4 } from "node:fs/promises";
+import { createHash as createHash2, randomBytes as randomBytes5 } from "node:crypto";
 var HEX242 = /^[0-9a-fA-F]{24}$/;
 var LIST_PAGE = 200;
 var ELEMENT_ITEMS_MAX = 5e3;
@@ -4558,6 +4685,10 @@ function matchFingerprint(files) {
 function signatureOf(args) {
   const pick = { folder: args.folder ?? null, run_id: args.run_id ?? null, map: args.map ?? null, collection: args.collection ?? null, match_element: args.match_element ?? null, source_system: args.source_system ?? null, match: args.match ?? null, element: args.element ?? null };
   return createHash2("sha256").update(JSON.stringify(pick)).digest("hex");
+}
+function storedAs(name) {
+  const kept = storedName(name);
+  return kept === name ? void 0 : kept;
 }
 var attachFolderTool = {
   name: "keepr_attach_folder",
@@ -4591,6 +4722,9 @@ var attachFolderTool = {
     const remote = remotePathProblem(given) ?? pathLengthProblem(given);
     if (remote)
       return fail(remote, { ok: false, code: "folder_refused" });
+    const far = await remoteLinkProblem(given);
+    if (far)
+      return fail(linkProblemRefusal(given, far), { ok: false, code: "folder_refused" });
     const secret = secretPlace(given);
     if (secret)
       return fail(secretRefusal(given, "folder", secret), { ok: false, code: "folder_refused" });
@@ -4672,7 +4806,7 @@ Try another match mode, a \`map\` naming the files per item, or match_element wi
       const lines = [...header, ""];
       lines.push(`MATCHED (${going.length}):`);
       for (const f of going.slice(0, SHOWN))
-        lines.push(`  ${identifierText(f.file.rel)} \u2192 ${title(f.itemId)}`);
+        lines.push(`  ${identifierText(f.file.rel)} \u2192 ${title(f.itemId)}${storedAs(f.file.name) ? ` (keepr will store it as ${identifierQuoted(storedAs(f.file.name))})` : ""}`);
       if (going.length > SHOWN)
         lines.push(`  \u2026 and ${going.length - SHOWN} more`);
       if (refused.length) {
@@ -4708,7 +4842,7 @@ Try another match mode, a \`map\` naming the files per item, or match_element wi
         dryRun: true,
         confirm: issued,
         leftOut: skipped.slice(0, 500),
-        matched: going.slice(0, 500).map((f) => ({ file: f.file.rel, itemId: f.itemId, item: title(f.itemId), bytes: f.file.size })),
+        matched: going.slice(0, 500).map((f) => ({ file: f.file.rel, itemId: f.itemId, item: title(f.itemId), bytes: f.file.size, ...storedAs(f.file.name) ? { storedAs: storedAs(f.file.name) } : {} })),
         refused: refused.slice(0, 500).map((f) => ({ file: f.file.rel, itemId: f.itemId, reason: f.refused })),
         unmatched: matched.unmatched.slice(0, 500).map((u) => ({ file: u.file.rel, reason: u.reason })),
         itemsWithoutFile: matched.itemsWithoutFile.slice(0, 500),

@@ -475,6 +475,10 @@ to skip the preview: it is where the token comes from.
   is not a removal.
 - **Removal only through `remove`**, by name, and only for the card's own
   elements. An inherited element belongs to the parent card; say so and stop.
+- `displayTemplate` is the title line and `subtitleTemplate` a second, longer
+  line under it, both as `"{{kpr}} {{title}}"`. A string sets it; `""` or
+  `null` clears it. A spec naming only `subtitleTemplate` is a change. keepr
+  refuses an unknown or hidden element and nothing changes.
 - `name`, `description`, `options` (merged), `color`, `icon` are card fields
   and pass through — an icon looked up first, as above. **`key` is refused**:
   it is the card's stable handle, and saved filters and links break when it

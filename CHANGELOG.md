@@ -3,6 +3,84 @@
 Each release lists the two versions it carries: the skill's (which is also the
 plugin's) and the server's.
 
+## 2.108.0 — 2026-11-17
+
+Skill 2.108.0, keepr-mcp 0.94.0. Also the first release of 2.106.0, 2.105.0, 2.104.0, 2.103.0, 2.102.0, 2.101.0, 2.100.0, 2.99.0, 2.98.0, 2.97.0, 2.96.0 and 2.95.0, below.
+
+- When your assistant is asked to attach a file to a collection that has never had attachments turned on, it now says so in one sentence instead of trying the upload and reporting keepr's refusal.
+
+## 2.106.0 — 2026-11-17
+
+Skill 2.106.0, keepr-mcp 0.93.0.
+
+- Your assistant can give a card a subtitle, or change or clear one, when it creates or changes a card through the keepr script, as it already could through the connector.
+
+## 2.105.0 — 2026-11-16
+
+Skill 2.105.0, keepr-mcp 0.93.0.
+
+- When your assistant attaches a folder with keepr.py, each file in a subfolder is now named by its path in the folder (`R-1/sub/x.pdf`), as keepr-mcp already does, so two files with the same name read apart and a path printed in the preview can be copied into a mapping. A file named on its own is shown as you gave it, and an empty name never appears.
+
+## 2.104.0 — 2026-11-16
+
+Skill 2.104.0, keepr-mcp 0.93.0.
+
+- When a setup or a new card your assistant proposes names an element more than one card defines, the preview now lists each one it could mean by its id, so your assistant can ask you which you mean and propose again without looking the ids up first.
+
+## 2.103.0 — 2026-11-16
+
+Skill 2.103.0, keepr-mcp 0.92.0.
+
+- Attaching a file whose name is not valid text (possible on Linux) no longer stops keepr.py with an error: the file is sent and stored with each unreadable byte shown as the replacement mark, the same name your assistant's keepr-mcp already sends, and a re-run skips it as already attached.
+
+## 2.102.0 — 2026-11-17
+
+Skill 2.102.0, keepr-mcp 0.91.0.
+
+- On Windows, keepr.py attach now reads every link on a file's path before anything follows it, so a link unpacked from an archive that points at another computer's shared folder by a less common spelling, through a linked folder, or by a link that cannot be read is left out and named in the preview instead of sending your Windows sign-in to that computer. A link to a file in the folder written as an absolute path now attaches.
+
+## 2.101.0 — 2026-11-16
+
+Skill 2.101.0, keepr-mcp 0.91.0.
+
+- Attaching a file by its path now reads exactly the file that was checked: if something else (a named pipe, or a link to another file) is put in its place a moment later, the attach is refused with the file named, instead of hanging or sending the wrong file.
+
+## 2.100.0 — 2026-11-16
+
+Skill 2.100.0, keepr-mcp 0.90.0.
+
+- When your assistant proposes a change to a form, its preview now says whether a group starts folded on the form, in the read view, or both (`(collapsed on the form)`), so a change of where a group starts no longer looks like nothing changed.
+
+## 2.99.0 — 2026-11-16
+
+Skill 2.99.0, keepr-mcp 0.89.0.
+
+- A copy of the keepr skill installed on its own, without the keepr app's source beside it, now runs its test suite cleanly: the one check that needs that source is skipped instead of failing.
+
+## 2.98.0 — 2026-11-16
+
+Skill 2.98.0, keepr-mcp 0.89.0.
+
+- On Windows, attaching a folder or a file no longer follows a link inside it that points at another computer's shared folder, which could have sent your Windows sign-in to that computer. Such a link is now left out and named in the preview, and the rest of the folder attaches as before.
+
+## 2.97.0 — 2026-11-16
+
+Skill 2.97.0, keepr-mcp 0.88.0.
+
+- When your assistant proposes a setup whose form leaves out elements a card inherits, its preview now says so (`left out: odometer, gcwr`) after the form's groups, so you see what the form drops before you agree.
+
+## 2.96.0 — 2026-11-16
+
+Skill 2.96.0, keepr-mcp 0.87.0.
+
+- A copy of the keepr skill installed on its own with its tests folder no longer loses that folder when `keepr.py update` fails part way. The update now keeps the tests with the rest of the previous version and puts back exactly what it replaced, and if some file cannot be put back it names it instead of saying the copy was restored.
+
+## 2.95.0 — 2026-11-16
+
+Skill 2.95.0, keepr-mcp 0.87.0.
+
+- A file whose name holds a line or paragraph separator, which keepr could not receive, now attaches under the name keepr stores (a space for each), and the preview of an attach says the name keepr will store when it is not the file's own.
+
 ## 2.94.0 — 2026-11-16
 
 Skill 2.94.0, keepr-mcp 0.86.0. Also the first release of 2.93.0 and 2.92.0, below.
