@@ -3,6 +3,18 @@
 Each release lists the two versions it carries: the skill's (which is also the
 plugin's) and the server's.
 
+## 2.110.0 — 2026-11-17
+
+Skill 2.110.0, keepr-mcp 0.94.0. Also the first release of 2.109.0, below.
+
+- When your assistant attaches files with keepr.py and the map file is not an object of item names to file names, it now says so in one line and names the bad entry. Before, it stopped on a Python error.
+
+## 2.109.0 — 2026-11-17
+
+Skill 2.109.0, keepr-mcp 0.94.0.
+
+- When your assistant attaches files with keepr.py, a file larger than keepr accepts for one file is now left out before it is opened, with a line that says its size and keepr's limit, and the rest of the folder still goes. Before, it read the whole file into memory first, so a huge file could freeze the computer or stop the run on an error. The limit is the one keepr states, read when the run starts; if keepr does not state one, the run says so and keepr itself still refuses a file that is too large.
+
 ## 2.108.0 — 2026-11-17
 
 Skill 2.108.0, keepr-mcp 0.94.0. Also the first release of 2.106.0, 2.105.0, 2.104.0, 2.103.0, 2.102.0, 2.101.0, 2.100.0, 2.99.0, 2.98.0, 2.97.0, 2.96.0 and 2.95.0, below.
