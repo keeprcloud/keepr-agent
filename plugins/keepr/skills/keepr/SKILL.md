@@ -217,7 +217,7 @@ Two rules hold in every chapter:
 
 ## This copy
 
-This is keepr skill **2.110.0**. Every fact that changes comes from keepr, so a
+This is keepr skill **2.112.0**. Every fact that changes comes from keepr, so a
 copy a release behind is still right about the way of working.
 
 ## Files

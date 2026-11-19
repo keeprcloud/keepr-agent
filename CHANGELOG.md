@@ -3,6 +3,18 @@
 Each release lists the two versions it carries: the skill's (which is also the
 plugin's) and the server's.
 
+## 2.112.0 — 2026-11-17
+
+Skill 2.112.0, keepr-mcp 0.96.0. Also the first release of 2.111.0, below.
+
+- When your assistant shows you what a change to several items by id would do, it now names each item by its title. Before, it listed their ids.
+
+## 2.111.0 — 2026-11-17
+
+Skill 2.111.0, keepr-mcp 0.95.0.
+
+- When your assistant reads an item that links to other records, it now names each linked record by its title, as it does for any list. Before, every linked record showed as (no title) beside its id.
+
 ## 2.110.0 — 2026-11-17
 
 Skill 2.110.0, keepr-mcp 0.94.0. Also the first release of 2.109.0, below.
