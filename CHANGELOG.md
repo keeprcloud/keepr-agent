@@ -3,6 +3,12 @@
 Each release lists the two versions it carries: the skill's (which is also the
 plugin's) and the server's.
 
+## 2.113.0 — 2026-11-19
+
+Skill 2.113.0, keepr-mcp 0.97.0.
+
+- Your assistant can now propose folding the records of one card into entries of the item each one names, for example invoice lines into an invoice. It shows what would be folded, what is skipped and why, what is deleted or kept, and until when it can be undone, and folds only after you say yes. Only a manager can fold.
+
 ## 2.112.0 — 2026-11-17
 
 Skill 2.112.0, keepr-mcp 0.96.0. Also the first release of 2.111.0, below.
